@@ -47,6 +47,37 @@
   color: var(--op-text);
 }
 
+.new-run-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 3rem;
+  border-radius: 1rem;
+  border: 1.5px dashed rgba(37, 99, 235, 0.5);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--op-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.new-run-button:active {
+  transform: scale(0.98);
+  background: rgba(37, 99, 235, 0.18);
+}
+
+.new-run-icon {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--op-blue);
+}
+
 .operator-error {
   background: var(--op-red-soft);
   border: 1px solid rgba(220, 38, 38, 0.4);

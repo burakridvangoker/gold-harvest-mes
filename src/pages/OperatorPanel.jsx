@@ -5,6 +5,7 @@ import { useStopReasons } from '../hooks/useStopReasons'
 import { formatDuration } from '../lib/duration'
 import StatusBadge from '../components/StatusBadge'
 import ReasonPicker from '../components/ReasonPicker'
+import ProductionRunWizard from '../components/ProductionRunWizard'
 import './OperatorPanel.css'
 
 const LINE_CODE = 'PFM-11'
@@ -15,6 +16,7 @@ function OperatorPanel() {
   const [pending, setPending] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const [openStopEventId, setOpenStopEventId] = useState(null)
+  const [wizardOpen, setWizardOpen] = useState(false)
 
   const plansizReasons = useMemo(
     () => reasons.filter((reason) => reason.category === 'plansiz'),
@@ -129,6 +131,22 @@ function OperatorPanel() {
     }
   }, [openStopEventId])
 
+  const handleCreateProductionRun = useCallback(
+    async (payload) => {
+      setWizardOpen(false)
+      setError(null)
+
+      const { error } = await supabase
+        .from('production_runs')
+        .insert({ line_code: LINE_CODE, ...payload })
+
+      if (error) {
+        setError('Üretim kaydedilemedi: ' + error.message)
+      }
+    },
+    [setError],
+  )
+
   const handleSubmitReasonNote = useCallback(async (note) => {
     const eventId = openStopEventId
     if (!eventId) return
@@ -170,6 +188,14 @@ function OperatorPanel() {
         <span className="operator-line-code">{LINE_CODE}</span>
         <StatusBadge status={line.status} />
       </header>
+
+      <button
+        type="button"
+        className="new-run-button"
+        onClick={() => setWizardOpen(true)}
+      >
+        <span className="new-run-icon">+</span> Yeni Üretim Başlat
+      </button>
 
       {error && <div className="operator-error">{error}</div>}
 
@@ -223,6 +249,12 @@ function OperatorPanel() {
         onSelect={handleSelectReason}
         onSkip={handleSkipReason}
         onSubmitNote={handleSubmitReasonNote}
+      />
+
+      <ProductionRunWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onSubmit={handleCreateProductionRun}
       />
     </div>
   )
