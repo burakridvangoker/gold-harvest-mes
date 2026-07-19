@@ -51,6 +51,28 @@
   color: #fff;
 }
 
+.duration-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #1e293b;
+}
+
+.duration-label {
+  font-size: 1rem;
+  color: #94a3b8;
+}
+
+.duration-value {
+  font-size: 2.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
 .operator-error {
   background: #7f1d1d;
   color: #fecaca;
