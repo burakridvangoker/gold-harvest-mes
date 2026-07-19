@@ -37,16 +37,60 @@ function OperatorPanel() {
     [setLine, setError],
   )
 
-  const handleStartProduction = () =>
-    applyUpdate(
-      { status: 'uretimde' },
-      { status: 'uretimde', status_changed_at: new Date().toISOString() },
+  const handleStartProduction = useCallback(async () => {
+    if (!line || pending) return
+    const previousLine = line
+    const timestamp = new Date().toISOString()
+
+    setLine((prev) =>
+      prev ? { ...prev, status: 'uretimde', status_changed_at: timestamp } : prev,
     )
-  const handleStop = () =>
-    applyUpdate(
-      { status: 'durdu' },
-      { status: 'durdu', status_changed_at: new Date().toISOString() },
-    )
+    setPending(true)
+
+    try {
+      const [lineResult, stopEventResult] = await Promise.all([
+        supabase.from('line_status').update({ status: 'uretimde' }).eq('line_code', LINE_CODE),
+        supabase
+          .from('stop_events')
+          .update({ ended_at: timestamp })
+          .eq('line_code', LINE_CODE)
+          .is('ended_at', null),
+      ])
+
+      if (lineResult.error || stopEventResult.error) {
+        setLine(previousLine)
+      }
+    } catch {
+      setLine(previousLine)
+    } finally {
+      setPending(false)
+    }
+  }, [line, pending, setLine])
+
+  const handleStop = useCallback(async () => {
+    if (!line || pending) return
+    const previousLine = line
+    const timestamp = new Date().toISOString()
+
+    setLine((prev) => (prev ? { ...prev, status: 'durdu', status_changed_at: timestamp } : prev))
+    setPending(true)
+
+    try {
+      const [lineResult, stopEventResult] = await Promise.all([
+        supabase.from('line_status').update({ status: 'durdu' }).eq('line_code', LINE_CODE),
+        supabase.from('stop_events').insert({ line_code: LINE_CODE, started_at: timestamp }),
+      ])
+
+      if (lineResult.error || stopEventResult.error) {
+        setLine(previousLine)
+      }
+    } catch {
+      setLine(previousLine)
+    } finally {
+      setPending(false)
+    }
+  }, [line, pending, setLine])
+
   const handlePalletPlusOne = () => {
     if (!line) return
     applyUpdate({ pallet_count: line.pallet_count + 1 })
@@ -80,7 +124,7 @@ function OperatorPanel() {
 
       {error && <div className="operator-error">{error}</div>}
 
-      <div className="duration-card">
+      <div className={`duration-card duration-card--${line.status}`}>
         <span className="duration-label">{durationLabel}</span>
         <span className="duration-value">{formatDuration(durationMs)}</span>
       </div>
