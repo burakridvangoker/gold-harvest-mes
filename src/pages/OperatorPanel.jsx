@@ -1,16 +1,29 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useLineStatus } from '../hooks/useLineStatus'
+import { useStopReasons } from '../hooks/useStopReasons'
 import { formatDuration } from '../lib/duration'
 import StatusBadge from '../components/StatusBadge'
+import ReasonPicker from '../components/ReasonPicker'
 import './OperatorPanel.css'
 
 const LINE_CODE = 'PFM-11'
 
 function OperatorPanel() {
   const { line, setLine, loading, error, setError } = useLineStatus(LINE_CODE)
+  const reasons = useStopReasons()
   const [pending, setPending] = useState(false)
   const [now, setNow] = useState(() => Date.now())
+  const [openStopEventId, setOpenStopEventId] = useState(null)
+
+  const plansizReasons = useMemo(
+    () => reasons.filter((reason) => reason.category === 'plansiz'),
+    [reasons],
+  )
+  const planliReasons = useMemo(
+    () => reasons.filter((reason) => reason.category === 'planli'),
+    [reasons],
+  )
 
   useEffect(() => {
     const intervalId = setInterval(() => setNow(Date.now()), 1000)
@@ -54,11 +67,14 @@ function OperatorPanel() {
           .from('stop_events')
           .update({ ended_at: timestamp })
           .eq('line_code', LINE_CODE)
-          .is('ended_at', null),
+          .is('ended_at', null)
+          .select('id'),
       ])
 
       if (lineResult.error || stopEventResult.error) {
         setLine(previousLine)
+      } else if (stopEventResult.data?.length) {
+        setOpenStopEventId(stopEventResult.data[0].id)
       }
     } catch {
       setLine(previousLine)
@@ -95,6 +111,39 @@ function OperatorPanel() {
     if (!line) return
     applyUpdate({ pallet_count: line.pallet_count + 1 })
   }
+
+  const handleSkipReason = useCallback(() => {
+    setOpenStopEventId(null)
+  }, [])
+
+  const handleSelectReason = useCallback(async (code) => {
+    const eventId = openStopEventId
+    if (!eventId) return
+
+    setOpenStopEventId(null)
+
+    const { error } = await supabase.from('stop_events').update({ reason_code: code }).eq('id', eventId)
+
+    if (error) {
+      setOpenStopEventId(eventId)
+    }
+  }, [openStopEventId])
+
+  const handleSubmitReasonNote = useCallback(async (note) => {
+    const eventId = openStopEventId
+    if (!eventId) return
+
+    setOpenStopEventId(null)
+
+    const { error } = await supabase
+      .from('stop_events')
+      .update({ reason_note: note })
+      .eq('id', eventId)
+
+    if (error) {
+      setOpenStopEventId(eventId)
+    }
+  }, [openStopEventId])
 
   if (loading) {
     return (
@@ -166,6 +215,15 @@ function OperatorPanel() {
           +1 PALET
         </button>
       </div>
+
+      <ReasonPicker
+        open={openStopEventId !== null}
+        plansizReasons={plansizReasons}
+        planliReasons={planliReasons}
+        onSelect={handleSelectReason}
+        onSkip={handleSkipReason}
+        onSubmitNote={handleSubmitReasonNote}
+      />
     </div>
   )
 }
