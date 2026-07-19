@@ -1,0 +1,69 @@
+.manager-dashboard {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  padding: 3rem 4rem;
+  background: #0f172a;
+  color: #f8fafc;
+  font-family: system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+}
+
+.manager-dashboard--center {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.manager-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.manager-line-code {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.manager-error {
+  background: #7f1d1d;
+  color: #fecaca;
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.manager-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  border-radius: 1.5rem;
+  background: #1e293b;
+  padding: 2rem;
+}
+
+.metric-label {
+  font-size: 1.5rem;
+  color: #94a3b8;
+  letter-spacing: 0.03em;
+}
+
+.metric-value {
+  font-size: 5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}

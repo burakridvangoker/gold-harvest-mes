@@ -1,0 +1,29 @@
+.status-badge {
+  display: inline-block;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff;
+}
+
+.status-badge--md {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+}
+
+.status-badge--lg {
+  padding: 1rem 2rem;
+  font-size: 2rem;
+}
+
+.status-badge--beklemede {
+  background: #78716c;
+}
+
+.status-badge--uretimde {
+  background: #16a34a;
+}
+
+.status-badge--durdu {
+  background: #dc2626;
+}

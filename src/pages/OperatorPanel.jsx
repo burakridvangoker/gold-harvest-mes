@@ -1,28 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useLineStatus } from '../hooks/useLineStatus'
+import { formatDuration } from '../lib/duration'
+import StatusBadge from '../components/StatusBadge'
 import './OperatorPanel.css'
 
 const LINE_CODE = 'PFM-11'
 
-const STATUS_LABELS = {
-  beklemede: 'BEKLEMEDE',
-  uretimde: 'ÜRETİMDE',
-  durdu: 'DURDU',
-}
-
-function formatDuration(ms) {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-}
-
 function OperatorPanel() {
-  const [line, setLine] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { line, setLine, loading, error, setError } = useLineStatus(LINE_CODE)
   const [pending, setPending] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
@@ -31,66 +17,25 @@ function OperatorPanel() {
     return () => clearInterval(intervalId)
   }, [])
 
-  useEffect(() => {
-    let isMounted = true
+  const applyUpdate = useCallback(
+    async (dbPatch, localPatch = dbPatch) => {
+      setLine((prev) => (prev ? { ...prev, ...localPatch } : prev))
+      setPending(true)
+      setError(null)
 
-    async function fetchLine() {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('line_status')
-        .select('*')
+        .update(dbPatch)
         .eq('line_code', LINE_CODE)
-        .single()
 
-      if (!isMounted) return
+      setPending(false)
 
       if (error) {
-        setError('Veri yüklenemedi: ' + error.message)
-      } else {
-        setLine(data)
+        setError('Kaydedilemedi: ' + error.message)
       }
-      setLoading(false)
-    }
-
-    fetchLine()
-
-    const channel = supabase
-      .channel(`line_status_${LINE_CODE}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'line_status',
-          filter: `line_code=eq.${LINE_CODE}`,
-        },
-        (payload) => {
-          if (payload.new) setLine(payload.new)
-        },
-      )
-      .subscribe()
-
-    return () => {
-      isMounted = false
-      supabase.removeChannel(channel)
-    }
-  }, [])
-
-  const applyUpdate = useCallback(async (dbPatch, localPatch = dbPatch) => {
-    setLine((prev) => (prev ? { ...prev, ...localPatch } : prev))
-    setPending(true)
-    setError(null)
-
-    const { error } = await supabase
-      .from('line_status')
-      .update(dbPatch)
-      .eq('line_code', LINE_CODE)
-
-    setPending(false)
-
-    if (error) {
-      setError('Kaydedilemedi: ' + error.message)
-    }
-  }, [])
+    },
+    [setLine, setError],
+  )
 
   const handleStartProduction = () =>
     applyUpdate(
@@ -130,9 +75,7 @@ function OperatorPanel() {
     <div className="operator-panel">
       <header className="operator-header">
         <span className="operator-line-code">{LINE_CODE}</span>
-        <span className={`status-badge status-badge--${line.status}`}>
-          {STATUS_LABELS[line.status] ?? line.status}
-        </span>
+        <StatusBadge status={line.status} />
       </header>
 
       {error && <div className="operator-error">{error}</div>}

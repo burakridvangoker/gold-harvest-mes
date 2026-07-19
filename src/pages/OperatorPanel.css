@@ -28,29 +28,6 @@
   letter-spacing: 0.05em;
 }
 
-.status-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: 0.03em;
-}
-
-.status-badge--beklemede {
-  background: #78716c;
-  color: #fff;
-}
-
-.status-badge--uretimde {
-  background: #16a34a;
-  color: #fff;
-}
-
-.status-badge--durdu {
-  background: #dc2626;
-  color: #fff;
-}
-
 .duration-card {
   display: flex;
   flex-direction: column;
