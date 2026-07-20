@@ -1,13 +1,36 @@
 .manager-dashboard {
+  --mgr-bg: #0a0f1c;
+  --mgr-bg-elevated: #0f172a;
+  --mgr-card: #141d31;
+  --mgr-card-border: rgba(148, 163, 184, 0.12);
+  --mgr-text: #f8fafc;
+  --mgr-text-muted: #8b98ac;
+  --mgr-accent: #8b7cf6;
+  --mgr-accent-soft: rgba(139, 124, 246, 0.18);
+  --mgr-green: #16a34a;
+  --mgr-red: #dc2626;
+  --mgr-status-color: #78716c;
+
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
-  padding: 3rem 4rem;
-  background: #0f172a;
-  color: #f8fafc;
-  font-family: system-ui, -apple-system, sans-serif;
+  gap: 1.75rem;
+  padding: 2rem 3rem 2.5rem;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(139, 124, 246, 0.08), transparent),
+    var(--mgr-bg);
+  color: var(--mgr-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   box-sizing: border-box;
+  transition: background 0.6s ease;
+}
+
+.manager-dashboard--uretimde {
+  --mgr-status-color: var(--mgr-green);
+}
+
+.manager-dashboard--durdu {
+  --mgr-status-color: var(--mgr-red);
 }
 
 .manager-dashboard--center {
@@ -15,33 +38,194 @@
   justify-content: center;
   text-align: center;
   font-size: 2rem;
+  color: var(--mgr-text-muted);
 }
+
+.manager-error {
+  background: rgba(220, 38, 38, 0.16);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  color: #fecaca;
+  padding: 1rem 1.5rem;
+  border-radius: 0.9rem;
+  font-size: 1.1rem;
+}
+
+/* Header */
 
 .manager-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 1.75rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--mgr-card-border);
+}
+
+.manager-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .manager-line-code {
-  font-size: 3rem;
+  font-size: 2.25rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
 }
 
-.manager-error {
-  background: #7f1d1d;
-  color: #fecaca;
-  padding: 1rem 1.5rem;
-  border-radius: 0.75rem;
-  font-size: 1.25rem;
+.manager-date {
+  font-size: 1.05rem;
+  color: var(--mgr-text-muted);
+  text-transform: capitalize;
 }
 
-.manager-grid {
+.manager-clock {
+  margin-left: auto;
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  font-size: 2.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--mgr-text);
+  letter-spacing: 0.04em;
+}
+
+/* Shared panel shell */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  background: var(--mgr-card);
+  border: 1px solid var(--mgr-card-border);
+  border-radius: 1.5rem;
+  padding: 1.75rem 2rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 12px 28px -16px rgba(0, 0, 0, 0.7);
+}
+
+.panel-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--mgr-text-muted);
+  text-transform: uppercase;
+}
+
+.panel-empty {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mgr-text-muted);
+  font-size: 1.15rem;
+  min-height: 6rem;
+}
+
+/* Top row: active production + time usage */
+
+.manager-top-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.active-run-panel,
+.usage-panel {
+  justify-content: center;
+}
+
+.active-run-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.active-run-product {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.active-run-meta {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.active-run-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.active-run-meta-label {
+  font-size: 0.95rem;
+  color: var(--mgr-text-muted);
+  letter-spacing: 0.03em;
+}
+
+.active-run-meta-value {
+  font-size: 1.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.active-run-meta-value small {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--mgr-text-muted);
+}
+
+.active-run-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--mgr-text-muted);
+  min-height: 6rem;
+}
+
+.usage-panel {
+  align-items: center;
+}
+
+.usage-ring {
+  --pct: 0%;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: conic-gradient(var(--mgr-accent) var(--pct), rgba(255, 255, 255, 0.07) 0);
+  transition: background 0.6s ease;
+}
+
+.usage-ring::before {
+  content: '';
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background: var(--mgr-card);
+}
+
+.usage-ring-value {
+  position: relative;
+  z-index: 1;
+  font-size: 2.25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Metrics grid */
+
+.manager-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
 }
 
 .metric-card {
@@ -49,21 +233,175 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.75rem;
   border-radius: 1.5rem;
-  background: #1e293b;
-  padding: 2rem;
+  background: var(--mgr-card);
+  border: 1px solid var(--mgr-card-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 12px 28px -16px rgba(0, 0, 0, 0.7);
+  padding: 1.75rem 1rem;
 }
 
 .metric-label {
-  font-size: 1.5rem;
-  color: #94a3b8;
-  letter-spacing: 0.03em;
+  font-size: 1.05rem;
+  color: var(--mgr-text-muted);
+  letter-spacing: 0.02em;
+  text-align: center;
 }
 
 .metric-value {
-  font-size: 5rem;
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  font-size: 3.25rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
+}
+
+/* Bottom row: top reasons + event feed */
+
+.manager-bottom-row {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  min-height: 0;
+}
+
+.reasons-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.reasons-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.reasons-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.reasons-row-label {
+  font-size: 1.2rem;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reasons-row-bar-track {
+  height: 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.reasons-row-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mgr-accent), #b7ade9);
+  transition: width 0.6s ease;
+}
+
+.reasons-row-value {
+  flex-shrink: 0;
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--mgr-text);
+  text-align: right;
+}
+
+.feed-panel {
+  min-height: 0;
+}
+
+.feed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.feed-row {
+  display: grid;
+  grid-template-columns: 3.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid var(--mgr-text-muted);
+}
+
+.feed-row--ongoing {
+  border-left-color: var(--mgr-red);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.feed-row-time {
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--mgr-text-muted);
+}
+
+.feed-row-label {
+  min-width: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-row-duration {
+  flex-shrink: 0;
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.feed-row-live {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  color: var(--mgr-red);
+}
+
+@media (max-width: 1100px) {
+  .manager-dashboard {
+    padding: 1.5rem;
+  }
+
+  .manager-top-row,
+  .manager-bottom-row {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .manager-clock {
+    font-size: 2rem;
+  }
 }
