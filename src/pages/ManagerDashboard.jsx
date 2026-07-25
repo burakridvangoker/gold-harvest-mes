@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../hooks/useAuth'
 import { useLineStatus } from '../hooks/useLineStatus'
 import { useActiveProductionRun } from '../hooks/useActiveProductionRun'
 import { useStopEvents } from '../hooks/useStopEvents'
@@ -20,6 +21,7 @@ function eventDurationMs(event, nowMs) {
 }
 
 function ManagerDashboard() {
+  const { signOut } = useAuth()
   const { line, loading, error } = useLineStatus(LINE_CODE)
   const { run } = useActiveProductionRun(LINE_CODE)
   const { events } = useStopEvents(LINE_CODE)
@@ -97,6 +99,9 @@ function ManagerDashboard() {
         </div>
         <span className="manager-clock">{formatClock(nowDate)}</span>
         <StatusBadge status={line.status} size="xl" />
+        <button type="button" className="manager-logout" onClick={signOut}>
+          Çıkış
+        </button>
       </header>
 
       {error && <div className="manager-error">{error}</div>}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../hooks/useAuth'
 import { useLineStatus } from '../hooks/useLineStatus'
 import { useStopReasons } from '../hooks/useStopReasons'
 import { formatDuration } from '../lib/duration'
@@ -11,6 +12,7 @@ import './OperatorPanel.css'
 const LINE_CODE = 'PFM-11'
 
 function OperatorPanel() {
+  const { signOut } = useAuth()
   const { line, setLine, loading, error, setError } = useLineStatus(LINE_CODE)
   const reasons = useStopReasons()
   const [pending, setPending] = useState(false)
@@ -187,6 +189,9 @@ function OperatorPanel() {
       <header className="operator-header">
         <span className="operator-line-code">{LINE_CODE}</span>
         <StatusBadge status={line.status} />
+        <button type="button" className="operator-logout" onClick={signOut}>
+          Çıkış
+        </button>
       </header>
 
       <button
