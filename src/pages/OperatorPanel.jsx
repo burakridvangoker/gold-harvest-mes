@@ -338,6 +338,12 @@ function OperatorPanel() {
     [activeRun, guard],
   )
 
+  const updateRun = useCallback(
+    (id, patch) =>
+      guard(() => supabase.from('product_runs').update(patch).eq('id', id), 'Ürün bilgisi güncellenemedi'),
+    [guard],
+  )
+
   const handleRunEndConfirm = useCallback(
     async (values) => {
       setRunEndOpen(false)
@@ -516,7 +522,13 @@ function OperatorPanel() {
               </div>
             </div>
 
-            <ProductHistory runs={runs} events={events} pallets={pallets} nowMs={now} />
+            <ProductHistory
+              runs={runs}
+              events={events}
+              pallets={pallets}
+              nowMs={now}
+              onUpdateRun={updateRun}
+            />
           </div>
 
           <div className="operator-actions">

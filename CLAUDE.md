@@ -210,6 +210,14 @@ değil) kart olarak listeler; karta dokunca süre/palet/koli/paket/verim ve
 `timeline.js`'ten yapar, hazır veri almaz — kod konumu haritasındaki
 kuralla tutarlı.
 
+Detay sayfasındaki "Düzenle" ile ürün kurulumunda girilen bilgiler
+(ürün adı, parti no, gramaj, koli içi adet, boş paket ağırlığı, palet
+başına koli, hedef koli, dolu/boş paket başlangıç no) sonradan
+düzeltilebilir — sahada bu alanlar sıkça eksik/yanlış girilip
+hatırlandıkça düzeltiliyor. `OperatorPanel`'deki `updateRun` bu formdan
+gelen patch'i doğrudan `product_runs` satırına yazar (`SpeedSheet`'in
+`calisma_hizi_pkt_dk` güncellemesiyle aynı desen).
+
 ## Andon tasarım sistemi
 
 `src/styles/andon.css` — ortak tasarım dili. İmza öğesi: **ekranın
