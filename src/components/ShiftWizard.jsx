@@ -4,19 +4,26 @@ import './ShiftWizard.css'
 /*
  * Vardiya / ürün başlatma sihirbazı.
  *
- * Sahada operatör her alanı bilmeyebilir. Bu yüzden yalnızca vardiya ve ürün
- * adı zorunlu; kalan her şey boş geçilebilir ve sonradan düzeltilebilir.
+ * Sahada operatör her alanı bilmeyebilir. Bu yüzden yalnızca gerektiği
+ * kadarı zorunlu; kalan her şey boş geçilebilir ve sonradan düzeltilebilir.
  * Eksik kayıt, uydurma kayıttan iyidir.
  *
- * mode='shift'   → vardiya + ilk ürün (vardiya başında)
- * mode='product' → sadece ürün (vardiya içinde ürün değişimi, Faz 2)
+ * mode='shift'   → SADECE vardiya bilgisi (vardiya no, operatör, süre,
+ *                  vardiya hedefi). Ürün bilgisi buradan bilerek çıkarıldı:
+ *                  vardiya çoğu zaman bir duruşla başlar (temizlik, arıza,
+ *                  henüz ürün belli değil), operatörü vardiyayı açmadan önce
+ *                  ürün detayına zorlamak yanlış. Vardiya "durdu" durumunda
+ *                  açılır; ürün ne zaman hazır olursa mode='product' ile
+ *                  girilir.
+ * mode='product' → ürün bilgisi (vardiyanın ilk ürünü de, sonraki ürün
+ *                  değişimi de aynı akıştan geçer).
  *
  * DİKKAT: tüm adım panelleri `wizard-track` içinde her zaman birlikte mount
  * edilir, sadece transform ile kaydırılır (adım geçişleri anında olsun diye).
- * Bu yüzden herhangi bir alanda autoFocus KULLANILMAMALI: mode='shift'te
- * "Ürün adı" 2. adımdır, autoFocus sayfa açılır açılmaz o inputa odaklanır
- * ve tarayıcı overflow:hidden konteyneri oraya kaydırır — transform ile
- * senkronsuz kalıp yanlış adımı gösterir. Yaşanmış hata, tekrar eklemeyin.
+ * Bu yüzden herhangi bir alanda autoFocus KULLANILMAMALI — yeni bir adım
+ * eklenirse ve o adım ilk adım değilse, autoFocus tarayıcının
+ * overflow:hidden konteyneri oraya kaydırmasına yol açar. Yaşanmış hata,
+ * tekrar eklemeyin.
  */
 
 const VARDIYA_OPTIONS = ['1', '2', '3']
@@ -32,7 +39,7 @@ const STEP_TITLES = {
   ozet: 'Özet',
 }
 
-const SHIFT_STEPS = ['vardiya', 'urun', 'parametre', 'palet', 'numarator', 'ozet']
+const SHIFT_STEPS = ['vardiya']
 const PRODUCT_STEPS = ['urun', 'parametre', 'palet', 'numarator', 'ozet']
 
 const INITIAL_FORM = {
@@ -100,16 +107,21 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
       return
     }
 
+    if (mode === 'shift') {
+      onSubmit({
+        shift: {
+          vardiya: form.vardiya,
+          operator: form.operator.trim() || null,
+          hedef_koli: toInt(form.hedefKoli),
+          vardiyaSaat: toNum(form.vardiyaSaat) ?? VARSAYILAN_VARDIYA_SAAT,
+        },
+        run: null,
+      })
+      return
+    }
+
     onSubmit({
-      shift:
-        mode === 'shift'
-          ? {
-              vardiya: form.vardiya,
-              operator: form.operator.trim() || null,
-              hedef_koli: toInt(form.hedefKoli),
-              vardiyaSaat: toNum(form.vardiyaSaat) ?? VARSAYILAN_VARDIYA_SAAT,
-            }
-          : null,
+      shift: null,
       run: {
         urun_adi: form.urunAdi.trim(),
         parti_no: form.partiNo.trim() || null,
@@ -117,7 +129,7 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
         koli_ici_adet: toInt(form.koliIciAdet),
         bos_paket_agirlik_g: toNum(form.bosPaketAgirlik),
         koli_per_palet: toInt(form.koliPerPalet) ?? VARSAYILAN_KOLI_PER_PALET,
-        hedef_koli: mode === 'product' ? toInt(form.hedefKoli) : null,
+        hedef_koli: toInt(form.hedefKoli),
         dolu_paket_baslangic: toInt(form.doluPaketBaslangic),
         bos_paket_baslangic: toInt(form.bosPaketBaslangic),
       },
@@ -172,6 +184,18 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
             onChange={update('vardiyaSaat')}
           />
           <span className="wizard-hint">Tempo hesabı bunun üzerinden yapılır.</span>
+        </label>
+        <label className="wizard-field">
+          <span className="wizard-label">Vardiya hedefi (koli)</span>
+          <input
+            className="wizard-input"
+            type="number"
+            inputMode="numeric"
+            value={form.hedefKoli}
+            onChange={update('hedefKoli')}
+            placeholder="Örn. 750"
+          />
+          <span className="wizard-hint">Bilmiyorsan boş bırak, sonra girebilirsin.</span>
         </label>
       </div>
     ),
@@ -259,9 +283,7 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
           </span>
         </label>
         <label className="wizard-field">
-          <span className="wizard-label">
-            {mode === 'shift' ? 'Vardiya hedefi (koli)' : 'Ürün hedefi (koli)'}
-          </span>
+          <span className="wizard-label">Ürün hedefi (koli)</span>
           <input
             className="wizard-input"
             type="number"
@@ -270,6 +292,7 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
             onChange={update('hedefKoli')}
             placeholder="Örn. 750"
           />
+          <span className="wizard-hint">Boş bırakılırsa vardiya hedefi geçerli olur.</span>
         </label>
       </div>
     ),
@@ -305,22 +328,6 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
     ozet: (
       <div className="wizard-panel" key="ozet">
         <dl className="wizard-summary">
-          {mode === 'shift' && (
-            <>
-              <div className="wizard-summary-row">
-                <dt>Vardiya</dt>
-                <dd>{form.vardiya ? `${form.vardiya}.` : '—'}</dd>
-              </div>
-              <div className="wizard-summary-row">
-                <dt>Operatör</dt>
-                <dd>{form.operator || '—'}</dd>
-              </div>
-              <div className="wizard-summary-row">
-                <dt>Süre</dt>
-                <dd>{form.vardiyaSaat ? `${form.vardiyaSaat} saat` : '—'}</dd>
-              </div>
-            </>
-          )}
           <div className="wizard-summary-row">
             <dt>Ürün</dt>
             <dd>{form.urunAdi || '—'}</dd>
@@ -371,7 +378,7 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
         className="wizard-sheet"
         role="dialog"
         aria-modal="true"
-        aria-label={mode === 'shift' ? 'Vardiya başlat' : 'Ürün değiştir'}
+        aria-label={mode === 'shift' ? 'Vardiya başlat' : 'Ürün bilgisi'}
       >
         <div className="wizard-header">
           <button type="button" className="wizard-close" onClick={onClose} aria-label="Kapat">

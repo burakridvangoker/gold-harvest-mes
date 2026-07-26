@@ -139,24 +139,17 @@ function OperatorPanel() {
         return
       }
 
-      const { data: newRun, error: runError } = await supabase
-        .from('product_runs')
-        .insert({ shift_id: newShift.id, line_code: lineCode, sira: 1, ...payload.run })
-        .select()
-        .single()
-
-      if (runError) {
-        setError('Ürün kaydedilemedi: ' + runError.message)
-        setBusy(false)
-        return
-      }
-
+      /*
+       * Vardiya ürünsüz, duruştan başlar: sahada genelde önce temizlik/arıza
+       * gibi bir duruş olur, ürün ne olacağı henüz belli olmayabilir.
+       * Operatör hazır olunca "ÜRÜN BAŞLAT" ile ürün bilgisini girer.
+       */
       const { error: eventError } = await supabase.from('timeline_events').insert({
         line_code: lineCode,
         shift_id: newShift.id,
-        product_run_id: newRun.id,
+        product_run_id: null,
         at: startedAt,
-        kind: 'uretim',
+        kind: 'durus',
       })
 
       if (eventError) setError('Başlangıç kaydedilemedi: ' + eventError.message)
@@ -429,7 +422,9 @@ function OperatorPanel() {
             <button type="button" className="operator-line-code" onClick={clearLine}>
               {lineCode}
             </button>
-            {activeRun && <span className="operator-run-name">{activeRun.urun_adi}</span>}
+            <span className="operator-run-name">
+              {activeRun ? activeRun.urun_adi : 'Ürün seçilmedi'}
+            </span>
           </div>
           <span aria-live="polite">
             <StatusBadge status={state} />
@@ -474,12 +469,14 @@ function OperatorPanel() {
               </span>
             </div>
 
-            <button type="button" className="speed-row" onClick={() => setSpeedOpen(true)}>
-              <span className="speed-row-label plate">Çalışma hızı</span>
-              <span className="speed-row-value tnum">
-                {activeRun?.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : 'Gir'}
-              </span>
-            </button>
+            {activeRun && (
+              <button type="button" className="speed-row" onClick={() => setSpeedOpen(true)}>
+                <span className="speed-row-label plate">Çalışma hızı</span>
+                <span className="speed-row-value tnum">
+                  {activeRun.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : 'Gir'}
+                </span>
+              </button>
+            )}
 
             {pace && (
               <div className={`plan-block plan-block--${pace.durum}`}>
@@ -529,10 +526,16 @@ function OperatorPanel() {
             <button
               type="button"
               className={`action-primary action-primary--${isRunning ? 'stop' : 'start'}`}
-              onClick={() => setPending({ type: isRunning ? 'stop' : 'start' })}
+              onClick={() => {
+                if (!activeRun) {
+                  setProductWizardOpen(true)
+                  return
+                }
+                setPending({ type: isRunning ? 'stop' : 'start' })
+              }}
               disabled={busy}
             >
-              {isRunning ? 'DURDUR' : 'BAŞLAT'}
+              {!activeRun ? 'ÜRÜN BAŞLAT' : isRunning ? 'DURDUR' : 'BAŞLAT'}
             </button>
             <button
               type="button"
@@ -607,8 +610,8 @@ function OperatorPanel() {
 
         <TimeSheet
           open={pending?.type === 'product-start'}
-          title="Yeni ürüne ne zaman geçildi?"
-          confirmLabel="Ürünü başlat"
+          title={activeRun ? 'Yeni ürüne ne zaman geçildi?' : 'Üretim ne zaman başladı?'}
+          confirmLabel={activeRun ? 'Ürünü başlat' : 'Üretimi başlat'}
           tone="start"
           initialMs={now}
           range={eventRange}

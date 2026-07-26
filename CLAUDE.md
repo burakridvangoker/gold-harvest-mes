@@ -108,15 +108,32 @@ değişmedikçe sabit); `ortalama_gramaj_g` ise `RunEndSheet`'te üretim
 sonunda teraziden okunan değer olarak. `RunEndSheet` bu hesabı operatör
 numaratörleri yazarken CANLI gösterir — kayıttan sonra değil, girerken.
 
+## Vardiya duruştan başlar, ürün bilgisi sonra girilir
+
+`ShiftWizard mode="shift"` artık SADECE vardiya bilgisini sorar (vardiya
+no, operatör, süre, vardiya hedefi) — ürün bilgisi kurulumdan bilerek
+çıkarıldı. Vardiya açılınca `createShift` bir `product_run` oluşturmaz,
+sadece `product_run_id: null` olan bir `durus` olayı yazar: vardiya
+"DURDU" durumunda başlar. Sahada vardiyanın ilk dakikaları genelde
+temizlik/arıza/bekleme oluyor, operatörü vardiyayı açmadan önce ürün
+detayına (gramaj, parti no, numaratör...) zorlamak yanlış bir varsayımdı.
+
+Ana ekranda `activeRun` yoksa birincil buton "ÜRÜN BAŞLAT" olur ve
+doğrudan `ShiftWizard mode="product"`'ı açar (aradaki `RunEndSheet`
+atlanır — bitirilecek bir ürün henüz yok). Operatör hazır olunca ürün
+bilgisini girer, `TimeSheet` ile "Üretim ne zaman başladı?" diye sorulur,
+ilk `product_run` + ona işaret eden `uretim` olayı öyle oluşur.
+
 ## Ürün geçmişi ve ürün değiştirme
 
-Aynı vardiyada birden çok ürün üretilebilir (Faz 1'in aksine artık UI'da
-var). Akış: operatör ekranındaki "Ürün değiştir" → `RunEndSheet` (bitiş
-numaratörleri + fire önizleme, aktif `product_run`'a kaydedilir) →
-`ShiftWizard mode="product"` (yeni ürün bilgisi) → `TimeSheet` ("yeni
-ürüne ne zaman geçildi") → yeni `product_run` satırı + o run'a işaret eden
-yeni `uretim` olayı. Eski ürüne dönmek istenirse (henüz UI'da yok, şema
-destekliyor) aynı prensip: eski `product_run_id`'siyle yeni bir olay.
+Aynı vardiyada birden çok ürün üretilebilir. Bir ürün üretimdeyken ikinci/
+üçüncü ürüne geçiş akışı farklı: operatör ekranındaki "Ürün değiştir" →
+`RunEndSheet` (bitiş numaratörleri + fire önizleme, aktif `product_run`'a
+kaydedilir) → `ShiftWizard mode="product"` (yeni ürün bilgisi) →
+`TimeSheet` ("yeni ürüne ne zaman geçildi") → yeni `product_run` satırı +
+o run'a işaret eden yeni `uretim` olayı. Eski ürüne dönmek istenirse
+(henüz UI'da yok, şema destekliyor) aynı prensip: eski `product_run_id`'
+siyle yeni bir olay.
 
 `ProductHistory` (`src/components/ProductHistory.jsx`) vardiyadaki her
 ürünü `runSpans()` ile (ilk başlangıç → son bitiş, ara dönüşler dahil
