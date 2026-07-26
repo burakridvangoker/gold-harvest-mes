@@ -1,38 +1,58 @@
+/*
+ * Durum rozeti = lamba + kelime. Dolgulu kapsül değil: dolgu, durum rengini
+ * küçük bir alana hapsediyordu. Burada renk lambada ve yazıda, zemin sakin
+ * kalıyor — böylece ekranın tamamını kaplayan andon sinyaliyle yarışmıyor.
+ */
+
 .status-badge {
-  display: inline-block;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--plate);
   font-weight: 700;
-  letter-spacing: 0.03em;
-  color: #fff;
-  transition: background-color 0.4s ease, box-shadow 0.4s ease;
+  text-transform: uppercase;
+  color: var(--badge-color, var(--film-dim));
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+.status-badge-lamp {
+  flex: none;
+  border-radius: 50%;
+  background: var(--badge-color, var(--film-dim));
+  box-shadow: 0 0 0 0.22em color-mix(in srgb, var(--badge-color, var(--film-dim)) 20%, transparent);
 }
 
 .status-badge--md {
-  padding: 0.5rem 1.1rem;
-  font-size: 0.95rem;
+  gap: 0.6rem;
+  font-size: 1.05rem;
 }
 
-.status-badge--lg {
-  padding: 1rem 2rem;
-  font-size: 2rem;
+.status-badge--md .status-badge-lamp {
+  width: 0.7rem;
+  height: 0.7rem;
 }
 
 .status-badge--xl {
-  padding: 1.1rem 2.5rem;
-  font-size: 2.75rem;
+  gap: clamp(0.75rem, 1vw, 1.4rem);
+  font-size: clamp(2.5rem, 3.6vw, 5rem);
+  letter-spacing: 0.06em;
+}
+
+.status-badge--xl .status-badge-lamp {
+  width: clamp(0.85rem, 1.2vw, 1.6rem);
+  height: clamp(0.85rem, 1.2vw, 1.6rem);
+  /* Büyük punto: halka em ile büyüseydi lekeye dönüşürdü, sabit tutuluyor. */
+  box-shadow: 0 0 0 0.4rem color-mix(in srgb, var(--badge-color) 18%, transparent);
 }
 
 .status-badge--beklemede {
-  background: #78716c;
-  box-shadow: 0 0 0 4px rgba(120, 113, 108, 0.16);
+  --badge-color: var(--signal-idle);
 }
 
 .status-badge--uretimde {
-  background: #16a34a;
-  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.16);
+  --badge-color: var(--signal-run);
 }
 
 .status-badge--durdu {
-  background: #dc2626;
-  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.16);
+  --badge-color: var(--signal-stop);
 }

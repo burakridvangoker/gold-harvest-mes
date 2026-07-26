@@ -165,97 +165,118 @@ function OperatorPanel() {
 
   if (loading) {
     return (
-      <div className="operator-panel operator-panel--center">
-        <p>Yükleniyor...</p>
+      <div className="operator-shell is-beklemede">
+        <div className="andon-rail" />
+        <div className="operator-panel operator-panel--center">
+          <p className="plate">Yükleniyor</p>
+        </div>
       </div>
     )
   }
 
   if (!line) {
     return (
-      <div className="operator-panel operator-panel--center">
-        <p>{LINE_CODE} hattı bulunamadı.</p>
+      <div className="operator-shell is-durdu">
+        <div className="andon-rail" />
+        <div className="operator-panel operator-panel--center">
+          <p className="plate">{LINE_CODE} hattı bulunamadı</p>
+        </div>
       </div>
     )
   }
 
-  const durationLabel = line.status === 'uretimde' ? 'Çalışma süresi' : 'Duruş süresi'
+  const isRunning = line.status === 'uretimde'
+  const durationLabel = isRunning ? 'Çalışma süresi' : 'Duruş süresi'
   const durationMs = now - new Date(line.status_changed_at).getTime()
 
+  /* Duruş uzadıkça lamba ısrarlanır: 30 dakikada tam yoğunluk. */
+  const urgency =
+    line.status === 'durdu' ? Math.min(1, durationMs / (30 * 60 * 1000)) : 0
+
   return (
-    <div className="operator-panel">
-      <header className="operator-header">
-        <span className="operator-line-code">{LINE_CODE}</span>
-        <StatusBadge status={line.status} />
-      </header>
-
-      <button
-        type="button"
-        className="new-run-button"
-        onClick={() => setWizardOpen(true)}
-      >
-        <span className="new-run-icon">+</span> Yeni Üretim Başlat
-      </button>
-
-      {error && <div className="operator-error">{error}</div>}
-
-      <div className={`duration-card duration-card--${line.status}`}>
-        <span className="duration-label">{durationLabel}</span>
-        <span className="duration-value">{formatDuration(durationMs)}</span>
-      </div>
-
-      <div className="operator-counts">
-        <div className="count-card">
-          <span className="count-label">Palet</span>
-          <span className="count-value">{line.pallet_count}</span>
-        </div>
-        <div className="count-card">
-          <span className="count-label">Paket</span>
-          <span className="count-value">{line.package_count}</span>
-        </div>
-      </div>
-
-      <div className="operator-actions">
-        <button
-          type="button"
-          className="action-button action-button--start"
-          onClick={handleStartProduction}
-          disabled={pending || line.status === 'uretimde'}
-        >
-          ÜRETİME GEÇ
-        </button>
-        <button
-          type="button"
-          className="action-button action-button--stop"
-          onClick={handleStop}
-          disabled={pending || line.status === 'durdu'}
-        >
-          DURDU
-        </button>
-        <button
-          type="button"
-          className="action-button action-button--pallet"
-          onClick={handlePalletPlusOne}
-          disabled={pending}
-        >
-          +1 PALET
-        </button>
-      </div>
-
-      <ReasonPicker
-        open={openStopEventId !== null}
-        plansizReasons={plansizReasons}
-        planliReasons={planliReasons}
-        onSelect={handleSelectReason}
-        onSkip={handleSkipReason}
-        onSubmitNote={handleSubmitReasonNote}
+    <div className={`operator-shell is-${line.status}`}>
+      <div
+        className={`andon-rail${line.status === 'durdu' ? ' andon-rail--pulsing' : ''}`}
+        style={{ '--urgency': urgency }}
       />
 
-      <ProductionRunWizard
-        open={wizardOpen}
-        onClose={() => setWizardOpen(false)}
-        onSubmit={handleCreateProductionRun}
-      />
+      <div className="operator-panel">
+        <header className="operator-header">
+          <span className="operator-line-code">{LINE_CODE}</span>
+          <span aria-live="polite">
+            <StatusBadge status={line.status} />
+          </span>
+        </header>
+
+        {error && <div className="operator-error">{error}</div>}
+
+        <div className="operator-body">
+          <div className="operator-readout">
+            <div className="duration-block">
+              <span className="duration-label plate">{durationLabel}</span>
+              <span className="duration-value tnum">{formatDuration(durationMs)}</span>
+            </div>
+
+            <div className="operator-counts">
+              <div className="count-cell">
+                <span className="count-label plate">Palet</span>
+                <span className="count-value tnum">{line.pallet_count}</span>
+              </div>
+              <div className="count-cell">
+                <span className="count-label plate">Paket</span>
+                <span className="count-value tnum">{line.package_count}</span>
+              </div>
+            </div>
+
+            <button type="button" className="new-run-button" onClick={() => setWizardOpen(true)}>
+              <span className="new-run-icon" aria-hidden="true">
+                +
+              </span>
+              Yeni üretim başlat
+            </button>
+          </div>
+
+          <div className="operator-actions">
+            {/*
+             * Tek birincil aksiyon. Önceden üç buton vardı ve ikisi her zaman
+             * pasifti — pasif buton hem yer kaplıyor hem yine de basılmaya
+             * davet ediyordu. Durum makinesi zaten ikili: çalışıyorsa durdur,
+             * durmuşsa başlat.
+             */}
+            <button
+              type="button"
+              className={`action-primary action-primary--${isRunning ? 'stop' : 'start'}`}
+              onClick={isRunning ? handleStop : handleStartProduction}
+              disabled={pending}
+            >
+              {isRunning ? 'DURDUR' : 'BAŞLAT'}
+            </button>
+            <button
+              type="button"
+              className="action-secondary"
+              onClick={handlePalletPlusOne}
+              disabled={pending}
+            >
+              +1 PALET
+            </button>
+          </div>
+        </div>
+
+        <ReasonPicker
+          open={openStopEventId !== null}
+          plansizReasons={plansizReasons}
+          planliReasons={planliReasons}
+          onSelect={handleSelectReason}
+          onSkip={handleSkipReason}
+          onSubmitNote={handleSubmitReasonNote}
+        />
+
+        <ProductionRunWizard
+          open={wizardOpen}
+          onClose={() => setWizardOpen(false)}
+          onSubmit={handleCreateProductionRun}
+        />
+      </div>
     </div>
   )
 }

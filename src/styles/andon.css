@@ -1,0 +1,135 @@
+/*
+ * Andon — Gold Harvest MES ortak tasarım sistemi
+ *
+ * Fabrika sahasındaki her makinenin tepesinde duran andon lambasından
+ * türetildi: ekranın kendisi lambadır. Durum, köşedeki bir rozete değil
+ * sayfanın tamamına yazılır.
+ *
+ * Yazı tipi rolleri ölçüme dayanır:
+ *   - IBM Plex Sans rakamları sabit 600 birim genişlikte, bu yüzden saniyede
+ *     bir güncellenen sayaçlar zıplamaz. Tüm sayılar ve gövde metni onda.
+ *   - Saira Condensed'in rakamları orantılı (299-489 birim), sayaçta
+ *     kullanılamaz. Sadece makine plakası dilindeki büyük harf etiketlerde.
+ */
+
+:root {
+  /* Çelik — mavi slate değil, yeşilimsi gri kırık siyah */
+  --steel-900: #0e1113;
+  --steel-800: #14181b;
+  --steel-700: #1c2124;
+  --steel-600: #2a3034;
+  --steel-line: rgba(232, 234, 230, 0.1);
+
+  /* Film — baskısız ambalaj filmi beyazı */
+  --film: #e8eae6;
+  --film-dim: #8a928f;
+
+  /* Sinyal — andon lambasının üç durumu */
+  --signal-run: #00b84d;
+  --signal-idle: #ffb000;
+  --signal-stop: #ff3b2f;
+
+  /* Sinyal zeminleri (ortam yıkaması) */
+  --wash-run: rgba(0, 184, 77, 0.09);
+  --wash-idle: rgba(255, 176, 0, 0.09);
+  --wash-stop: rgba(255, 59, 47, 0.11);
+
+  /* Duruş sebebi aileleri */
+  --plansiz: #ff8a3d;
+  --planli: #4fd6c4;
+
+  --data: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --plate: 'Saira Condensed', 'IBM Plex Sans Condensed', 'Arial Narrow', system-ui, sans-serif;
+
+  /* Varsayılan durum = beklemede */
+  --status: var(--signal-idle);
+  --status-wash: var(--wash-idle);
+}
+
+/* Durum, sayfa kökünden aşağı akar. Tek kaynak, tek değişken. */
+.is-uretimde {
+  --status: var(--signal-run);
+  --status-wash: var(--wash-run);
+}
+
+.is-durdu {
+  --status: var(--signal-stop);
+  --status-wash: var(--wash-stop);
+}
+
+.is-beklemede {
+  --status: var(--signal-idle);
+  --status-wash: var(--wash-idle);
+}
+
+/* Makine plakası etiketi: büyük harf, sıkışık, geniş harf aralığı */
+.plate {
+  font-family: var(--plate);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--film-dim);
+}
+
+/* Sayısal veri: sabit genişlikli rakamlar, sıfır zıplama */
+.tnum {
+  font-family: var(--data);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/*
+ * Andon rayı — lamba kulesinin kendisi. Her iki ekranın da sol kenarında
+ * tam boy durur ve durum rengini taşır.
+ */
+.andon-rail {
+  flex: 0 0 auto;
+  align-self: stretch;
+  background: var(--status);
+  box-shadow: 0 0 2.5rem -0.25rem var(--status);
+}
+
+/*
+ * Duruş nabzı: hat ne kadar uzun durursa lamba o kadar ısrarcı olur.
+ * Yoğunluk JS'ten --urgency (0-1) ile gelir.
+ */
+.andon-rail--pulsing {
+  animation: andon-pulse calc(2.4s - var(--urgency, 0) * 1.4s) ease-in-out infinite;
+}
+
+@keyframes andon-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: calc(0.62 - var(--urgency, 0) * 0.3);
+  }
+}
+
+/* Klavye odağı her yerde görünür — dokunmatik panelde de, masaüstünde de */
+:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 3px solid var(--film);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /*
+   * Nabız yerine sabit yüksek kontrast: bilgi kaybolmasın, hareket kalksın.
+   */
+  .andon-rail--pulsing {
+    animation: none;
+    opacity: 1;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,286 +1,276 @@
-.manager-dashboard {
-  --mgr-bg: #0a0f1c;
-  --mgr-bg-elevated: #0f172a;
-  --mgr-card: #141d31;
-  --mgr-card-border: rgba(148, 163, 184, 0.12);
-  --mgr-text: #f8fafc;
-  --mgr-text-muted: #8b98ac;
-  --mgr-accent: #8b7cf6;
-  --mgr-accent-soft: rgba(139, 124, 246, 0.18);
-  --mgr-green: #16a34a;
-  --mgr-red: #dc2626;
-  --mgr-status-color: #78716c;
+/*
+ * Müdür panosu — duvara asılı ekran, 3-5 metreden bakılır.
+ *
+ * Ölçek kuralı: bu panonun EN KÜÇÜK metni, operatör panelinin EN BÜYÜK
+ * etiketinden büyüktür. Tipografi vw ile ölçeklenir, çünkü aynı sayfa
+ * 24" ofis monitöründe de 55" saha ekranında da doğru okunmalı.
+ *
+ * Kart yok. Dokuz gölgeli kutu, 4 metreden sadece gürültüydü; bölgeler
+ * boşluk ve saç teli çizgiyle ayrılıyor.
+ */
 
-  min-height: 100dvh;
+.manager-shell {
   display: flex;
-  flex-direction: column;
-  gap: 1.75rem;
-  padding: 2rem 3rem 2.5rem;
+  /*
+   * Sabit yükseklik + gizli taşma: pano duvarda asılı, sayfa kaydırılmaz.
+   * Uzun olay akışı kendi içinde kayar, ekranın altından taşmaz.
+   */
+  height: 100dvh;
+  overflow: hidden;
   background:
-    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(139, 124, 246, 0.08), transparent),
-    var(--mgr-bg);
-  color: var(--mgr-text);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    linear-gradient(var(--status-wash), var(--status-wash)),
+    var(--steel-900);
+  color: var(--film);
+  font-family: var(--data);
   box-sizing: border-box;
   transition: background 0.6s ease;
 }
 
-.manager-dashboard--uretimde {
-  --mgr-status-color: var(--mgr-green);
+.manager-shell .andon-rail {
+  width: clamp(0.75rem, 1.1vw, 1.75rem);
 }
 
-.manager-dashboard--durdu {
-  --mgr-status-color: var(--mgr-red);
+.manager-dashboard {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 2.2vh, 2.5rem);
+  padding: clamp(1.25rem, 2.4vw, 3rem);
+  box-sizing: border-box;
 }
 
 .manager-dashboard--center {
   align-items: center;
   justify-content: center;
-  text-align: center;
-  font-size: 2rem;
-  color: var(--mgr-text-muted);
+  font-size: clamp(1.25rem, 2vw, 2.5rem);
 }
 
 .manager-error {
-  background: rgba(220, 38, 38, 0.16);
-  border: 1px solid rgba(220, 38, 38, 0.4);
-  color: #fecaca;
-  padding: 1rem 1.5rem;
-  border-radius: 0.9rem;
-  font-size: 1.1rem;
+  background: rgba(255, 59, 47, 0.14);
+  border-left: 5px solid var(--signal-stop);
+  color: #ffd9d5;
+  padding: clamp(0.75rem, 1.2vw, 1.4rem) clamp(1rem, 1.6vw, 2rem);
+  font-size: clamp(1.05rem, 1.15vw, 1.7rem);
 }
 
-/* Header */
+/* Başlık */
 
 .manager-header {
   display: flex;
-  align-items: center;
-  gap: 1.75rem;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid var(--mgr-card-border);
-}
-
-.manager-header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  align-items: baseline;
+  gap: clamp(1rem, 2vw, 2.5rem);
+  padding-bottom: clamp(0.75rem, 1.4vh, 1.5rem);
+  border-bottom: 1px solid var(--steel-line);
 }
 
 .manager-line-code {
-  font-size: 2.25rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--plate);
+  font-size: clamp(1.75rem, 2.4vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
 }
 
 .manager-date {
-  font-size: 1.05rem;
-  color: var(--mgr-text-muted);
-  text-transform: capitalize;
+  font-size: clamp(1rem, 1.1vw, 1.6rem);
+  text-transform: uppercase;
 }
 
 .manager-clock {
   margin-left: auto;
-  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
-  font-size: 2.75rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--mgr-text);
-  letter-spacing: 0.04em;
+  font-size: clamp(2.25rem, 3.2vw, 4.5rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
 }
 
-/* Shared panel shell */
+/* Bölgeler */
 
-.panel {
+.zone {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
-  background: var(--mgr-card);
-  border: 1px solid var(--mgr-card-border);
-  border-radius: 1.5rem;
-  padding: 1.75rem 2rem;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 12px 28px -16px rgba(0, 0, 0, 0.7);
+  gap: clamp(0.6rem, 1.2vh, 1.25rem);
 }
 
-.panel-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--mgr-text-muted);
-  text-transform: uppercase;
+.zone + .zone {
+  padding-top: clamp(1rem, 2vh, 2rem);
+  border-top: 1px solid var(--steel-line);
 }
 
-.panel-empty {
-  flex: 1;
+.zone-head {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--mgr-text-muted);
-  font-size: 1.15rem;
-  min-height: 6rem;
-}
-
-/* Top row: active production + time usage */
-
-.manager-top-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 1.5rem;
 }
 
-.active-run-panel,
-.usage-panel {
-  justify-content: center;
+.zone-title {
+  margin: 0;
+  font-size: clamp(1.05rem, 1.15vw, 1.7rem);
+  font-weight: 600;
 }
 
-.active-run-body {
+.zone-empty {
+  margin: 0;
+  padding: clamp(1rem, 2vh, 2rem) 0;
+  font-size: clamp(1.05rem, 1.15vw, 1.7rem);
+}
+
+/* ŞİMDİ */
+
+.now-state {
   display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+  align-items: baseline;
+  gap: clamp(1rem, 2.5vw, 3rem);
+  flex-wrap: wrap;
 }
 
-.active-run-product {
-  font-size: 2.5rem;
-  font-weight: 800;
-  line-height: 1.15;
+.now-elapsed {
+  margin-left: auto;
+  font-size: clamp(3rem, 6vw, 9rem);
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: -0.025em;
+  color: var(--status);
+  transition: color 0.6s ease;
 }
 
-.active-run-meta {
+.now-run {
   display: flex;
-  gap: 2.5rem;
+  align-items: baseline;
+  gap: clamp(0.75rem, 1.6vw, 2rem);
+  flex-wrap: wrap;
 }
 
-.active-run-meta-item {
+.now-run-product {
+  font-size: clamp(1.75rem, 2.6vw, 4rem);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.now-run-meta {
+  font-size: clamp(1rem, 1.15vw, 1.7rem);
+}
+
+.now-run-empty {
+  font-size: clamp(1.35rem, 1.8vw, 2.75rem);
+  color: var(--signal-idle);
+}
+
+/* BUGÜN */
+
+.usage-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: clamp(1.75rem, 2.4vw, 3.5rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.usage-figure-note {
+  font-size: clamp(0.95rem, 1.05vw, 1.5rem);
+}
+
+/*
+ * Oransal çubuk: çalışma ve duruş aynı uzunlukta yan yana. Simit grafiğinin
+ * aksine bölünmeyi doğrudan gösterir ve uzaktan tek bakışta okunur.
+ * Zemin duruş, dolgu çalışma.
+ */
+.split-bar {
+  height: clamp(1.5rem, 2.4vw, 3.25rem);
+  background: var(--signal-stop);
+  overflow: hidden;
+}
+
+.split-bar-run {
+  height: 100%;
+  background: var(--signal-run);
+  transition: width 0.6s ease;
+}
+
+.today-figures {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(0.75rem, 1.6vw, 2rem);
+}
+
+.figure {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  padding-left: clamp(0.6rem, 0.8vw, 1.1rem);
+  border-left: 3px solid var(--steel-600);
 }
 
-.active-run-meta-label {
-  font-size: 0.95rem;
-  color: var(--mgr-text-muted);
-  letter-spacing: 0.03em;
+.figure--run {
+  border-left-color: var(--signal-run);
 }
 
-.active-run-meta-value {
-  font-size: 1.85rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+.figure--stop {
+  border-left-color: var(--signal-stop);
 }
 
-.active-run-meta-value small {
-  font-size: 1rem;
+.figure-label {
+  font-size: clamp(1rem, 1.05vw, 1.6rem);
+}
+
+.figure-value {
+  margin: 0;
+  font-size: clamp(2rem, 3.4vw, 5rem);
   font-weight: 600;
-  color: var(--mgr-text-muted);
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
-.active-run-empty {
+/* NEDEN */
+
+.zone--why {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--mgr-text-muted);
-  min-height: 6rem;
-}
-
-.usage-panel {
-  align-items: center;
-}
-
-.usage-ring {
-  --pct: 0%;
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  background: conic-gradient(var(--mgr-accent) var(--pct), rgba(255, 255, 255, 0.07) 0);
-  transition: background 0.6s ease;
-}
-
-.usage-ring::before {
-  content: '';
-  position: absolute;
-  inset: 13px;
-  border-radius: 50%;
-  background: var(--mgr-card);
-}
-
-.usage-ring-value {
-  position: relative;
-  z-index: 1;
-  font-size: 2.25rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Metrics grid */
-
-.manager-metrics {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-}
-
-.metric-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  border-radius: 1.5rem;
-  background: var(--mgr-card);
-  border: 1px solid var(--mgr-card-border);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 12px 28px -16px rgba(0, 0, 0, 0.7);
-  padding: 1.75rem 1rem;
-}
-
-.metric-label {
-  font-size: 1.05rem;
-  color: var(--mgr-text-muted);
-  letter-spacing: 0.02em;
-  text-align: center;
-}
-
-.metric-value {
-  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
-  font-size: 3.25rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.03em;
-}
-
-/* Bottom row: top reasons + event feed */
-
-.manager-bottom-row {
-  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: clamp(1.5rem, 3vw, 3.5rem);
+}
+
+.why-col {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.6rem, 1.2vh, 1.25rem);
   min-height: 0;
 }
 
-.reasons-list {
+.reasons-list,
+.feed-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: clamp(0.6rem, 1.1vh, 1.15rem);
+  min-height: 0;
+}
+
+.feed-list {
+  overflow-y: auto;
 }
 
 .reasons-row {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.4rem;
+  /* Renk planlı/plansız ayrımını taşır. Varsayılan: sebep girilmemiş. */
+  --reason-color: var(--film-dim);
+}
+
+.reasons-row--plansiz {
+  --reason-color: var(--plansiz);
+}
+
+.reasons-row--planli {
+  --reason-color: var(--planli);
 }
 
 .reasons-row-head {
@@ -291,117 +281,86 @@
 }
 
 .reasons-row-label {
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: clamp(1.15rem, 1.3vw, 2rem);
+  font-weight: 500;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.reasons-row-bar-track {
-  height: 0.85rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-}
-
-.reasons-row-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--mgr-accent), #b7ade9);
-  transition: width 0.6s ease;
 }
 
 .reasons-row-value {
   flex-shrink: 0;
-  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
-  font-size: 1.2rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--mgr-text);
-  text-align: right;
+  font-size: clamp(1.15rem, 1.3vw, 2rem);
+  font-weight: 600;
 }
 
-.feed-panel {
-  min-height: 0;
+.reasons-row-bar-track {
+  height: clamp(0.5rem, 0.7vw, 1rem);
+  background: rgba(232, 234, 230, 0.07);
 }
 
-.feed-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  overflow-y: auto;
-  min-height: 0;
+.reasons-row-bar-fill {
+  height: 100%;
+  background: var(--reason-color);
+  transition: width 0.6s ease;
 }
 
 .feed-row {
   display: grid;
-  grid-template-columns: 3.75rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.9rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-left: 3px solid var(--mgr-text-muted);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: clamp(0.75rem, 1.2vw, 1.75rem);
+  padding: clamp(0.4rem, 0.7vh, 0.75rem) 0 clamp(0.4rem, 0.7vh, 0.75rem)
+    clamp(0.6rem, 0.8vw, 1.1rem);
+  border-left: 3px solid var(--steel-600);
+  font-size: clamp(1.15rem, 1.25vw, 1.9rem);
 }
 
 .feed-row--ongoing {
-  border-left-color: var(--mgr-red);
-  background: rgba(220, 38, 38, 0.08);
+  border-left-color: var(--signal-stop);
 }
 
 .feed-row-time {
-  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
-  font-size: 1.1rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--mgr-text-muted);
+  color: var(--film-dim);
+  font-weight: 500;
 }
 
 .feed-row-label {
   min-width: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.feed-row--ongoing .feed-row-label::after {
+  content: ' · sürüyor';
+  color: var(--signal-stop);
+  font-family: var(--plate);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8em;
+}
+
 .feed-row-duration {
   flex-shrink: 0;
-  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
-  font-size: 1.1rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
+  font-weight: 600;
   white-space: nowrap;
 }
 
-.feed-row-live {
-  font-family: system-ui, -apple-system, sans-serif;
-  font-weight: 600;
-  color: var(--mgr-red);
-}
-
-@media (max-width: 1100px) {
-  .manager-dashboard {
-    padding: 1.5rem;
-  }
-
-  .manager-top-row,
-  .manager-bottom-row {
+/*
+ * Dar ekran (ofis monitörü, dikey pano): iki sütunlu bölgeler alt alta.
+ */
+@media (max-width: 1000px) {
+  .zone--why {
     grid-template-columns: 1fr;
   }
 
-  .manager-metrics {
+  .today-figures {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .manager-clock {
-    font-size: 2rem;
+  .manager-header {
+    flex-wrap: wrap;
   }
 }

@@ -33,7 +33,7 @@ function ReasonPicker({ open, plansizReasons, planliReasons, onSelect, onSkip, o
         <h2 className="reason-picker-title">Duruş sebebi</h2>
 
         <button type="button" className="reason-skip-button" onClick={onSkip}>
-          Sonra gir / boş bırak
+          Sebebi sonra gir
         </button>
 
         <div className="reason-picker-scroll">
