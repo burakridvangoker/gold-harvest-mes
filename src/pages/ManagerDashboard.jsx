@@ -13,6 +13,7 @@ import {
   palletTotalsByRun,
   runSpans,
   shiftTotals,
+  totalsByRun,
 } from '../lib/timeline'
 import { formatDelta, formatDuration } from '../lib/duration'
 import { formatClock, formatDateLabel, formatShortTime } from '../lib/time'
@@ -94,39 +95,59 @@ function ManagerDashboard() {
   const paket = koliToPaket(paletler.koliAdedi, activeRun?.koli_ici_adet)
   const maxReasonMs = topReasons[0]?.ms ?? 0
 
-  /* Hedef koli ürün bazlı; tempo da aktif ürünün kendi başlangıcına göre. */
-  const activeRunSpan = activeRun ? runSpans(events, now).get(activeRun.id) ?? null : null
-  const activeRunKoli = activeRun
-    ? (palletTotalsByRun(pallets).get(activeRun.id)?.koliAdedi ?? 0)
-    : 0
+  /* Hedef koli ürün bazlı; tempo da her ürünün kendi başlangıcına göre. */
+  const spans = runSpans(events, now)
+  const paletlerByRun = palletTotalsByRun(pallets)
+  const runTotals = totalsByRun(intervals)
+  const shiftEndMs = shift.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null
 
-  const pace =
-    activeRun?.hedef_koli && activeRunSpan
-      ? paceStatus({
-          hedefKoli: activeRun.hedef_koli,
-          uretilenKoli: activeRunKoli,
-          shiftStartMs: activeRunSpan.startMs,
-          shiftEndMs: shift.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null,
-          nowMs: now,
-        })
-      : null
+  const activeRunKoli = activeRun ? (paletlerByRun.get(activeRun.id)?.koliAdedi ?? 0) : 0
+  const activeRunTotals = activeRun ? runTotals.get(activeRun.id) ?? { uretimMs: 0, durusMs: 0 } : null
+
+  /*
+   * Ürün geçmişi: her ürünün kendi hedef ilerlemesi ayrı bir satır. Aktif
+   * olan canlı sayılır (nowMs = şimdi); üretimi bitmiş bir ürün için tempo
+   * o ürünün son anına ("span.endMs") göre dondurulur — üstte asılı kalır,
+   * bir daha değişmez. Sıra `runs` ile aynı (sira artan), yani eski üstte.
+   */
+  const planRows = runs
+    .filter((run) => run.hedef_koli)
+    .map((run) => {
+      const span = spans.get(run.id) ?? null
+      if (!span) return null
+      const isActive = run.id === activeRun?.id
+      const pace = paceStatus({
+        hedefKoli: run.hedef_koli,
+        uretilenKoli: paletlerByRun.get(run.id)?.koliAdedi ?? 0,
+        shiftStartMs: span.startMs,
+        shiftEndMs,
+        nowMs: isActive ? now : span.endMs,
+      })
+      return pace ? { run, pace, isActive } : null
+    })
+    .filter(Boolean)
 
   const zamanKullanimi = Math.round(totals.zamanKullanimi * 100)
   const acikKalmaDurum = seviyeDurumu(totals.zamanKullanimi)
 
   /*
-   * İkinci oran: makine açık kaldığı sürede, girilen çalışma hızına göre
-   * ne kadarı gerçekten "net iş"ti. Ör. 6 saat açık kaldı ama üretilen
-   * paket sayısı hıza göre yalnızca 5 saatlik işe karşılık geliyorsa
-   * %83 — duruşlardan bağımsız, hızdaki düşüşü/mikro-duruşları yakalar.
+   * İkinci oran: aktif ürün açık kaldığı sürede, girilen çalışma hızına
+   * göre ne kadarı gerçekten "net iş"ti. Ör. 6 saat açık kaldı ama
+   * üretilen paket sayısı hıza göre yalnızca 5 saatlik işe karşılık
+   * geliyorsa %83 — duruşlardan bağımsız, hızdaki düşüşü/mikro-duruşları
+   * yakalar. Aktif ürüne göre kapsanır (şimdi'ye göre değil): aksi halde
+   * önceki üründen kalan paletler yeni ürünün birkaç dakikalık çalışma
+   * süresine bölünüp anlamsız yüzdeler (%1000+) üretir.
    */
-  const performans = activeRun?.calisma_hizi_pkt_dk
-    ? hizVerimi({
-        paketAdedi: paket ?? 0,
-        uretimMs: totals.uretimMs,
-        hedefHizPktDk: activeRun.calisma_hizi_pkt_dk,
-      })
-    : null
+  const activeRunPaket = koliToPaket(activeRunKoli, activeRun?.koli_ici_adet)
+  const performans =
+    activeRun?.calisma_hizi_pkt_dk && activeRunTotals
+      ? hizVerimi({
+          paketAdedi: activeRunPaket ?? 0,
+          uretimMs: activeRunTotals.uretimMs,
+          hedefHizPktDk: activeRun.calisma_hizi_pkt_dk,
+        })
+      : null
   const performansDurum = performans ? seviyeDurumu(performans.oran) : null
   const performansYuzde = performans ? Math.round(performans.oran * 100) : null
 
@@ -218,19 +239,26 @@ function ManagerDashboard() {
             </div>
           </dl>
 
-          {pace && (
-            <div className={`plan-row plan-row--${pace.durum}`}>
-              <span className="plan-row-label plate">Ürün planı</span>
-              <span className="plan-row-figure tnum">
-                {pace.uretilenKoli} / {pace.hedefKoli} koli
-              </span>
-              <span className="plan-row-status">
-                {pace.durum === 'tamam'
-                  ? 'Hedef tamam'
-                  : pace.durum === 'planinda'
-                    ? 'Planında'
-                    : `${formatDelta(pace.farkDk)} ${pace.durum === 'onde' ? 'önde' : 'geride'}`}
-              </span>
+          {planRows.length > 0 && (
+            <div className="plan-stack">
+              {planRows.map(({ run, pace, isActive }) => (
+                <div
+                  key={run.id}
+                  className={`plan-row plan-row--${pace.durum}${isActive ? '' : ' plan-row--frozen'}`}
+                >
+                  <span className="plan-row-label plate">{run.urun_adi}</span>
+                  <span className="plan-row-figure tnum">
+                    {pace.uretilenKoli} / {pace.hedefKoli} koli
+                  </span>
+                  <span className="plan-row-status">
+                    {pace.durum === 'tamam'
+                      ? 'Hedef tamam'
+                      : pace.durum === 'planinda'
+                        ? 'Planında'
+                        : `${formatDelta(pace.farkDk)} ${pace.durum === 'onde' ? 'önde' : 'geride'}`}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </section>

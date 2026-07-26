@@ -205,7 +205,17 @@
  * Ürün hedefi (plan) — iki oranın altında ikincil bir satır. Bunlar
  * makinenin genel verimliliği (açık kalma / hız verimi), o ise tek bir
  * ürünün kendi hedefine göre ilerlemesi; karıştırılmasın diye ayrı yer.
+ *
+ * Vardiyada birden çok ürün olabilir: her ürünün kendi satırı var, sırayla
+ * (eski üstte). Üretimi biten ürünün satırı o ürünün son anına dondurulur
+ * ve soluklaşır ("asılı kalır") — aktif ürününki tek canlı, değişen satır.
  */
+.plan-stack {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.4rem, 0.9vh, 0.85rem);
+}
+
 .plan-row {
   display: flex;
   align-items: baseline;
@@ -213,6 +223,10 @@
   gap: clamp(0.6rem, 1.2vw, 1.5rem);
   font-size: clamp(1.05rem, 1.2vw, 1.8rem);
   --plan-color: var(--film);
+}
+
+.plan-row--frozen {
+  opacity: 0.55;
 }
 
 .plan-row--onde,

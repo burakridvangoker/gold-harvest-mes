@@ -157,19 +157,30 @@ oran gösterir (`src/pages/ManagerDashboard.jsx`, `.oran-group`):
 - **Açık kalma oranı** — `shiftTotals(intervals).zamanKullanimi`: vardiya
   boyunca makinenin ne kadarının "uretim" durumunda geçtiği (duruşlar
   dahil toplam süreye oran). Vardiya geneli, aktif ürüne bağlı değil.
-- **Hız verimi** — `timeline.js#hizVerimi`: makine açık kaldığı sürede
-  girilen `calisma_hizi_pkt_dk`'ya göre üretilen paket sayısının kaç
-  saatlik "net iş"e karşılık geldiği. Örnek: 6 saat açık kaldı ama
-  üretilen paket hıza göre yalnızca 5 saatlik işe denk geliyorsa %83 —
-  mikro-duruşları ve hız düşüşünü, açık kalma oranından bağımsız olarak
-  yakalar.
+- **Hız verimi** — `timeline.js#hizVerimi`: AKTİF ürünün açık kaldığı
+  sürede, o ürüne girilen `calisma_hizi_pkt_dk`'ya göre üretilen paket
+  sayısının kaç saatlik "net iş"e karşılık geldiği. Örnek: 6 saat açık
+  kaldı ama üretilen paket hıza göre yalnızca 5 saatlik işe denk
+  geliyorsa %83 — mikro-duruşları ve hız düşüşünü, açık kalma oranından
+  bağımsız olarak yakalar. Bilinçli olarak aktif ürüne göre kapsanır
+  (vardiya geneline göre değil): paket/süre vardiya genelinden alınıp
+  sadece aktif ürünün hızıyla bölünseydi, önceki üründen kalan paletler
+  yeni ürünün birkaç dakikalık çalışma süresine bölünüp %1000+ gibi
+  anlamsız değerler üretiyordu — yaşanmış hata, tekrar düşmeyin.
 
 Bu ikisi eskiden tek bir slotu paylaşıyordu (ürün hedefi varsa açık kalma
 oranı hiç gösterilmiyordu) — kullanıcı ikisinin de HER ZAMAN ayrı ayrı
 görünmesini istedi. Ürün hedefi ilerlemesi (`paceStatus`) üçüncü, farklı
 bir kavram: tek bir ürünün kendi hedefine göre önde/geride olması. Bu
-yüzden ayrı bir satırda (`.plan-row`) altta, sadece aktif ürünün hedefi
-varsa gösterilir — üç metriği aynı slotta gösterip birbirine karıştırmayın.
+yüzden ayrı bir yerde (`.plan-stack`) altta gösterilir.
+
+**Ürün planı da ürün bazlı satırlara ayrılır:** vardiyada birden çok ürün
+varsa (`runs`, `sira` sırasıyla) her birinin kendi hedef satırı olur, en
+eski üstte. Aktif ürünün satırı canlıdır (`nowMs = now`); üretimi bitmiş
+bir ürünün satırı kendi son anına (`runSpans(...).endMs`) dondurulur ve
+`.plan-row--frozen` ile soluklaştırılır — "üretimi bitti, bir daha
+değişmez" anlamında üstte asılı kalır. Yeni ürüne geçince onun kendi
+satırı altta, canlı olarak belirir.
 
 ## Ürün geçmişi ve ürün değiştirme
 
