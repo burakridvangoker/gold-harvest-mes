@@ -1,0 +1,212 @@
+.eventlog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 62;
+  display: flex;
+  flex-direction: column;
+}
+
+.eventlog-sheet {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--steel-900);
+  color: var(--film);
+  font-family: var(--data);
+  padding: calc(0.75rem + env(safe-area-inset-top)) clamp(1.1rem, 4vw, 2rem)
+    calc(1rem + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  animation: eventlog-fade 0.18s ease;
+}
+
+.eventlog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--steel-line);
+  flex-shrink: 0;
+}
+
+.eventlog-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--film);
+}
+
+.eventlog-close {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--steel-600);
+  background: transparent;
+  color: var(--film);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.eventlog-empty {
+  margin: 0;
+  padding: 3rem 0;
+  text-align: center;
+  font-size: 1.05rem;
+}
+
+.eventlog-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/*
+ * Satırın tamamı dokunulabilir: düzeltme sık yapılacak bir iş, ayrı bir
+ * "düzenle" ikonunu hedeflemek zorunda kalmasın.
+ */
+.eventlog-row {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-height: 4.25rem;
+  padding: 0.75rem 0.5rem 0.75rem 0.75rem;
+  border: none;
+  border-left: 3px solid var(--steel-600);
+  border-bottom: 1px solid var(--steel-line);
+  background: transparent;
+  color: var(--film);
+  font-family: var(--data);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+}
+
+.eventlog-row:active {
+  background: var(--steel-800);
+}
+
+.eventlog-row--uretim {
+  border-left-color: var(--signal-run);
+}
+
+.eventlog-row--durus {
+  border-left-color: var(--signal-stop);
+}
+
+.eventlog-row--palet {
+  border-left-color: var(--film-dim);
+}
+
+.eventlog-row-time {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--film-dim);
+}
+
+.eventlog-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.eventlog-row-kind {
+  font-size: 0.75rem;
+}
+
+.eventlog-row-label {
+  font-size: 1.05rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventlog-row-meta {
+  font-size: 0.95rem;
+  color: var(--film-dim);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.eventlog-row-live {
+  font-family: var(--plate);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8em;
+  color: var(--signal-stop);
+}
+
+/* Düzenleme sayfası içindeki alanlar */
+
+.eventlog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.eventlog-field-label {
+  font-size: 0.85rem;
+}
+
+.eventlog-field-input {
+  width: 100%;
+  min-height: 3.5rem;
+  border: 1px solid var(--steel-600);
+  background: var(--steel-900);
+  color: var(--film);
+  padding: 0.75rem 1rem;
+  font-size: 1.1rem;
+  font-family: var(--data);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.eventlog-field-input:focus {
+  outline: 3px solid var(--film);
+  outline-offset: 2px;
+}
+
+/* Silme iki dokunuş ister: ilk dokunuş uyarıya çevirir. */
+
+.eventlog-delete {
+  width: 100%;
+  min-height: 3.5rem;
+  margin-top: 1rem;
+  border: 1px solid var(--signal-stop);
+  background: transparent;
+  color: var(--signal-stop);
+  font-family: var(--plate);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.eventlog-delete--armed {
+  background: var(--signal-stop);
+  color: var(--steel-900);
+}
+
+@keyframes eventlog-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

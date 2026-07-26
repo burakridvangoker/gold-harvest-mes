@@ -1,0 +1,180 @@
+.stopnote-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 11, 0.8);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 65;
+  animation: stopnote-fade 0.18s ease;
+}
+
+.stopnote-sheet {
+  width: 100%;
+  max-width: 640px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--steel-800);
+  border-top: 3px solid var(--signal-stop);
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem clamp(1.1rem, 4vw, 2rem) calc(1.25rem + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  font-family: var(--data);
+  color: var(--film);
+  animation: stopnote-rise 0.22s ease;
+}
+
+.stopnote-handle {
+  width: 2.75rem;
+  height: 0.25rem;
+  background: var(--steel-600);
+  margin: 0.25rem auto 1rem;
+}
+
+.stopnote-title {
+  margin: 0 0 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--film);
+  text-align: center;
+}
+
+/*
+ * Sık girilen notlar. Kullanıldıkça yukarı çıkar; ileride koda dönüşecek
+ * adaylar bunlar.
+ */
+
+.stopnote-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.stopnote-suggestions-label {
+  font-size: 0.85rem;
+}
+
+.stopnote-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stopnote-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--steel-600);
+  background: var(--steel-700);
+  color: var(--film);
+  font-family: var(--data);
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.stopnote-chip:active {
+  transform: scale(0.97);
+  background: var(--steel-600);
+}
+
+.stopnote-chip-count {
+  font-size: 0.85rem;
+  color: var(--film-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.stopnote-input {
+  width: 100%;
+  border: 1px solid var(--steel-600);
+  background: var(--steel-900);
+  color: var(--film);
+  padding: 0.9rem 1rem;
+  font-size: 1.1rem;
+  font-family: var(--data);
+  line-height: 1.45;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.stopnote-input::placeholder {
+  color: var(--film-dim);
+}
+
+.stopnote-input:focus {
+  outline: 3px solid var(--film);
+  outline-offset: 2px;
+}
+
+.stopnote-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.stopnote-button {
+  min-height: 4rem;
+  border: none;
+  font-family: var(--plate);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.stopnote-button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.stopnote-button--later {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--steel-600);
+  color: var(--film-dim);
+}
+
+.stopnote-button--save {
+  flex: 1;
+  background: var(--film);
+  color: var(--steel-900);
+}
+
+.stopnote-button--save:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@keyframes stopnote-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes stopnote-rise {
+  from {
+    transform: translateY(20px);
+    opacity: 0.7;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

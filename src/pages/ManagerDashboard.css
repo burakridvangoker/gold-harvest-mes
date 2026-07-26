@@ -161,16 +161,29 @@
 /* BUGÜN */
 
 .usage-figure {
+  --usage-color: var(--film);
+
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
   font-size: clamp(1.75rem, 2.4vw, 3.5rem);
   font-weight: 600;
   line-height: 1;
+  color: var(--usage-color);
+}
+
+.usage-figure--onde,
+.usage-figure--tamam {
+  --usage-color: var(--signal-run);
+}
+
+.usage-figure--geride {
+  --usage-color: var(--signal-stop);
 }
 
 .usage-figure-note {
   font-size: clamp(0.95rem, 1.05vw, 1.5rem);
+  color: var(--usage-color);
 }
 
 /*
@@ -193,7 +206,7 @@
 .today-figures {
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: clamp(0.75rem, 1.6vw, 2rem);
 }
 
@@ -257,20 +270,15 @@
   overflow-y: auto;
 }
 
+/*
+ * Sebepler artık serbest metin; planlı/plansız ayrımı yok. Kodlar zamanla
+ * tekrarlayan notlardan doğduğunda kategori rengi buraya geri gelecek.
+ */
 .reasons-row {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  /* Renk planlı/plansız ayrımını taşır. Varsayılan: sebep girilmemiş. */
-  --reason-color: var(--film-dim);
-}
-
-.reasons-row--plansiz {
-  --reason-color: var(--plansiz);
-}
-
-.reasons-row--planli {
-  --reason-color: var(--planli);
+  --reason-color: var(--signal-stop);
 }
 
 .reasons-row-head {
@@ -295,6 +303,11 @@
   font-weight: 600;
 }
 
+.reasons-row-count {
+  color: var(--film-dim);
+  font-weight: 500;
+}
+
 .reasons-row-bar-track {
   height: clamp(0.5rem, 0.7vw, 1rem);
   background: rgba(232, 234, 230, 0.07);
@@ -317,7 +330,12 @@
   font-size: clamp(1.15rem, 1.25vw, 1.9rem);
 }
 
-.feed-row--ongoing {
+/* Kenar rengi olayın türünü söyler; "sürüyor" eki hâlâ açık olanı işaretler. */
+.feed-row--uretim {
+  border-left-color: var(--signal-run);
+}
+
+.feed-row--durus {
   border-left-color: var(--signal-stop);
 }
 
@@ -335,7 +353,7 @@
 
 .feed-row--ongoing .feed-row-label::after {
   content: ' · sürüyor';
-  color: var(--signal-stop);
+  color: var(--status);
   font-family: var(--plate);
   text-transform: uppercase;
   letter-spacing: 0.1em;

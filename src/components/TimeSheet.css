@@ -1,0 +1,224 @@
+/*
+ * Zaman düzeltme sayfası. Operatör paneliyle aynı çelik/sinyal dili.
+ * Ton, onaylanan aksiyonun andon rengini taşır: başlatma yeşil, durdurma
+ * kırmızı — böylece hangi olayı onayladığı saatten önce anlaşılır.
+ */
+
+.timesheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 11, 0.8);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 70;
+  animation: timesheet-fade 0.18s ease;
+}
+
+.timesheet-sheet {
+  --tone: var(--film);
+
+  width: 100%;
+  max-width: 640px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--steel-800);
+  border-top: 3px solid var(--tone);
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem clamp(1.1rem, 4vw, 2rem) calc(1.25rem + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  font-family: var(--data);
+  color: var(--film);
+  animation: timesheet-rise 0.22s ease;
+}
+
+.timesheet-sheet--start {
+  --tone: var(--signal-run);
+}
+
+.timesheet-sheet--stop {
+  --tone: var(--signal-stop);
+}
+
+.timesheet-handle {
+  width: 2.75rem;
+  height: 0.25rem;
+  background: var(--steel-600);
+  margin: 0.25rem auto 1rem;
+}
+
+.timesheet-title {
+  margin: 0 0 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--film);
+  text-align: center;
+}
+
+/* Saat: sayfanın en büyük öğesi, doğrudan düzenlenebilir. */
+
+.timesheet-clock-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.timesheet-clock-hint {
+  font-size: 0.85rem;
+}
+
+.timesheet-clock {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.15em;
+}
+
+/*
+ * İki ayrı sayı alanı: native <input type="time"> yerine. Native denetim
+ * 12/24 saat gösterimini tarayıcı/OS yerel ayarına göre seçiyordu ve
+ * lang="tr-TR" bunu değiştirmiyordu — fabrikada cihaz İngilizce ayarlıysa
+ * operatör AM/PM ile karşılaşırdı. Burada format tamamen bizim elimizde.
+ */
+.timesheet-clock-part {
+  width: 2.1ch;
+  border: none;
+  border-bottom: 2px solid var(--steel-600);
+  background: transparent;
+  color: var(--tone);
+  font-family: var(--data);
+  font-size: clamp(3.5rem, 16vw, 5.5rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  text-align: center;
+  padding: 0 0 0.25rem;
+  box-sizing: content-box;
+  caret-color: var(--tone);
+}
+
+.timesheet-clock-part:focus {
+  outline: none;
+  border-bottom-color: var(--tone);
+}
+
+.timesheet-clock-colon {
+  font-size: clamp(3rem, 13vw, 4.5rem);
+  font-weight: 600;
+  color: var(--film-dim);
+  transform: translateY(-0.08em);
+}
+
+.timesheet-clock-field:focus-within .timesheet-clock-hint {
+  color: var(--tone);
+}
+
+.timesheet-relative {
+  margin: 0.6rem 0 1.25rem;
+  text-align: center;
+  font-size: 1.05rem;
+  color: var(--film-dim);
+}
+
+.timesheet-relative--floor {
+  color: var(--signal-idle);
+}
+
+/* Hızlı geri alma: geç girenin tek dokunuşu. */
+
+.timesheet-steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+}
+
+.timesheet-step {
+  min-height: 3.5rem;
+  border: 1px solid var(--steel-600);
+  background: var(--steel-700);
+  color: var(--film);
+  font-family: var(--data);
+  font-size: clamp(0.95rem, 3.5vw, 1.15rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.timesheet-step:not(:disabled):active {
+  transform: scale(0.96);
+  background: var(--steel-600);
+}
+
+.timesheet-step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.timesheet-extra {
+  margin-top: 1.25rem;
+}
+
+.timesheet-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.timesheet-button {
+  min-height: 4rem;
+  border: none;
+  font-family: var(--plate);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, filter 0.15s ease;
+}
+
+.timesheet-button:active {
+  transform: scale(0.98);
+}
+
+.timesheet-button--cancel {
+  flex: 0.55;
+  background: transparent;
+  border: 1px solid var(--steel-600);
+  color: var(--film-dim);
+}
+
+.timesheet-button--confirm {
+  flex: 1;
+  background: var(--tone);
+  color: var(--steel-900);
+}
+
+@keyframes timesheet-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes timesheet-rise {
+  from {
+    transform: translateY(20px);
+    opacity: 0.7;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

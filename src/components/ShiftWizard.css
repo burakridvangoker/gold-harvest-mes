@@ -146,6 +146,19 @@
   outline-offset: 2px;
 }
 
+/* Alanın neden istendiğini söyleyen tek satır; zorunlu olmadığını da belli eder. */
+.wizard-hint {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--film-dim);
+}
+
+.wizard-hint--center {
+  display: block;
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
 .wizard-input::placeholder {
   color: var(--film-dim);
 }
