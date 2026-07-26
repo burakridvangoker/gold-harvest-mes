@@ -9,6 +9,8 @@ import {
   koliToPaket,
   paceStatus,
   palletTotals,
+  palletTotalsByRun,
+  runSpans,
   shiftTotals,
 } from '../lib/timeline'
 import { formatDelta, formatDuration } from '../lib/duration'
@@ -77,20 +79,28 @@ function ManagerDashboard() {
     )
   }
 
-  const shiftStartMs = new Date(shift.started_at).getTime()
   const son = intervals[intervals.length - 1] ?? null
   const urgency = state === 'durdu' && son ? Math.min(1, son.durationMs / TAM_ISRAR_MS) : 0
 
   const paket = koliToPaket(paletler.koliAdedi, activeRun?.koli_ici_adet)
   const maxReasonMs = topReasons[0]?.ms ?? 0
 
-  const pace = paceStatus({
-    hedefKoli: shift.hedef_koli,
-    uretilenKoli: paletler.koliAdedi,
-    shiftStartMs,
-    shiftEndMs: shift.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null,
-    nowMs: now,
-  })
+  /* Hedef koli ürün bazlı; tempo da aktif ürünün kendi başlangıcına göre. */
+  const activeRunSpan = activeRun ? runSpans(events, now).get(activeRun.id) ?? null : null
+  const activeRunKoli = activeRun
+    ? (palletTotalsByRun(pallets).get(activeRun.id)?.koliAdedi ?? 0)
+    : 0
+
+  const pace =
+    activeRun?.hedef_koli && activeRunSpan
+      ? paceStatus({
+          hedefKoli: activeRun.hedef_koli,
+          uretilenKoli: activeRunKoli,
+          shiftStartMs: activeRunSpan.startMs,
+          shiftEndMs: shift.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null,
+          nowMs: now,
+        })
+      : null
 
   const zamanKullanimi = Math.round(totals.zamanKullanimi * 100)
 

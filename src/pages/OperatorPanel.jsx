@@ -11,9 +11,10 @@ import {
   paceStatus,
   palletTotals,
   palletTotalsByRun,
+  runSpans,
 } from '../lib/timeline'
 import { formatDelta, formatDuration } from '../lib/duration'
-import { formatDateLabel } from '../lib/time'
+import { formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import TimeSheet from '../components/TimeSheet'
 import StopNoteSheet from '../components/StopNoteSheet'
@@ -25,7 +26,6 @@ import ShiftWizard from '../components/ShiftWizard'
 import LineSelect from '../components/LineSelect'
 import './OperatorPanel.css'
 
-const SAAT_MS = 60 * 60 * 1000
 const TAM_ISRAR_MS = 30 * 60 * 1000
 
 function OperatorPanel() {
@@ -72,18 +72,28 @@ function OperatorPanel() {
     : { paletAdedi: 0, koliAdedi: 0 }
   const activeRunPaket = koliToPaket(activeRunPaletler.koliAdedi, activeRun?.koli_ici_adet)
 
+  /*
+   * Hedef koli ürün bazlıdır (vardiya kurulumunda artık sorulmuyor), bu
+   * yüzden tempo da aktif ürüne göre hesaplanır: ürünün kendi başlangıcı
+   * ("runSpans") ile vardiyanın planlı bitişi arasında ne kadar önde/geride.
+   */
+  const activeRunSpan = useMemo(() => {
+    if (!activeRun) return null
+    return runSpans(events, now).get(activeRun.id) ?? null
+  }, [activeRun, events, now])
+
   const pace = useMemo(
     () =>
-      shift
+      activeRun?.hedef_koli && activeRunSpan && shift
         ? paceStatus({
-            hedefKoli: shift.hedef_koli,
-            uretilenKoli: paletlerToplam.koliAdedi,
-            shiftStartMs,
+            hedefKoli: activeRun.hedef_koli,
+            uretilenKoli: activeRunPaletler.koliAdedi,
+            shiftStartMs: activeRunSpan.startMs,
             shiftEndMs: shift.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null,
             nowMs: now,
           })
         : null,
-    [shift, paletlerToplam.koliAdedi, shiftStartMs, now],
+    [activeRun, activeRunSpan, activeRunPaletler.koliAdedi, shift, now],
   )
 
   const eventRange = useMemo(
@@ -112,13 +122,17 @@ function OperatorPanel() {
   )
 
   const createShift = useCallback(
-    async (payload, atMs) => {
+    async (payload) => {
       if (busy) return
       setBusy(true)
       setError(null)
 
-      const startedAt = new Date(atMs).toISOString()
-      const sure = payload.shift.vardiyaSaat || 8
+      /*
+       * Vardiyaların saatleri sahada sabit ve belli (1. 07-15, 2. 15-23,
+       * 3. 23-07) — operatöre "ne zaman başladı" diye sormaya gerek yok.
+       */
+      const startMs = vardiyaBaslangici(payload.shift.vardiya)
+      const startedAt = new Date(startMs).toISOString()
 
       const { data: newShift, error: shiftError } = await supabase
         .from('shifts')
@@ -126,9 +140,8 @@ function OperatorPanel() {
           line_code: lineCode,
           vardiya: payload.shift.vardiya,
           operator: payload.shift.operator,
-          hedef_koli: payload.shift.hedef_koli,
           started_at: startedAt,
-          planlanan_bitis: new Date(atMs + sure * SAAT_MS).toISOString(),
+          planlanan_bitis: new Date(startMs + VARDIYA_SURESI_MS).toISOString(),
         })
         .select()
         .single()
@@ -231,11 +244,6 @@ function OperatorPanel() {
       setPending(null)
       if (!action) return
 
-      if (action.type === 'shift-start') {
-        await createShift(action.payload, atMs)
-        return
-      }
-
       if (action.type === 'product-start') {
         await createProductRun(action.payload, atMs)
         return
@@ -279,7 +287,7 @@ function OperatorPanel() {
         )
       }
     },
-    [pending, createShift, createProductRun, addEvent, guard, shift, lineCode, activeRun, palletKoli],
+    [pending, createProductRun, addEvent, guard, shift, lineCode, activeRun, palletKoli],
   )
 
   const saveNote = useCallback(
@@ -388,19 +396,8 @@ function OperatorPanel() {
           onClose={() => setWizardOpen(false)}
           onSubmit={(payload) => {
             setWizardOpen(false)
-            setPending({ type: 'shift-start', payload })
+            createShift(payload)
           }}
-        />
-
-        <TimeSheet
-          open={pending?.type === 'shift-start'}
-          title="Vardiya ne zaman başladı?"
-          confirmLabel="Vardiyayı başlat"
-          tone="start"
-          initialMs={now}
-          range={{ maxMs: now }}
-          onConfirm={handleTimeConfirm}
-          onCancel={() => setPending(null)}
         />
       </div>
     )
@@ -481,7 +478,7 @@ function OperatorPanel() {
             {pace && (
               <div className={`plan-block plan-block--${pace.durum}`}>
                 <div className="plan-head">
-                  <span className="plan-label plate">Vardiya planı</span>
+                  <span className="plan-label plate">Ürün planı</span>
                   <span className="plan-figure tnum">
                     {pace.uretilenKoli} / {pace.hedefKoli} <small>koli</small>
                   </span>

@@ -59,3 +59,23 @@ export function fromTimeInputValue(baseMs, value) {
   shifted.setUTCHours(hours, minutes, 0, 0)
   return shifted.getTime() - TR_OFFSET_MS
 }
+
+/*
+ * Vardiyaların saatleri sahada sabit ve bellidir — operatöre "ne zaman
+ * başladı" diye sormaya gerek yok. Üçü de 8 saat.
+ */
+export const VARDIYA_SAATLERI = { 1: 7, 2: 15, 3: 23 }
+export const VARDIYA_SURESI_MS = 8 * 60 * 60 * 1000
+
+/**
+ * Seçilen vardiyanın planlı başlangıcı. 3. vardiya gece yarısını geçtiği
+ * için "bugünkü" saat henüz gelmediyse (ör. saat 02:00'de vardiya 3
+ * açılıyorsa) bir gün geriye düşer — vardiya dün 23:00'te başlamıştır.
+ */
+export function vardiyaBaslangici(vardiyaNo, nowMs = Date.now()) {
+  const saat = VARDIYA_SAATLERI[vardiyaNo]
+  if (saat == null) return null
+
+  const bugun = fromTimeInputValue(nowMs, `${String(saat).padStart(2, '0')}:00`)
+  return bugun > nowMs ? bugun - 24 * 60 * 60 * 1000 : bugun
+}

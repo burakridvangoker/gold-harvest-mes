@@ -8,15 +8,18 @@ import './ShiftWizard.css'
  * kadarı zorunlu; kalan her şey boş geçilebilir ve sonradan düzeltilebilir.
  * Eksik kayıt, uydurma kayıttan iyidir.
  *
- * mode='shift'   → SADECE vardiya bilgisi (vardiya no, operatör, süre,
- *                  vardiya hedefi). Ürün bilgisi buradan bilerek çıkarıldı:
- *                  vardiya çoğu zaman bir duruşla başlar (temizlik, arıza,
- *                  henüz ürün belli değil), operatörü vardiyayı açmadan önce
- *                  ürün detayına zorlamak yanlış. Vardiya "durdu" durumunda
+ * mode='shift'   → SADECE vardiya no + operatör. Ne başlangıç saati
+ *                  sorulur (vardiyaların saatleri sabit ve belli — bkz.
+ *                  src/lib/time.js#vardiyaBaslangici) ne de hedef koli
+ *                  (hedef ürün bazlı, mode='product'da sorulur). Ürün
+ *                  bilgisi de buradan bilerek çıkarıldı: vardiya çoğu
+ *                  zaman bir duruşla başlar (temizlik, arıza, henüz ürün
+ *                  belli değil), operatörü vardiyayı açmadan önce ürün
+ *                  detayına zorlamak yanlış. Vardiya "durdu" durumunda
  *                  açılır; ürün ne zaman hazır olursa mode='product' ile
  *                  girilir.
- * mode='product' → ürün bilgisi (vardiyanın ilk ürünü de, sonraki ürün
- *                  değişimi de aynı akıştan geçer).
+ * mode='product' → ürün bilgisi + ürün hedefi (vardiyanın ilk ürünü de,
+ *                  sonraki ürün değişimi de aynı akıştan geçer).
  *
  * DİKKAT: tüm adım panelleri `wizard-track` içinde her zaman birlikte mount
  * edilir, sadece transform ile kaydırılır (adım geçişleri anında olsun diye).
@@ -27,7 +30,6 @@ import './ShiftWizard.css'
  */
 
 const VARDIYA_OPTIONS = ['1', '2', '3']
-const VARSAYILAN_VARDIYA_SAAT = 8
 const VARSAYILAN_KOLI_PER_PALET = 100
 
 const STEP_TITLES = {
@@ -45,7 +47,6 @@ const PRODUCT_STEPS = ['urun', 'parametre', 'palet', 'numarator', 'ozet']
 const INITIAL_FORM = {
   vardiya: '',
   operator: '',
-  vardiyaSaat: String(VARSAYILAN_VARDIYA_SAAT),
   urunAdi: '',
   partiNo: '',
   gramaj: '',
@@ -112,8 +113,6 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
         shift: {
           vardiya: form.vardiya,
           operator: form.operator.trim() || null,
-          hedef_koli: toInt(form.hedefKoli),
-          vardiyaSaat: toNum(form.vardiyaSaat) ?? VARSAYILAN_VARDIYA_SAAT,
         },
         run: null,
       })
@@ -173,29 +172,6 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
             onChange={update('operator')}
             placeholder="Ad Soyad"
           />
-        </label>
-        <label className="wizard-field">
-          <span className="wizard-label">Vardiya süresi (saat)</span>
-          <input
-            className="wizard-input"
-            type="number"
-            inputMode="decimal"
-            value={form.vardiyaSaat}
-            onChange={update('vardiyaSaat')}
-          />
-          <span className="wizard-hint">Tempo hesabı bunun üzerinden yapılır.</span>
-        </label>
-        <label className="wizard-field">
-          <span className="wizard-label">Vardiya hedefi (koli)</span>
-          <input
-            className="wizard-input"
-            type="number"
-            inputMode="numeric"
-            value={form.hedefKoli}
-            onChange={update('hedefKoli')}
-            placeholder="Örn. 750"
-          />
-          <span className="wizard-hint">Bilmiyorsan boş bırak, sonra girebilirsin.</span>
         </label>
       </div>
     ),
@@ -292,7 +268,7 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
             onChange={update('hedefKoli')}
             placeholder="Örn. 750"
           />
-          <span className="wizard-hint">Boş bırakılırsa vardiya hedefi geçerli olur.</span>
+          <span className="wizard-hint">Bilmiyorsan boş bırak, sonra girebilirsin.</span>
         </label>
       </div>
     ),

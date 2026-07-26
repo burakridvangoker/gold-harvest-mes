@@ -110,19 +110,32 @@ numaratörleri yazarken CANLI gösterir — kayıttan sonra değil, girerken.
 
 ## Vardiya duruştan başlar, ürün bilgisi sonra girilir
 
-`ShiftWizard mode="shift"` artık SADECE vardiya bilgisini sorar (vardiya
-no, operatör, süre, vardiya hedefi) — ürün bilgisi kurulumdan bilerek
-çıkarıldı. Vardiya açılınca `createShift` bir `product_run` oluşturmaz,
-sadece `product_run_id: null` olan bir `durus` olayı yazar: vardiya
-"DURDU" durumunda başlar. Sahada vardiyanın ilk dakikaları genelde
-temizlik/arıza/bekleme oluyor, operatörü vardiyayı açmadan önce ürün
-detayına (gramaj, parti no, numaratör...) zorlamak yanlış bir varsayımdı.
+`ShiftWizard mode="shift"` artık SADECE vardiya no + operatör sorar —
+ne başlangıç saati ne de hedef koli. Vardiyaların saatleri sahada sabit
+ve belli (1. 07-15, 2. 15-23, 3. 23-07, üçü de 8 saat) — `createShift`
+bunu operatöre sormaz, `src/lib/time.js#vardiyaBaslangici` ile hesaplar
+(3. vardiya gece yarısını geçtiği için "bugünkü" saat henüz gelmediyse
+bir gün geriye düşer). Hedef koli ürün bazlı olduğu için (`product_runs.
+hedef_koli`, her ürün kendi hedefini `ShiftWizard mode="product"`'ta
+sorar) vardiya kurulumunda hiç sorulmaz.
+
+Vardiya açılınca `createShift` bir `product_run` oluşturmaz, sadece
+`product_run_id: null` olan bir `durus` olayı yazar: vardiya "DURDU"
+durumunda başlar. Sahada vardiyanın ilk dakikaları genelde temizlik/
+arıza/bekleme oluyor, operatörü vardiyayı açmadan önce ürün detayına
+(gramaj, parti no, numaratör...) zorlamak yanlış bir varsayımdı.
 
 Ana ekranda `activeRun` yoksa birincil buton "ÜRÜN BAŞLAT" olur ve
 doğrudan `ShiftWizard mode="product"`'ı açar (aradaki `RunEndSheet`
 atlanır — bitirilecek bir ürün henüz yok). Operatör hazır olunca ürün
 bilgisini girer, `TimeSheet` ile "Üretim ne zaman başladı?" diye sorulur,
 ilk `product_run` + ona işaret eden `uretim` olayı öyle oluşur.
+
+**Plan/tempo takibi ürün bazlı:** `paceStatus` artık `shift.hedef_koli`
+değil `activeRun.hedef_koli` ile çalışır; pencere aktif ürünün kendi
+başlangıcından (`runSpans`) vardiyanın planlı bitişine kadardır. Bir
+ürünün hedefi yoksa (boş bırakılmışsa) plan bloğu hiç gösterilmez —
+vardiya genelinde ayrı bir hedef kolonu artık yok.
 
 ## Ürün geçmişi ve ürün değiştirme
 
