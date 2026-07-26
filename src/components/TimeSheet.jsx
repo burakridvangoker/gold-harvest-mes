@@ -62,13 +62,23 @@ function TimeSheet({
   const [mmDraft, setMmDraft] = useState('00')
   const focusField = useRef(null)
   const minuteInputRef = useRef(null)
+  const wasOpen = useRef(false)
 
+  /*
+   * Üst bileşenler initialMs'i genelde canlı "now" state'inden geçirir
+   * (saniyede bir güncellenir). Bu efekt [open, initialMs]'e bağlı kalırsa,
+   * sayfa açıkken her saniye yeniden tetiklenip operatörün az önce girdiği
+   * saati "şimdi"ye resetler — kullanıcı saati hiç değiştiremez. Bu yüzden
+   * sadece kapalı→açık geçişinde sıfırlıyoruz, açıkken initialMs değişse bile
+   * dokunmuyoruz.
+   */
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpen.current) {
       setValueMs(initialMs ?? Date.now())
       setNowMs(Date.now())
       focusField.current = null
     }
+    wasOpen.current = open
   }, [open, initialMs])
 
   useEffect(() => {
