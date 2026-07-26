@@ -182,6 +182,7 @@ function TimeSheet({
               aria-label="Dakika"
             />
           </div>
+          <span className="timesheet-clock-edit-hint">Rakama dokun, elle yaz</span>
         </div>
 
         <p className={`timesheet-relative${atFloor ? ' timesheet-relative--floor' : ''}`}>

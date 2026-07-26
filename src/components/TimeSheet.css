@@ -82,12 +82,16 @@
  * 12/24 saat gösterimini tarayıcı/OS yerel ayarına göre seçiyordu ve
  * lang="tr-TR" bunu değiştirmiyordu — fabrikada cihaz İngilizce ayarlıysa
  * operatör AM/PM ile karşılaşırdı. Burada format tamamen bizim elimizde.
+ *
+ * Görünür kutu bilerek eklendi: sadece alt çizgi varken operatör bunun
+ * dokunup elle yazılabilir bir alan olduğunu fark etmiyordu, sadece hızlı
+ * geri alma çiplerini (−1dk vb.) kullanabildiğini sanıyordu.
  */
 .timesheet-clock-part {
   width: 2.1ch;
-  border: none;
-  border-bottom: 2px solid var(--steel-600);
-  background: transparent;
+  border: 2px solid var(--steel-600);
+  border-radius: 0.5rem;
+  background: var(--steel-700);
   color: var(--tone);
   font-family: var(--data);
   font-size: clamp(3.5rem, 16vw, 5.5rem);
@@ -95,14 +99,21 @@
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
   text-align: center;
-  padding: 0 0 0.25rem;
+  padding: 0.15em 0 0.25rem;
   box-sizing: content-box;
   caret-color: var(--tone);
+  cursor: text;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.timesheet-clock-part:hover {
+  border-color: var(--film-dim);
 }
 
 .timesheet-clock-part:focus {
   outline: none;
-  border-bottom-color: var(--tone);
+  border-color: var(--tone);
+  background: var(--steel-800);
 }
 
 .timesheet-clock-colon {
@@ -114,6 +125,11 @@
 
 .timesheet-clock-field:focus-within .timesheet-clock-hint {
   color: var(--tone);
+}
+
+.timesheet-clock-edit-hint {
+  font-size: 0.8rem;
+  color: var(--film-dim);
 }
 
 .timesheet-relative {
