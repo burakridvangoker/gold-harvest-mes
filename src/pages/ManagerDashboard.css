@@ -12,11 +12,13 @@
 .manager-shell {
   display: flex;
   /*
-   * Sabit yükseklik + gizli taşma: pano duvarda asılı, sayfa kaydırılmaz.
-   * Uzun olay akışı kendi içinde kayar, ekranın altından taşmaz.
+   * Duvara asılı sabit ekranda tamamı sığar ama masaüstü/tarayıcı
+   * penceresi kısa olduğunda (ör. ürün satırları çoğaldığında) alttaki
+   * "Duruş sebepleri"/"Son olaylar" görünmez oluyordu — sayfa hiç
+   * kaydırılamıyordu. min-height ile sayfanın kendisi kaydırılabilir;
+   * içerik ekrana sığıyorsa zaten fark etmez.
    */
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100dvh;
   background:
     linear-gradient(var(--status-wash), var(--status-wash)),
     var(--steel-900);
@@ -347,8 +349,6 @@
 /* NEDEN */
 
 .zone--why {
-  flex: 1;
-  min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(1.5rem, 3vw, 3.5rem);
@@ -358,7 +358,6 @@
   display: flex;
   flex-direction: column;
   gap: clamp(0.6rem, 1.2vh, 1.25rem);
-  min-height: 0;
 }
 
 .reasons-list,
@@ -369,11 +368,6 @@
   display: flex;
   flex-direction: column;
   gap: clamp(0.6rem, 1.1vh, 1.15rem);
-  min-height: 0;
-}
-
-.feed-list {
-  overflow-y: auto;
 }
 
 /*

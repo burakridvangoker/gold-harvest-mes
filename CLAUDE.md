@@ -237,6 +237,12 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
   olsun diye). Bu yüzden hiçbir alanda `autoFocus` kullanmayın — ilk
   adım olmayan bir alanda autoFocus, tarayıcının overflow:hidden
   konteyneri oraya kaydırmasına ve yanlış adımın görünmesine yol açar.
+- `ManagerDashboard` başta `height:100dvh; overflow:hidden` ile "duvara
+  asılı ekran, sayfa hiç kaydırılmaz" diye tasarlanmıştı. Vardiyada birden
+  çok ürün olunca (`.plan-stack` büyür) içerik gerçek TV boyundan uzun
+  bir pencerede (ör. masaüstü tarayıcı) taşıyor, "Duruş sebepleri"/"Son
+  olaylar" hiç görünmüyordu. `min-height: 100dvh`'ye çevrildi — sayfa artık
+  gerektiğinde kaydırılabilir, sığdığında zaten fark etmez.
 
 ## Kod konumu haritası
 
