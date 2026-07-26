@@ -45,6 +45,14 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+  /* Geniş ekranda buton duvardan duvara yayılmasın; telefonda etkisiz. */
+  width: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+.operator-panel--center .action-primary {
+  width: 100%;
 }
 
 .operator-header {
@@ -136,6 +144,8 @@
   line-height: 0.92;
   letter-spacing: -0.02em;
   color: var(--status);
+  /* Lamba camı parıltısı: sayı, andon lambasının kendisi gibi hafif ışır. */
+  text-shadow: 0 0 0.4em color-mix(in srgb, var(--status) 30%, transparent);
   transition: color 0.5s ease;
 }
 
@@ -378,20 +388,32 @@
 }
 
 .action-primary {
+  --btn-face: var(--signal-idle);
+  --btn-edge: color-mix(in srgb, var(--btn-face) 45%, black);
+
   /* Eldivenli dokunuş için rahat eşik 88px; burada fazlasıyla üstünde. */
   min-height: clamp(5.5rem, 15vh, 9rem);
   font-size: clamp(2rem, 8vw, 3rem);
   letter-spacing: 0.1em;
   /* Sinyal renkli yüzeyde her zaman koyu mürekkep: güvenlik levhası dili. */
   color: var(--steel-900);
+  background: var(--btn-face);
+  /*
+   * Fiziksel bası butonu: koyu alt kenar butonun gövdesi, üstteki ince ışık
+   * kubbesi. Basınca buton gerçekten alçalır (aşağıda :active) — makinedeki
+   * start/stop mantar butonlarının dokunmatik karşılığı.
+   */
+  box-shadow:
+    0 0.375rem 0 0 var(--btn-edge),
+    inset 0 2px 0 rgba(255, 255, 255, 0.28);
 }
 
 .action-primary--start {
-  background: var(--signal-run);
+  --btn-face: var(--signal-run);
 }
 
 .action-primary--stop {
-  background: var(--signal-stop);
+  --btn-face: var(--signal-stop);
 }
 
 .action-secondary {
@@ -403,7 +425,14 @@
   letter-spacing: 0.12em;
 }
 
-.action-primary:not(:disabled):active,
+.action-primary:not(:disabled):active {
+  transform: translateY(0.3rem);
+  box-shadow:
+    0 0.075rem 0 0 var(--btn-edge),
+    inset 0 2px 0 rgba(255, 255, 255, 0.28);
+  filter: brightness(0.94);
+}
+
 .action-secondary:not(:disabled):active {
   transform: scale(0.98);
   filter: brightness(0.94);

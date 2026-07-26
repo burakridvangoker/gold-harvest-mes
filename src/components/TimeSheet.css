@@ -219,6 +219,17 @@
   flex: 1;
   background: var(--tone);
   color: var(--steel-900);
+  /* Operatör panelindeki fiziksel bası butonuyla aynı dil. */
+  box-shadow:
+    0 0.25rem 0 0 color-mix(in srgb, var(--tone) 45%, black),
+    inset 0 2px 0 rgba(255, 255, 255, 0.28);
+}
+
+.timesheet-button--confirm:active {
+  transform: translateY(0.2rem);
+  box-shadow:
+    0 0.05rem 0 0 color-mix(in srgb, var(--tone) 45%, black),
+    inset 0 2px 0 rgba(255, 255, 255, 0.28);
 }
 
 @keyframes timesheet-fade {

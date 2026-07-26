@@ -80,13 +80,35 @@
 
 /*
  * Andon rayı — lamba kulesinin kendisi. Her iki ekranın da sol kenarında
- * tam boy durur ve durum rengini taşır.
+ * tam boy durur ve durum rengini taşır. İnce koyu bölmeler gerçek lamba
+ * kulesindeki istiflenmiş cam dilimlerini çağrıştırır; ray düz bir renk
+ * şeridi değil, ekipmanın kendisidir.
  */
 .andon-rail {
   flex: 0 0 auto;
   align-self: stretch;
-  background: var(--status);
+  background-color: var(--status);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 54px,
+    rgba(0, 0, 0, 0.28) 54px,
+    rgba(0, 0, 0, 0.28) 57px
+  );
   box-shadow: 0 0 2.5rem -0.25rem var(--status);
+}
+
+/*
+ * Hat plakası — makinenin üstüne perçinli gerçek isim plakası gibi.
+ * Her iki ekranda da aynı kimlik.
+ */
+.operator-line-code,
+.manager-line-code {
+  display: inline-block;
+  padding: 0.08em 0.45em 0.14em;
+  border: 1px solid rgba(232, 234, 230, 0.2);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(0, 0, 0, 0.14));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
 /*
