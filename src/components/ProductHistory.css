@@ -1,0 +1,53 @@
+.history-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: clamp(0.6rem, 1.6vh, 1rem) 0;
+  border-top: 1px solid var(--steel-line);
+}
+
+.history-strip-label {
+  font-size: clamp(0.8rem, 2.6vw, 1rem);
+}
+
+.history-strip-list {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.history-card {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 9rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--steel-600);
+  background: var(--steel-800);
+  color: var(--film);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+}
+
+.history-card:active {
+  background: var(--steel-700);
+}
+
+.history-card-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-card-time {
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}

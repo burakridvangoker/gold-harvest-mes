@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useShift } from '../hooks/useShift'
+import { useLineCode } from '../hooks/useLineCode'
+import LineSelect from '../components/LineSelect'
 import {
   buildIntervals,
   currentState,
@@ -14,14 +16,14 @@ import { formatClock, formatDateLabel, formatShortTime } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import './ManagerDashboard.css'
 
-const LINE_CODE = 'PFM-11'
 const RECENT_EVENTS_LIMIT = 8
 const TOP_REASONS_LIMIT = 5
 const NO_REASON_LABEL = 'Sebep girilmemiş'
 const TAM_ISRAR_MS = 30 * 60 * 1000
 
 function ManagerDashboard() {
-  const { shift, runs, events, pallets, loading, error } = useShift(LINE_CODE)
+  const { lineCode, selectLine, clearLine } = useLineCode()
+  const { shift, runs, events, pallets, loading, error } = useShift(lineCode)
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -46,6 +48,10 @@ function ManagerDashboard() {
 
   const nowDate = new Date(now)
 
+  if (!lineCode) {
+    return <LineSelect onSelect={selectLine} />
+  }
+
   if (loading) {
     return (
       <div className="manager-shell is-beklemede">
@@ -62,7 +68,9 @@ function ManagerDashboard() {
       <div className="manager-shell is-beklemede">
         <div className="andon-rail" />
         <div className="manager-dashboard manager-dashboard--center">
-          <span className="manager-line-code">{LINE_CODE}</span>
+          <button type="button" className="manager-line-code" onClick={clearLine}>
+            {lineCode}
+          </button>
           <p className="plate">Açık vardiya yok</p>
         </div>
       </div>
@@ -95,7 +103,9 @@ function ManagerDashboard() {
 
       <div className="manager-dashboard">
         <header className="manager-header">
-          <span className="manager-line-code">{LINE_CODE}</span>
+          <button type="button" className="manager-line-code" onClick={clearLine}>
+            {lineCode}
+          </button>
           <span className="manager-date plate">
             {formatDateLabel(nowDate)} · {shift.vardiya}. vardiya
             {shift.operator ? ` · ${shift.operator}` : ''}
@@ -117,7 +127,7 @@ function ManagerDashboard() {
               <span className="now-run-product">{activeRun.urun_adi}</span>
               <span className="now-run-meta plate">
                 {activeRun.parti_no ? `${activeRun.parti_no} · ` : ''}
-                {activeRun.hedef_hiz_pkt_dk ? `hedef ${activeRun.hedef_hiz_pkt_dk} pkt/dk` : ''}
+                {activeRun.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : ''}
               </span>
             </div>
           ) : (

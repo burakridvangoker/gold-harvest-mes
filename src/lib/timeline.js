@@ -145,6 +145,30 @@ export function clampToWindow(ms, { minMs, maxMs }) {
   return value
 }
 
+/**
+ * Ürün başına başlangıç/bitiş anı. Ürün geçmişi kartları buradan besleniyor:
+ * bir ürünün ilk olayından son aralığının bitişine kadar. Aynı ürüne geri
+ * dönülürse (A→B→A) aralar dahil değil, sadece en erken başlangıç ve en geç
+ * bitiş — "bu ürünle ne zaman ilk/son ilgilenildi" sorusuna cevap.
+ */
+export function runSpans(events, nowMs = Date.now()) {
+  const intervals = buildIntervals(events, nowMs)
+  const map = new Map()
+
+  for (const interval of intervals) {
+    const key = interval.productRunId
+    if (key == null) continue
+
+    const current = map.get(key) ?? { startMs: interval.startMs, endMs: interval.endMs, ongoing: false }
+    current.startMs = Math.min(current.startMs, interval.startMs)
+    current.endMs = Math.max(current.endMs, interval.endMs)
+    if (interval.ongoing) current.ongoing = true
+    map.set(key, current)
+  }
+
+  return map
+}
+
 /* ---- Palet ve koli ---- */
 
 export function palletTotals(pallets) {
@@ -245,6 +269,36 @@ export function hizVerimi({ paketAdedi, uretimMs, hedefHizPktDk }) {
 
   const mevcutPktDk = paketAdedi / (uretimMs / DAKIKA_MS)
   return { mevcutPktDk, hedefPktDk: hedefHizPktDk, oran: mevcutPktDk / hedefHizPktDk }
+}
+
+/* ---- Ambalaj firesi ---- */
+
+/**
+ * Ürün üretimi bitince operatörden dolu/boş paket numaratör bitişi alınır.
+ * Fark, üretilen paket adediyle karşılaştırılır: aradaki eksik dolu pakette
+ * kaybolmuştur (dolu fire). Boş paket farkı da kullanılmayıp atılan/artan
+ * ambalajdır. İkisinin toplamı ambalaj firesi — grama çevirmek için boş
+ * paket ağırlığıyla çarpılır.
+ */
+export function packagingWaste({
+  doluBaslangic,
+  doluBitis,
+  bosBaslangic,
+  bosBitis,
+  toplamPaket,
+  bosPaketAgirlikG,
+}) {
+  if (doluBaslangic == null || doluBitis == null || bosBaslangic == null || bosBitis == null) {
+    return null
+  }
+
+  const doluFark = doluBitis - doluBaslangic
+  const bosFark = bosBitis - bosBaslangic
+  const doluFire = doluFark - (toplamPaket ?? 0)
+  const ambalajFireAdet = doluFire + bosFark
+  const ambalajFireGram = bosPaketAgirlikG ? ambalajFireAdet * bosPaketAgirlikG : null
+
+  return { doluFark, bosFark, doluFire, ambalajFireAdet, ambalajFireGram }
 }
 
 /* ---- Duruş notları ---- */

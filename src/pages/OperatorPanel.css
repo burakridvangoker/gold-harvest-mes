@@ -87,10 +87,22 @@
   white-space: nowrap;
 }
 
+.operator-idle-date {
+  margin: 0.75rem 0 0;
+  font-size: clamp(0.9rem, 3vw, 1.1rem);
+}
+
 .operator-idle-text {
-  margin: 1.5rem 0 2rem;
+  margin: 0.5rem 0 2rem;
   font-size: clamp(1.15rem, 4.5vw, 1.5rem);
   color: var(--film-dim);
+}
+
+/* Hat plakası artık dokunulabilir: hat değiştirmek için. */
+button.operator-line-code {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .operator-error {
@@ -147,6 +159,36 @@
   /* Lamba camı parıltısı: sayı, andon lambasının kendisi gibi hafif ışır. */
   text-shadow: 0 0 0.4em color-mix(in srgb, var(--status) 30%, transparent);
   transition: color 0.5s ease;
+}
+
+/*
+ * Çalışma hızı: kurulumda bir kere sorulan sabit hedef değil, operatörün
+ * istediği zaman dokunup güncelleyebildiği anlık değer. Dolgulu satır =
+ * basılabilir kuralına uyar.
+ */
+.speed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0 0.1rem;
+  border: none;
+  background: transparent;
+  color: var(--film);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.speed-row-label {
+  font-size: clamp(0.8rem, 2.6vw, 1rem);
+  color: var(--film-dim);
+}
+
+.speed-row-value {
+  font-size: clamp(1.1rem, 4vw, 1.4rem);
+  font-weight: 600;
 }
 
 /*
@@ -264,7 +306,7 @@
 .operator-secondary {
   flex-shrink: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
   padding: 0.6rem 0;
   border-bottom: 1px solid var(--steel-line);

@@ -21,6 +21,11 @@ export function useFrequentNotes(lineCode, limit = 6) {
   useEffect(() => {
     let isMounted = true
 
+    if (!lineCode) {
+      setNotes([])
+      return undefined
+    }
+
     async function fetchNotes() {
       const { data, error } = await supabase
         .from('timeline_events')

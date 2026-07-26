@@ -7,8 +7,10 @@ import {
   currentState,
   downtimeByNote,
   frequentNotes,
+  packagingWaste,
   paceStatus,
   palletTotals,
+  runSpans,
   shiftTotals,
   totalsByRun,
   validEditWindow,
@@ -251,6 +253,76 @@ describe('palet ve koli', () => {
     ]
 
     assert.deepEqual(palletTotals(pallets), { paletAdedi: 3, koliAdedi: 260 })
+  })
+})
+
+describe('runSpans', () => {
+  it('ürünün ilk başlangıcından son bitişine kadarki aralığı verir', () => {
+    // A: 07:00-08:00, B: 08:00-08:30, A: 08:30-09:00 (hâlâ sürüyor)
+    const olaylar = [
+      { id: '1', at: T(7, 0), kind: 'uretim', product_run_id: 'A' },
+      { id: '2', at: T(8, 0), kind: 'uretim', product_run_id: 'B' },
+      { id: '3', at: T(8, 30), kind: 'uretim', product_run_id: 'A' },
+    ]
+
+    const spans = runSpans(olaylar, ms(T(9, 0)))
+
+    assert.equal(spans.get('A').startMs, ms(T(7, 0)))
+    assert.equal(spans.get('A').endMs, ms(T(9, 0)))
+    assert.equal(spans.get('A').ongoing, true)
+
+    assert.equal(spans.get('B').startMs, ms(T(8, 0)))
+    assert.equal(spans.get('B').endMs, ms(T(8, 30)))
+    assert.equal(spans.get('B').ongoing, false)
+  })
+})
+
+describe('packagingWaste', () => {
+  it('dolu ve boş paket farkından ambalaj firesini hesaplar', () => {
+    // 1000 paket üretildi (koli×koli_ici_adet). Dolu numaratör 1004 ilerledi
+    // (4 dolu paket kayıp), boş numaratör 6 ilerledi (6 boş paket kullanıldı
+    // ama dolamadı/atıldı). Ambalaj firesi = 4 + 6 = 10 adet, her biri 3g → 30g.
+    const sonuc = packagingWaste({
+      doluBaslangic: 10000,
+      doluBitis: 11004,
+      bosBaslangic: 5000,
+      bosBitis: 5006,
+      toplamPaket: 1000,
+      bosPaketAgirlikG: 3,
+    })
+
+    assert.equal(sonuc.doluFark, 1004)
+    assert.equal(sonuc.bosFark, 6)
+    assert.equal(sonuc.doluFire, 4)
+    assert.equal(sonuc.ambalajFireAdet, 10)
+    assert.equal(sonuc.ambalajFireGram, 30)
+  })
+
+  it('eksik numaratör varsa null döner', () => {
+    assert.equal(
+      packagingWaste({
+        doluBaslangic: 1,
+        doluBitis: null,
+        bosBaslangic: 1,
+        bosBitis: 2,
+        toplamPaket: 10,
+        bosPaketAgirlikG: 3,
+      }),
+      null,
+    )
+  })
+
+  it('boş paket ağırlığı yoksa gram hesaplanmaz', () => {
+    const sonuc = packagingWaste({
+      doluBaslangic: 0,
+      doluBitis: 100,
+      bosBaslangic: 0,
+      bosBitis: 0,
+      toplamPaket: 100,
+      bosPaketAgirlikG: null,
+    })
+
+    assert.equal(sonuc.ambalajFireGram, null)
   })
 })
 

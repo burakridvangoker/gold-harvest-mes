@@ -43,7 +43,7 @@ const INITIAL_FORM = {
   partiNo: '',
   gramaj: '',
   koliIciAdet: '',
-  hedefHiz: '',
+  bosPaketAgirlik: '',
   koliPerPalet: String(VARSAYILAN_KOLI_PER_PALET),
   hedefKoli: '',
   doluPaketBaslangic: '',
@@ -115,7 +115,7 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
         parti_no: form.partiNo.trim() || null,
         gramaj: toNum(form.gramaj),
         koli_ici_adet: toInt(form.koliIciAdet),
-        hedef_hiz_pkt_dk: toNum(form.hedefHiz),
+        bos_paket_agirlik_g: toNum(form.bosPaketAgirlik),
         koli_per_palet: toInt(form.koliPerPalet) ?? VARSAYILAN_KOLI_PER_PALET,
         hedef_koli: mode === 'product' ? toInt(form.hedefKoli) : null,
         dolu_paket_baslangic: toInt(form.doluPaketBaslangic),
@@ -227,15 +227,18 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
           <span className="wizard-hint">Paket sayısı buradan hesaplanır.</span>
         </label>
         <label className="wizard-field">
-          <span className="wizard-label">Hedef hız (pkt/dk)</span>
+          <span className="wizard-label">Boş paket ağırlığı (g)</span>
           <input
             className="wizard-input"
             type="number"
             inputMode="decimal"
-            value={form.hedefHiz}
-            onChange={update('hedefHiz')}
-            placeholder="Örn. 45"
+            value={form.bosPaketAgirlik}
+            onChange={update('bosPaketAgirlik')}
+            placeholder="Örn. 3"
           />
+          <span className="wizard-hint">
+            Ambalaj malzemesinin kendi ağırlığı; ürün bitince fire hesabında kullanılır.
+          </span>
         </label>
       </div>
     ),
@@ -335,8 +338,8 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
             <dd>{form.koliIciAdet || '—'}</dd>
           </div>
           <div className="wizard-summary-row">
-            <dt>Hedef hız</dt>
-            <dd>{form.hedefHiz ? `${form.hedefHiz} pkt/dk` : '—'}</dd>
+            <dt>Boş paket ağırlığı</dt>
+            <dd>{form.bosPaketAgirlik ? `${form.bosPaketAgirlik} g` : '—'}</dd>
           </div>
           <div className="wizard-summary-row">
             <dt>Palet başına koli</dt>

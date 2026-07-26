@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useShift } from '../hooks/useShift'
 import { useFrequentNotes } from '../hooks/useFrequentNotes'
+import { useLineCode } from '../hooks/useLineCode'
 import {
   buildIntervals,
   currentState,
@@ -9,26 +10,35 @@ import {
   newEventWindow,
   paceStatus,
   palletTotals,
+  palletTotalsByRun,
 } from '../lib/timeline'
 import { formatDelta, formatDuration } from '../lib/duration'
+import { formatDateLabel } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import TimeSheet from '../components/TimeSheet'
 import StopNoteSheet from '../components/StopNoteSheet'
+import SpeedSheet from '../components/SpeedSheet'
+import RunEndSheet from '../components/RunEndSheet'
+import ProductHistory from '../components/ProductHistory'
 import EventLog from '../components/EventLog'
 import ShiftWizard from '../components/ShiftWizard'
+import LineSelect from '../components/LineSelect'
 import './OperatorPanel.css'
 
-const LINE_CODE = 'PFM-11'
 const SAAT_MS = 60 * 60 * 1000
 const TAM_ISRAR_MS = 30 * 60 * 1000
 
 function OperatorPanel() {
-  const { shift, runs, events, pallets, loading, error, setError, refresh } = useShift(LINE_CODE)
-  const suggestions = useFrequentNotes(LINE_CODE)
+  const { lineCode, selectLine, clearLine } = useLineCode()
+  const { shift, runs, events, pallets, loading, error, setError, refresh } = useShift(lineCode)
+  const suggestions = useFrequentNotes(lineCode)
 
   const [now, setNow] = useState(() => Date.now())
   const [busy, setBusy] = useState(false)
   const [wizardOpen, setWizardOpen] = useState(false)
+  const [productWizardOpen, setProductWizardOpen] = useState(false)
+  const [runEndOpen, setRunEndOpen] = useState(false)
+  const [speedOpen, setSpeedOpen] = useState(false)
   const [logOpen, setLogOpen] = useState(false)
   const [pending, setPending] = useState(null)
   const [noteEventId, setNoteEventId] = useState(null)
@@ -40,6 +50,7 @@ function OperatorPanel() {
   }, [])
 
   const runsById = useMemo(() => new Map(runs.map((run) => [run.id, run])), [runs])
+  const paletlerByRun = useMemo(() => palletTotalsByRun(pallets), [pallets])
 
   /* Aktif ürün son olayın işaret ettiği üründür; olay yoksa son açılan ürün. */
   const activeRun = useMemo(() => {
@@ -50,24 +61,29 @@ function OperatorPanel() {
 
   const shiftStartMs = shift ? new Date(shift.started_at).getTime() : null
   const intervals = useMemo(() => buildIntervals(events, now), [events, now])
-  const paletler = useMemo(() => palletTotals(pallets), [pallets])
+  const paletlerToplam = useMemo(() => palletTotals(pallets), [pallets])
   const state = useMemo(() => currentState(events), [events])
   const son = intervals[intervals.length - 1] ?? null
 
-  const paket = koliToPaket(paletler.koliAdedi, activeRun?.koli_ici_adet)
+  const paket = koliToPaket(paletlerToplam.koliAdedi, activeRun?.koli_ici_adet)
+
+  const activeRunPaletler = activeRun
+    ? paletlerByRun.get(activeRun.id) ?? { paletAdedi: 0, koliAdedi: 0 }
+    : { paletAdedi: 0, koliAdedi: 0 }
+  const activeRunPaket = koliToPaket(activeRunPaletler.koliAdedi, activeRun?.koli_ici_adet)
 
   const pace = useMemo(
     () =>
       shift
         ? paceStatus({
             hedefKoli: shift.hedef_koli,
-            uretilenKoli: paletler.koliAdedi,
+            uretilenKoli: paletlerToplam.koliAdedi,
             shiftStartMs,
             shiftEndMs: shift.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null,
             nowMs: now,
           })
         : null,
-    [shift, paletler.koliAdedi, shiftStartMs, now],
+    [shift, paletlerToplam.koliAdedi, shiftStartMs, now],
   )
 
   const eventRange = useMemo(
@@ -107,7 +123,7 @@ function OperatorPanel() {
       const { data: newShift, error: shiftError } = await supabase
         .from('shifts')
         .insert({
-          line_code: LINE_CODE,
+          line_code: lineCode,
           vardiya: payload.shift.vardiya,
           operator: payload.shift.operator,
           hedef_koli: payload.shift.hedef_koli,
@@ -125,7 +141,7 @@ function OperatorPanel() {
 
       const { data: newRun, error: runError } = await supabase
         .from('product_runs')
-        .insert({ shift_id: newShift.id, line_code: LINE_CODE, sira: 1, ...payload.run })
+        .insert({ shift_id: newShift.id, line_code: lineCode, sira: 1, ...payload.run })
         .select()
         .single()
 
@@ -136,7 +152,7 @@ function OperatorPanel() {
       }
 
       const { error: eventError } = await supabase.from('timeline_events').insert({
-        line_code: LINE_CODE,
+        line_code: lineCode,
         shift_id: newShift.id,
         product_run_id: newRun.id,
         at: startedAt,
@@ -148,7 +164,43 @@ function OperatorPanel() {
       await refresh()
       setBusy(false)
     },
-    [busy, setError, refresh],
+    [busy, lineCode, setError, refresh],
+  )
+
+  const createProductRun = useCallback(
+    async (payload, atMs) => {
+      if (busy || !shift) return
+      setBusy(true)
+      setError(null)
+
+      const nextSira = runs.reduce((max, run) => Math.max(max, run.sira ?? 0), 0) + 1
+
+      const { data: newRun, error: runError } = await supabase
+        .from('product_runs')
+        .insert({ shift_id: shift.id, line_code: lineCode, sira: nextSira, ...payload.run })
+        .select()
+        .single()
+
+      if (runError) {
+        setError('Ürün kaydedilemedi: ' + runError.message)
+        setBusy(false)
+        return
+      }
+
+      const { error: eventError } = await supabase.from('timeline_events').insert({
+        line_code: lineCode,
+        shift_id: shift.id,
+        product_run_id: newRun.id,
+        at: new Date(atMs).toISOString(),
+        kind: 'uretim',
+      })
+
+      if (eventError) setError('Ürün geçişi kaydedilemedi: ' + eventError.message)
+
+      await refresh()
+      setBusy(false)
+    },
+    [busy, shift, runs, lineCode, setError, refresh],
   )
 
   const addEvent = useCallback(
@@ -160,7 +212,7 @@ function OperatorPanel() {
       const { data, error: failure } = await supabase
         .from('timeline_events')
         .insert({
-          line_code: LINE_CODE,
+          line_code: lineCode,
           shift_id: shift.id,
           product_run_id: activeRun?.id ?? null,
           at: new Date(atMs).toISOString(),
@@ -175,7 +227,7 @@ function OperatorPanel() {
       setBusy(false)
       return failure ? null : data.id
     },
-    [busy, shift, activeRun, setError, refresh],
+    [busy, shift, lineCode, activeRun, setError, refresh],
   )
 
   /* ---- TimeSheet onayı: hangi aksiyon bekliyorsa o çalışır ---- */
@@ -188,6 +240,11 @@ function OperatorPanel() {
 
       if (action.type === 'shift-start') {
         await createShift(action.payload, atMs)
+        return
+      }
+
+      if (action.type === 'product-start') {
+        await createProductRun(action.payload, atMs)
         return
       }
 
@@ -207,7 +264,7 @@ function OperatorPanel() {
         await guard(
           () =>
             supabase.from('pallet_records').insert({
-              line_code: LINE_CODE,
+              line_code: lineCode,
               shift_id: shift.id,
               product_run_id: activeRun.id,
               completed_at: new Date(atMs).toISOString(),
@@ -229,7 +286,7 @@ function OperatorPanel() {
         )
       }
     },
-    [pending, createShift, addEvent, guard, shift, activeRun, palletKoli],
+    [pending, createShift, createProductRun, addEvent, guard, shift, lineCode, activeRun, palletKoli],
   )
 
   const saveNote = useCallback(
@@ -268,7 +325,38 @@ function OperatorPanel() {
     [guard],
   )
 
+  const updateSpeed = useCallback(
+    (value) => {
+      setSpeedOpen(false)
+      if (!activeRun) return
+      guard(
+        () => supabase.from('product_runs').update({ calisma_hizi_pkt_dk: value }).eq('id', activeRun.id),
+        'Hız kaydedilemedi',
+      )
+    },
+    [activeRun, guard],
+  )
+
+  const handleRunEndConfirm = useCallback(
+    async (values) => {
+      setRunEndOpen(false)
+      if (!activeRun) return
+
+      await guard(
+        () => supabase.from('product_runs').update(values).eq('id', activeRun.id),
+        'Ürün bilgisi kaydedilemedi',
+      )
+
+      setProductWizardOpen(true)
+    },
+    [activeRun, guard],
+  )
+
   /* ---- Görünüm ---- */
+
+  if (!lineCode) {
+    return <LineSelect onSelect={selectLine} />
+  }
 
   if (loading) {
     return (
@@ -286,7 +374,10 @@ function OperatorPanel() {
       <div className="operator-shell is-beklemede">
         <div className="andon-rail" />
         <div className="operator-panel operator-panel--center">
-          <span className="operator-line-code">{LINE_CODE}</span>
+          <button type="button" className="operator-line-code" onClick={clearLine}>
+            {lineCode}
+          </button>
+          <p className="operator-idle-date plate">{formatDateLabel(new Date(now))}</p>
           <p className="operator-idle-text">Açık vardiya yok</p>
           {error && <div className="operator-error">{error}</div>}
           <button
@@ -335,7 +426,9 @@ function OperatorPanel() {
       <div className="operator-panel">
         <header className="operator-header">
           <div className="operator-header-left">
-            <span className="operator-line-code">{LINE_CODE}</span>
+            <button type="button" className="operator-line-code" onClick={clearLine}>
+              {lineCode}
+            </button>
             {activeRun && <span className="operator-run-name">{activeRun.urun_adi}</span>}
           </div>
           <span aria-live="polite">
@@ -358,6 +451,14 @@ function OperatorPanel() {
           <button
             type="button"
             className="ghost-button"
+            onClick={() => setRunEndOpen(true)}
+            disabled={!activeRun}
+          >
+            Ürün değiştir
+          </button>
+          <button
+            type="button"
+            className="ghost-button"
             onClick={() => setPending({ type: 'shift-end' })}
           >
             Vardiyayı bitir
@@ -372,6 +473,13 @@ function OperatorPanel() {
                 {formatDuration(son ? son.durationMs : 0)}
               </span>
             </div>
+
+            <button type="button" className="speed-row" onClick={() => setSpeedOpen(true)}>
+              <span className="speed-row-label plate">Çalışma hızı</span>
+              <span className="speed-row-value tnum">
+                {activeRun?.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : 'Gir'}
+              </span>
+            </button>
 
             {pace && (
               <div className={`plan-block plan-block--${pace.durum}`}>
@@ -402,17 +510,19 @@ function OperatorPanel() {
             <div className="operator-counts">
               <div className="count-cell">
                 <span className="count-label plate">Palet</span>
-                <span className="count-value tnum">{paletler.paletAdedi}</span>
+                <span className="count-value tnum">{paletlerToplam.paletAdedi}</span>
               </div>
               <div className="count-cell">
                 <span className="count-label plate">Koli</span>
-                <span className="count-value tnum">{paletler.koliAdedi}</span>
+                <span className="count-value tnum">{paletlerToplam.koliAdedi}</span>
               </div>
               <div className="count-cell">
                 <span className="count-label plate">Paket</span>
                 <span className="count-value tnum">{paket ?? '—'}</span>
               </div>
             </div>
+
+            <ProductHistory runs={runs} events={events} pallets={pallets} nowMs={now} />
           </div>
 
           <div className="operator-actions">
@@ -495,11 +605,48 @@ function OperatorPanel() {
           onCancel={() => setPending(null)}
         />
 
+        <TimeSheet
+          open={pending?.type === 'product-start'}
+          title="Yeni ürüne ne zaman geçildi?"
+          confirmLabel="Ürünü başlat"
+          tone="start"
+          initialMs={now}
+          range={eventRange}
+          onConfirm={handleTimeConfirm}
+          onCancel={() => setPending(null)}
+        />
+
         <StopNoteSheet
           open={noteEventId !== null}
           suggestions={suggestions}
           onSave={saveNote}
           onSkip={() => setNoteEventId(null)}
+        />
+
+        <SpeedSheet
+          open={speedOpen}
+          initialValue={activeRun?.calisma_hizi_pkt_dk}
+          onConfirm={updateSpeed}
+          onCancel={() => setSpeedOpen(false)}
+        />
+
+        <RunEndSheet
+          open={runEndOpen}
+          run={activeRun}
+          koliAdedi={activeRunPaletler.koliAdedi}
+          paketAdedi={activeRunPaket}
+          onConfirm={handleRunEndConfirm}
+          onCancel={() => setRunEndOpen(false)}
+        />
+
+        <ShiftWizard
+          open={productWizardOpen}
+          mode="product"
+          onClose={() => setProductWizardOpen(false)}
+          onSubmit={(payload) => {
+            setProductWizardOpen(false)
+            setPending({ type: 'product-start', payload })
+          }}
         />
 
         <EventLog

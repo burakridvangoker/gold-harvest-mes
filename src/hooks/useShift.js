@@ -21,6 +21,16 @@ export function useShift(lineCode) {
   const [error, setError] = useState(null)
 
   const refresh = useCallback(async () => {
+    if (!lineCode) {
+      setShift(null)
+      setRuns([])
+      setEvents([])
+      setPallets([])
+      setError(null)
+      setLoading(false)
+      return
+    }
+
     const { data: openShift, error: shiftError } = await supabase
       .from('shifts')
       .select('*')
@@ -73,6 +83,11 @@ export function useShift(lineCode) {
 
   useEffect(() => {
     let isMounted = true
+
+    if (!lineCode) {
+      setLoading(false)
+      return undefined
+    }
 
     const run = async () => {
       await refresh()

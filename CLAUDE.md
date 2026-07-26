@@ -1,8 +1,9 @@
 # Gold Harvest MES
 
-Gıda paketleme hattı (şu an tek hat: `PFM-11`) için üretim takip sistemi.
-Türkçe UI, Supabase realtime, React + Vite. Bu dosya projenin kalıcı
-hafızasıdır — bir sohbet oturumu bitse de burada yazan kararlar geçerlidir.
+Gıda paketleme hatları (`PFM-4`, `PFM-10`, `PFM-11` — `src/lib/lines.js`)
+için üretim takip sistemi. Türkçe UI, Supabase realtime, React + Vite.
+Bu dosya projenin kalıcı hafızasıdır — bir sohbet oturumu bitse de burada
+yazan kararlar geçerlidir.
 
 **Önemli sınır:** Bu dosya proje bağlamını taşır, konuşma geçmişini
 taşımaz. Yeni bir oturum (başka bir hesap, başka bir kişi, limit bitip
@@ -23,7 +24,14 @@ npm run build
 ```
 
 Rotalar (`src/main.jsx`): `/` (Vite karşılama sayfası, kullanılmıyor),
-`/operator` (OperatorPanel), `/mudur` (ManagerDashboard).
+`/operator` (OperatorPanel), `/mudur` (ManagerDashboard). İkisi de önce
+hat seçtirir (`LineSelect`, `useLineCode` — cihaz başına `localStorage`'da
+tutulur), seçilen hat plakasına (`.operator-line-code`/`.manager-line-code`)
+dokununca hat değiştirilebilir.
+
+Vercel'e deploy edilirken **Production Branch** çalışan geliştirme
+branch'ine ayarlı olmalı (`main` değil) — bkz. proje geçmişi. `vercel.json`
+SPA rewrite kuralı taşır, olmadan `/operator`/`/mudur` doğrudan girişte 404 verir.
 
 ## Veritabanı şeması — sırayla çalıştır
 
@@ -32,6 +40,9 @@ Rotalar (`src/main.jsx`): `/` (Vite karşılama sayfası, kullanılmıyor),
 3. `setup_shifts.sql` — `shifts`, `product_runs`
 4. `setup_timeline.sql` — `timeline_events`, `pallet_records`
 5. `migrate_to_timeline.sql` — `line_status`'u türetilen alanlardan arındırır
+6. `add_run_details.sql` — PFM-4/PFM-10 hat kayıtları, `hedef_hiz_pkt_dk` →
+   `calisma_hizi_pkt_dk` yeniden adlandırma, `bos_paket_agirlik_g` /
+   `ortalama_gramaj_g` kolonları
 
 RLS tüm tablolarda açık, tüm politikalar `using (true)` — henüz
 kimlik doğrulama yok, sahada hızlı iterasyon için bilinçli bir tercih.
@@ -68,6 +79,51 @@ Faz 1 UI'ı onu kullanmıyor. `frequentNotes()` (`src/lib/timeline.js`)
 tekrarlayan notları sıklığa göre sıralayıp tek dokunuşluk çip olarak
 sunuyor — kodlar zamanla buradan, elle katalog yönetimi gerekmeden
 terfi edecek. Bu tasarım kasıtlı; erken kod zorunluluğu eklemeyin.
+
+## Çalışma hızı: hedef değil, anlık değer
+
+`product_runs.calisma_hizi_pkt_dk` kurulumda bir kere sorulup kilitlenen
+bir "hedef" değil — operatörün üretim sırasında `SpeedSheet` ile istediği
+zaman güncelleyebildiği anlık bir değerdir (eski adı `hedef_hiz_pkt_dk`,
+`add_run_details.sql`'de yeniden adlandırıldı). `ShiftWizard`'ın kurulum
+adımında artık sorulmuyor; operatör ana ekranındaki "Çalışma hızı" satırına
+dokunarak her an değiştirir. Yeni bir "hedef hız" ihtiyacı çıkarsa bu ayrı
+bir alan olmalı, bu kolonun anlamını geri döndürmeyin.
+
+## Ambalaj firesi hesabı
+
+Her ürün üretimi bitince (`RunEndSheet`, ürün değiştirirken ya da vardiya
+biterken tetiklenir) operatörden dolu/boş paket numaratör **bitişi**
+istenir (başlangıçları zaten `ShiftWizard`'da alınıyor). Hesap
+`packagingWaste()` (`src/lib/timeline.js`) içinde, saf fonksiyon olarak:
+
+- `doluFark = doluBitis - doluBaslangic`, `bosFark = bosBitis - bosBaslangic`
+- `doluFire = doluFark - toplamPaket` (üretilen paket, `koliToPaket` ile
+  palet kayıtlarından türetilir — burada da saklanmaz)
+- `ambalajFireAdet = doluFire + bosFark`, grama çevirmek için
+  `product_runs.bos_paket_agirlik_g` ile çarpılır
+
+`bos_paket_agirlik_g` ürün kurulumunda bir kere sorulur (ambalaj malzemesi
+değişmedikçe sabit); `ortalama_gramaj_g` ise `RunEndSheet`'te üretim
+sonunda teraziden okunan değer olarak. `RunEndSheet` bu hesabı operatör
+numaratörleri yazarken CANLI gösterir — kayıttan sonra değil, girerken.
+
+## Ürün geçmişi ve ürün değiştirme
+
+Aynı vardiyada birden çok ürün üretilebilir (Faz 1'in aksine artık UI'da
+var). Akış: operatör ekranındaki "Ürün değiştir" → `RunEndSheet` (bitiş
+numaratörleri + fire önizleme, aktif `product_run`'a kaydedilir) →
+`ShiftWizard mode="product"` (yeni ürün bilgisi) → `TimeSheet` ("yeni
+ürüne ne zaman geçildi") → yeni `product_run` satırı + o run'a işaret eden
+yeni `uretim` olayı. Eski ürüne dönmek istenirse (henüz UI'da yok, şema
+destekliyor) aynı prensip: eski `product_run_id`'siyle yeni bir olay.
+
+`ProductHistory` (`src/components/ProductHistory.jsx`) vardiyadaki her
+ürünü `runSpans()` ile (ilk başlangıç → son bitiş, ara dönüşler dahil
+değil) kart olarak listeler; karta dokunca süre/palet/koli/paket/verim ve
+(varsa) ambalaj firesi detayı açılır. Bu bileşen de kendi hesaplarını
+`timeline.js`'ten yapar, hazır veri almaz — kod konumu haritasındaki
+kuralla tutarlı.
 
 ## Andon tasarım sistemi
 
@@ -106,28 +162,36 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
   Realtime'da **artımlı yama değil yeniden çekme** yapılır: kayıtlar
   düzenlenebilir/silinebilir olduğu için artımlı birleştirme kolayca
   tutarsız düşer. Vardiya başına veri az, yeniden çekmek ucuz.
-- `src/components/TimeSheet.jsx` — geriye dönük saat düzeltme. Durum
-  değiştiren HER aksiyon (başlat/durdur/palet/vardiya bitir) buradan geçer.
+- `src/components/TimeSheet.jsx` — geriye dönük saat düzeltme, kaydırmalı
+  saat/dakika çarkı (`WheelColumn`). Durum değiştiren HER aksiyon
+  (başlat/durdur/palet/vardiya bitir/ürün geçişi) buradan geçer.
 - `src/components/StopNoteSheet.jsx` — serbest metin duruş notu + sık
   kullanılan çipler.
 - `src/components/EventLog.jsx` — olay geçmişi, düzenle/sil yüzeyi.
 - `src/components/ShiftWizard.jsx` — vardiya/ürün başlatma. `mode="shift"`
-  (vardiya+ilk ürün) ve `mode="product"` (Faz 2, ürün değişimi) destekler.
+  (vardiya+ilk ürün) ve `mode="product"` (vardiya içi ürün değişimi,
+  operatör ekranına bağlı) destekler.
+- `src/components/SpeedSheet.jsx` — çalışma hızını istendiği an düzenleme.
+- `src/components/RunEndSheet.jsx` — ürün bitişinde numaratör + ambalaj
+  fire önizlemesi.
+- `src/components/ProductHistory.jsx` — vardiyadaki ürün kartları + detay.
+- `src/components/Sheet.css` — SpeedSheet/RunEndSheet/ProductHistory'nin
+  paylaştığı nötr alttan-açılan sayfa iskeleti (TimeSheet/StopNoteSheet
+  kendi tonlarını taşıdığı için ayrı kaldı).
+- `src/components/LineSelect.jsx` + `src/hooks/useLineCode.js` — hat
+  seçimi, cihaz başına `localStorage`'da.
+- `src/lib/lines.js` — sahadaki hatların tek kaynağı (`LINE_CODES`).
 
 ## Faz durumu
 
-**Faz 1 (bu commit'te tamamlandı):** vardiya yaşam döngüsü, zaman
-çizelgesi + geriye dönük düzeltme, kodsuz duruş notu, olay geçmişi
-(düzenle/sil), ayarlanabilir palet/koli, vardiya planı ilerlemesi ve
-tempo göstergesi ("X dk öndesin/geridesin"). Vardiya başına tek ürün
-varsayılır — şema çoklu ürünü destekler, UI henüz yok.
+**Tamamlandı:** vardiya yaşam döngüsü, zaman çizelgesi + geriye dönük
+düzeltme (kaydırmalı saat çarkı), kodsuz duruş notu, olay geçmişi
+(düzenle/sil), ayarlanabilir palet/koli, vardiya planı ilerlemesi ve tempo
+göstergesi, çoklu hat seçici, aynı vardiyada birden çok ürün (ürün
+değiştir akışı), ürün geçmişi kartları, çalışma hızını her an düzenleme,
+ambalaj firesi hesabı.
 
-**Faz 2 (yapılmadı):** ürün değişimi UI'ı (`ShiftWizard` `mode="product"`
-zaten hazır, operatör ekranına bağlanmadı), geçmiş ürün kartları, eski
-ürüne geri dönüş, ürün bazlı + genel verim ayrımı, müdür panosunda run
-geçmişi paneli, not→kod terfi arayüzü (`stop_reasons` tablosu şemada
-duruyor, kullanılmıyor).
-
-**Çoklu hat:** DB/mantık genel (`line_code` her tabloda), ama UI hâlâ
-`PFM-11`'e sabit (`OperatorPanel.jsx` ve `ManagerDashboard.jsx` içinde
-`LINE_CODE` sabiti). Çoklu hat gerekirse hat seçici eklenmeli.
+**Yapılmadı:** eski ürüne geri dönüp üretime devam etme UI'ı (şema/`
+runSpans` bunu zaten destekliyor, sadece "bu ürüne dön" butonu yok), ürün
+bazlı + genel verim ayrımının müdür panosunda ayrı gösterimi, not→kod
+terfi arayüzü (`stop_reasons` tablosu şemada duruyor, kullanılmıyor).
