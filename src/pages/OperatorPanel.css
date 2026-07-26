@@ -87,6 +87,20 @@
   white-space: nowrap;
 }
 
+/* Vardiya no + operatör adı — dokununca düzeltilebilir (yanlış yazılan ad). */
+.operator-shift-info {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--data);
+  font-size: clamp(0.8rem, 2.8vw, 0.95rem);
+  color: var(--film-dim);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .operator-idle-date {
   margin: 0.75rem 0 0;
   font-size: clamp(0.9rem, 3vw, 1.1rem);

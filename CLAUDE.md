@@ -216,7 +216,18 @@ başına koli, hedef koli, dolu/boş paket başlangıç no) sonradan
 düzeltilebilir — sahada bu alanlar sıkça eksik/yanlış girilip
 hatırlandıkça düzeltiliyor. `OperatorPanel`'deki `updateRun` bu formdan
 gelen patch'i doğrudan `product_runs` satırına yazar (`SpeedSheet`'in
-`calisma_hizi_pkt_dk` güncellemesiyle aynı desen).
+`calisma_hizi_pkt_dk` güncellemesiyle aynı desen). Bitiş numaratörleri
+(dolu/boş paket bitiş no, ortalama gramaj) sadece üretimi bitmiş bir
+ürün için gösterilir (`!span.ongoing`) — aktif üründe henüz bitiş yok.
+
+**Operatör adı da sonradan düzeltilebilir:** `OperatorPanel` başlığında
+artık "{vardiya}. vardiya · {operatör}" satırı var (`.operator-shift-info`,
+önceden hiç gösterilmiyordu), dokununca ad-soyad düzenlenebiliyor
+(`updateOperator` → `shifts.operator`). Vardiya NUMARASI kasıtlı olarak
+düzenlenemez — değiştirmek `planlanan_bitis`/`started_at`'i de değiştirmeyi
+gerektirir ki bu tüm ürünlerin `paceStatus` hesaplarını geriye dönük
+bozar; yanlış vardiya seçildiyse çözüm o vardiyayı bitirip doğrusunu
+yeniden açmak (vardiyalar ucuz, yeniden oluşturmak sorun değil).
 
 ## Andon tasarım sistemi
 

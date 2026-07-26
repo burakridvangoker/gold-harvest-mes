@@ -24,6 +24,7 @@ import ProductHistory from '../components/ProductHistory'
 import EventLog from '../components/EventLog'
 import ShiftWizard from '../components/ShiftWizard'
 import LineSelect from '../components/LineSelect'
+import '../components/Sheet.css'
 import './OperatorPanel.css'
 
 const TAM_ISRAR_MS = 30 * 60 * 1000
@@ -39,6 +40,8 @@ function OperatorPanel() {
   const [productWizardOpen, setProductWizardOpen] = useState(false)
   const [runEndOpen, setRunEndOpen] = useState(false)
   const [speedOpen, setSpeedOpen] = useState(false)
+  const [operatorOpen, setOperatorOpen] = useState(false)
+  const [operatorName, setOperatorName] = useState('')
   const [logOpen, setLogOpen] = useState(false)
   const [pending, setPending] = useState(null)
   const [noteEventId, setNoteEventId] = useState(null)
@@ -344,6 +347,18 @@ function OperatorPanel() {
     [guard],
   )
 
+  const updateOperator = useCallback(
+    (name) => {
+      setOperatorOpen(false)
+      if (!shift) return
+      guard(
+        () => supabase.from('shifts').update({ operator: name.trim() || null }).eq('id', shift.id),
+        'Operatör güncellenemedi',
+      )
+    },
+    [shift, guard],
+  )
+
   const handleRunEndConfirm = useCallback(
     async (values) => {
       setRunEndOpen(false)
@@ -424,6 +439,16 @@ function OperatorPanel() {
           <div className="operator-header-left">
             <button type="button" className="operator-line-code" onClick={clearLine}>
               {lineCode}
+            </button>
+            <button
+              type="button"
+              className="operator-shift-info"
+              onClick={() => {
+                setOperatorName(shift.operator ?? '')
+                setOperatorOpen(true)
+              }}
+            >
+              {shift.vardiya}. vardiya · {shift.operator || 'Operatör girilmedi'}
             </button>
             <span className="operator-run-name">
               {activeRun ? activeRun.urun_adi : 'Ürün seçilmedi'}
@@ -641,6 +666,48 @@ function OperatorPanel() {
           onConfirm={updateSpeed}
           onCancel={() => setSpeedOpen(false)}
         />
+
+        {operatorOpen && (
+          <div className="sheet-overlay" onClick={() => setOperatorOpen(false)}>
+            <div
+              className="sheet-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Operatör"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="sheet-handle" />
+              <h2 className="sheet-title plate">Operatör</h2>
+              <label className="sheet-field">
+                <span className="sheet-field-label">Ad Soyad</span>
+                <input
+                  className="sheet-input"
+                  type="text"
+                  value={operatorName}
+                  onChange={(event) => setOperatorName(event.target.value)}
+                  placeholder="Ad Soyad"
+                  autoFocus
+                />
+              </label>
+              <div className="sheet-actions">
+                <button
+                  type="button"
+                  className="sheet-button sheet-button--secondary"
+                  onClick={() => setOperatorOpen(false)}
+                >
+                  Vazgeç
+                </button>
+                <button
+                  type="button"
+                  className="sheet-button sheet-button--primary"
+                  onClick={() => updateOperator(operatorName)}
+                >
+                  Kaydet
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <RunEndSheet
           open={runEndOpen}

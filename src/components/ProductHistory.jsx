@@ -32,6 +32,9 @@ const runToForm = (run) => ({
   hedefKoli: run.hedef_koli != null ? String(run.hedef_koli) : '',
   doluPaketBaslangic: run.dolu_paket_baslangic != null ? String(run.dolu_paket_baslangic) : '',
   bosPaketBaslangic: run.bos_paket_baslangic != null ? String(run.bos_paket_baslangic) : '',
+  doluPaketBitis: run.dolu_paket_bitis != null ? String(run.dolu_paket_bitis) : '',
+  bosPaketBitis: run.bos_paket_bitis != null ? String(run.bos_paket_bitis) : '',
+  ortalamaGramaj: run.ortalama_gramaj_g != null ? String(run.ortalama_gramaj_g) : '',
 })
 
 /*
@@ -101,6 +104,9 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun }) {
       hedef_koli: toInt(form.hedefKoli),
       dolu_paket_baslangic: toInt(form.doluPaketBaslangic),
       bos_paket_baslangic: toInt(form.bosPaketBaslangic),
+      dolu_paket_bitis: toInt(form.doluPaketBitis),
+      bos_paket_bitis: toInt(form.bosPaketBitis),
+      ortalama_gramaj_g: toNum(form.ortalamaGramaj),
     })
     setEditing(false)
   }
@@ -237,6 +243,47 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun }) {
                     }
                   />
                 </label>
+
+                {!open.span?.ongoing && (
+                  <>
+                    <label className="sheet-field">
+                      <span className="sheet-field-label">Dolu paket bitiş no</span>
+                      <input
+                        className="sheet-input tnum"
+                        type="number"
+                        inputMode="numeric"
+                        value={form.doluPaketBitis}
+                        onChange={(event) =>
+                          setForm((prev) => ({ ...prev, doluPaketBitis: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label className="sheet-field">
+                      <span className="sheet-field-label">Boş paket bitiş no</span>
+                      <input
+                        className="sheet-input tnum"
+                        type="number"
+                        inputMode="numeric"
+                        value={form.bosPaketBitis}
+                        onChange={(event) =>
+                          setForm((prev) => ({ ...prev, bosPaketBitis: event.target.value }))
+                        }
+                      />
+                    </label>
+                    <label className="sheet-field">
+                      <span className="sheet-field-label">Ortalama gramaj (g)</span>
+                      <input
+                        className="sheet-input tnum"
+                        type="number"
+                        inputMode="decimal"
+                        value={form.ortalamaGramaj}
+                        onChange={(event) =>
+                          setForm((prev) => ({ ...prev, ortalamaGramaj: event.target.value }))
+                        }
+                      />
+                    </label>
+                  </>
+                )}
 
                 <div className="sheet-actions">
                   <button
