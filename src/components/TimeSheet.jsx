@@ -10,10 +10,18 @@ import './TimeSheet.css'
  * Bu yüzden durum değiştiren HER aksiyon buradan geçer.
  *
  * Tasarım kuralı: zamanında girdiyse tek dokunuş yetmeli. Varsayılan "şimdi",
- * onay butonu hemen altında. Geç kaldıysa tek çip daha: "-5dk".
+ * onay butonu hemen altında. Geç kaldıysa saat/dakika çarkını kaydırır.
+ *
+ * Saat girişi kaydırmalı çark (telefonda tek elle, bakmadan bile kullanılır).
+ * Klavyeyle iki haneli sayı yazmaktan (özellikle native <input type="time">
+ * — AM/PM sorunu CLAUDE.md'de kayıtlı) daha hızlı ve dokunmatik ekrana daha
+ * uygun. Fare tekerleği ve trackpad ile masaüstünde de çalışır.
  */
 
 const QUICK_STEPS = [1, 5, 10, 15, 30]
+const ITEM_HEIGHT = 48
+const VISIBLE_COUNT = 5
+const PAD_COUNT = Math.floor(VISIBLE_COUNT / 2)
 
 function relativeLabel(valueMs, nowMs) {
   const diffDk = Math.round((nowMs - valueMs) / 60000)
@@ -28,7 +36,77 @@ function relativeLabel(valueMs, nowMs) {
 }
 
 const pad2 = (n) => String(n).padStart(2, '0')
-const onlyDigits = (value) => value.replace(/\D/g, '').slice(0, 2)
+
+/*
+ * Tek bir kaydırmalı sütun (saat ya da dakika). Değer dışarıdan değişirse
+ * (çipler, aralık kısıtı) çark o değere kayar; kullanıcı kaydırdığında
+ * kaydırma durunca (debounce) en yakın satır değere yuvarlanıp bildirilir.
+ */
+function WheelColumn({ length, value, onChange, formatItem, label }) {
+  const viewportRef = useRef(null)
+  const settleTimer = useRef(null)
+  const isExternalScroll = useRef(false)
+
+  useEffect(() => {
+    const el = viewportRef.current
+    if (!el) return
+
+    const target = value * ITEM_HEIGHT
+    if (Math.abs(el.scrollTop - target) > 1) {
+      isExternalScroll.current = true
+      el.scrollTo({ top: target, behavior: 'auto' })
+    }
+  }, [value])
+
+  const handleScroll = () => {
+    if (settleTimer.current) clearTimeout(settleTimer.current)
+
+    settleTimer.current = setTimeout(() => {
+      const el = viewportRef.current
+      if (!el) return
+
+      if (isExternalScroll.current) {
+        isExternalScroll.current = false
+        return
+      }
+
+      const index = Math.min(length - 1, Math.max(0, Math.round(el.scrollTop / ITEM_HEIGHT)))
+      const target = index * ITEM_HEIGHT
+      if (Math.abs(el.scrollTop - target) > 1) {
+        el.scrollTo({ top: target, behavior: 'smooth' })
+      }
+      if (index !== value) onChange(index)
+    }, 120)
+  }
+
+  const selectItem = (index) => {
+    const el = viewportRef.current
+    if (el) el.scrollTo({ top: index * ITEM_HEIGHT, behavior: 'smooth' })
+    if (index !== value) onChange(index)
+  }
+
+  return (
+    <div className="wheel-column" aria-label={label}>
+      <div className="wheel-highlight" aria-hidden="true" />
+      <div className="wheel-viewport" ref={viewportRef} onScroll={handleScroll}>
+        <div style={{ height: PAD_COUNT * ITEM_HEIGHT }} aria-hidden="true" />
+        {Array.from({ length }, (_, i) => (
+          <button
+            key={i}
+            type="button"
+            tabIndex={-1}
+            className={`wheel-item tnum${i === value ? ' wheel-item--active' : ''}`}
+            style={{ height: ITEM_HEIGHT }}
+            onClick={() => selectItem(i)}
+          >
+            {formatItem(i)}
+          </button>
+        ))}
+        <div style={{ height: PAD_COUNT * ITEM_HEIGHT }} aria-hidden="true" />
+      </div>
+    </div>
+  )
+}
 
 function TimeSheet({
   open,
@@ -43,25 +121,6 @@ function TimeSheet({
 }) {
   const [valueMs, setValueMs] = useState(initialMs ?? Date.now())
   const [nowMs, setNowMs] = useState(() => Date.now())
-
-  /*
-   * Saat/dakika alanları kendi taslak metnini tutar. <input type="time">
-   * kullanmıyoruz çünkü o denetim 12/24 saat gösterimini sayfanın değil
-   * TARAYICI/OS yerel ayarının diline göre seçiyor (lang="tr-TR" bunu
-   * etkilemiyor) — cihaz İngilizce ayarlıysa operatör AM/PM ile
-   * karşılaşırdı. <input type="number"> ise başka bir sorun çıkardı:
-   * her tuş vuruşunda anlık pad/clamp yapıp değeri geri yazınca native
-   * spinner davranışı ve önde sıfır normalizasyonu araya girip "14"
-   * yazmaya çalışırken "01" + "4" gibi ara durumları bozuyordu.
-   *
-   * Çözüm: odaklanan alan serbestçe yazılır (taslak), diğer alan ve dış
-   * değişiklikler (hızlı geri alma çipleri) valueMs'ten senkronlanır;
-   * asıl değere geçiş yalnızca blur'da veya 2 hane tamamlanınca olur.
-   */
-  const [hhDraft, setHhDraft] = useState('00')
-  const [mmDraft, setMmDraft] = useState('00')
-  const focusField = useRef(null)
-  const minuteInputRef = useRef(null)
   const wasOpen = useRef(false)
 
   /*
@@ -76,7 +135,6 @@ function TimeSheet({
     if (open && !wasOpen.current) {
       setValueMs(initialMs ?? Date.now())
       setNowMs(Date.now())
-      focusField.current = null
     }
     wasOpen.current = open
   }, [open, initialMs])
@@ -92,46 +150,24 @@ function TimeSheet({
     [range.minMs, range.maxMs, nowMs],
   )
 
-  useEffect(() => {
-    const [h, m] = toTimeInputValue(valueMs).split(':')
-    if (focusField.current !== 'hh') setHhDraft(h)
-    if (focusField.current !== 'mm') setMmDraft(m)
-  }, [valueMs])
-
   if (!open) return null
+
+  const [hourStr, minuteStr] = toTimeInputValue(valueMs).split(':')
+  const hour = Number(hourStr)
+  const minute = Number(minuteStr)
 
   const shiftBy = (dakika) => {
     setValueMs((current) => clampToWindow(current - dakika * 60000, effectiveRange))
   }
 
-  const commit = (field, raw) => {
-    const max = field === 'hh' ? 23 : 59
-    const parsed = parseInt(raw, 10)
-    if (!Number.isFinite(parsed)) return
-
-    const clamped = Math.min(max, Math.max(0, parsed))
-    const [h, m] = toTimeInputValue(valueMs).split(':')
-    const composed = fromTimeInputValue(
-      valueMs,
-      field === 'hh' ? `${pad2(clamped)}:${m}` : `${h}:${pad2(clamped)}`,
-    )
+  const setHour = (h) => {
+    const composed = fromTimeInputValue(valueMs, `${pad2(h)}:${minuteStr}`)
     if (composed != null) setValueMs(clampToWindow(composed, effectiveRange))
   }
 
-  const handleDraftChange = (field, setDraft) => (event) => {
-    const digits = onlyDigits(event.target.value)
-    setDraft(digits)
-
-    if (digits.length === 2) {
-      commit(field, digits)
-      /* 2. hane girilince otomatik dakikaya geç: OTP kutucukları gibi. */
-      if (field === 'hh') minuteInputRef.current?.focus()
-    }
-  }
-
-  const handleBlur = (field, draft) => () => {
-    focusField.current = null
-    commit(field, draft || '0')
+  const setMinute = (m) => {
+    const composed = fromTimeInputValue(valueMs, `${hourStr}:${pad2(m)}`)
+    if (composed != null) setValueMs(clampToWindow(composed, effectiveRange))
   }
 
   const atFloor = effectiveRange.minMs != null && valueMs <= effectiveRange.minMs
@@ -150,39 +186,17 @@ function TimeSheet({
 
         <div className="timesheet-clock-field">
           <span className="timesheet-clock-hint plate">Saat</span>
-          <div className="timesheet-clock">
-            <input
-              className="timesheet-clock-part tnum"
-              type="text"
-              inputMode="numeric"
-              maxLength={2}
-              value={hhDraft}
-              onFocus={(event) => {
-                focusField.current = 'hh'
-                event.target.select()
-              }}
-              onChange={handleDraftChange('hh', setHhDraft)}
-              onBlur={handleBlur('hh', hhDraft)}
-              aria-label="Saat"
-            />
+          <div className="timesheet-wheels">
+            <WheelColumn length={24} value={hour} onChange={setHour} formatItem={pad2} label="Saat" />
             <span className="timesheet-clock-colon">:</span>
-            <input
-              ref={minuteInputRef}
-              className="timesheet-clock-part tnum"
-              type="text"
-              inputMode="numeric"
-              maxLength={2}
-              value={mmDraft}
-              onFocus={(event) => {
-                focusField.current = 'mm'
-                event.target.select()
-              }}
-              onChange={handleDraftChange('mm', setMmDraft)}
-              onBlur={handleBlur('mm', mmDraft)}
-              aria-label="Dakika"
+            <WheelColumn
+              length={60}
+              value={minute}
+              onChange={setMinute}
+              formatItem={pad2}
+              label="Dakika"
             />
           </div>
-          <span className="timesheet-clock-edit-hint">Rakama dokun, elle yaz</span>
         </div>
 
         <p className={`timesheet-relative${atFloor ? ' timesheet-relative--floor' : ''}`}>

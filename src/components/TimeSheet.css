@@ -70,66 +70,103 @@
   font-size: 0.85rem;
 }
 
-.timesheet-clock {
+.timesheet-wheels {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
-  gap: 0.15em;
+  gap: 0.4rem;
 }
 
 /*
- * İki ayrı sayı alanı: native <input type="time"> yerine. Native denetim
- * 12/24 saat gösterimini tarayıcı/OS yerel ayarına göre seçiyordu ve
+ * Kaydırmalı saat/dakika çarkı: native <input type="time"> yerine. Native
+ * denetim 12/24 saat gösterimini tarayıcı/OS yerel ayarına göre seçiyordu ve
  * lang="tr-TR" bunu değiştirmiyordu — fabrikada cihaz İngilizce ayarlıysa
- * operatör AM/PM ile karşılaşırdı. Burada format tamamen bizim elimizde.
+ * operatör AM/PM ile karşılaşırdı. Manuel iki haneli yazı alanı da (önceki
+ * sürüm) tuşla girmeyi gerektiriyordu; sahada telefonu tek elle tutan
+ * operatör için kaydırmak yazmaktan daha hızlı ve daha az hataya açık.
  *
- * Görünür kutu bilerek eklendi: sadece alt çizgi varken operatör bunun
- * dokunup elle yazılabilir bir alan olduğunu fark etmiyordu, sadece hızlı
- * geri alma çiplerini (−1dk vb.) kullanabildiğini sanıyordu.
+ * ITEM_HEIGHT (48px) ve VISIBLE_COUNT (5) TimeSheet.jsx'teki sabitlerle
+ * birebir eşleşmeli — viewport yüksekliği ve scroll-snap hesabı JS'te bu
+ * sabitlere göre yapılıyor.
  */
-.timesheet-clock-part {
-  width: 2.1ch;
-  border: 2px solid var(--steel-600);
-  border-radius: 0.5rem;
-  background: var(--steel-700);
-  color: var(--tone);
+.wheel-column {
+  position: relative;
+  width: 3.4ch;
+}
+
+.wheel-viewport {
+  height: 240px;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 48px,
+    black calc(100% - 48px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 48px,
+    black calc(100% - 48px),
+    transparent 100%
+  );
+}
+
+.wheel-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-item {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  scroll-snap-align: center;
   font-family: var(--data);
-  font-size: clamp(3.5rem, 16vw, 5.5rem);
-  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-  text-align: center;
-  padding: 0.15em 0 0.25rem;
-  box-sizing: content-box;
-  caret-color: var(--tone);
-  cursor: text;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  color: var(--film-dim);
+  opacity: 0.45;
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease, opacity 0.15s ease, font-size 0.15s ease;
 }
 
-.timesheet-clock-part:hover {
-  border-color: var(--film-dim);
+.wheel-item--active {
+  color: var(--tone);
+  font-size: 1.9rem;
+  font-weight: 700;
+  opacity: 1;
 }
 
-.timesheet-clock-part:focus {
-  outline: none;
-  border-color: var(--tone);
-  background: var(--steel-800);
+.wheel-highlight {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 48px;
+  transform: translateY(-50%);
+  border-top: 2px solid var(--steel-600);
+  border-bottom: 2px solid var(--steel-600);
+  pointer-events: none;
 }
 
 .timesheet-clock-colon {
-  font-size: clamp(3rem, 13vw, 4.5rem);
+  font-size: 1.6rem;
   font-weight: 600;
   color: var(--film-dim);
-  transform: translateY(-0.08em);
 }
 
 .timesheet-clock-field:focus-within .timesheet-clock-hint {
   color: var(--tone);
-}
-
-.timesheet-clock-edit-hint {
-  font-size: 0.8rem;
-  color: var(--film-dim);
 }
 
 .timesheet-relative {
