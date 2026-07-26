@@ -105,25 +105,40 @@ function ManagerDashboard() {
   const activeRunTotals = activeRun ? runTotals.get(activeRun.id) ?? { uretimMs: 0, durusMs: 0 } : null
 
   /*
-   * Ürün geçmişi: her ürünün kendi hedef ilerlemesi ayrı bir satır. Aktif
-   * olan canlı sayılır (nowMs = şimdi); üretimi bitmiş bir ürün için tempo
-   * o ürünün son anına ("span.endMs") göre dondurulur — üstte asılı kalır,
-   * bir daha değişmez. Sıra `runs` ile aynı (sira artan), yani eski üstte.
+   * Ürün geçmişi: her ürünün kendi açık kalma / hız verimi / hedef
+   * ilerlemesi ayrı bir satır — üstteki iki oran genel (vardiya/aktif
+   * ürün), bunlar ürün bazlı ek bilgi. Aktif olan canlı sayılır
+   * (nowMs = şimdi); üretimi bitmiş bir ürün için tempo o ürünün son
+   * anına ("span.endMs") göre dondurulur — üstte asılı kalır, bir daha
+   * değişmez. Sıra `runs` ile aynı (sira artan), yani eski üstte.
    */
-  const planRows = runs
-    .filter((run) => run.hedef_koli)
+  const productRows = runs
     .map((run) => {
       const span = spans.get(run.id) ?? null
       if (!span) return null
+
       const isActive = run.id === activeRun?.id
-      const pace = paceStatus({
-        hedefKoli: run.hedef_koli,
-        uretilenKoli: paletlerByRun.get(run.id)?.koliAdedi ?? 0,
-        shiftStartMs: span.startMs,
-        shiftEndMs,
-        nowMs: isActive ? now : span.endMs,
-      })
-      return pace ? { run, pace, isActive } : null
+      const rt = runTotals.get(run.id) ?? { uretimMs: 0, durusMs: 0 }
+      const rToplamMs = rt.uretimMs + rt.durusMs
+      const acikKalmaOran = rToplamMs > 0 ? rt.uretimMs / rToplamMs : null
+
+      const koli = paletlerByRun.get(run.id)?.koliAdedi ?? 0
+      const runPaket = koliToPaket(koli, run.koli_ici_adet)
+      const perf = run.calisma_hizi_pkt_dk
+        ? hizVerimi({ paketAdedi: runPaket ?? 0, uretimMs: rt.uretimMs, hedefHizPktDk: run.calisma_hizi_pkt_dk })
+        : null
+
+      const pace = run.hedef_koli
+        ? paceStatus({
+            hedefKoli: run.hedef_koli,
+            uretilenKoli: koli,
+            shiftStartMs: span.startMs,
+            shiftEndMs,
+            nowMs: isActive ? now : span.endMs,
+          })
+        : null
+
+      return { run, isActive, acikKalmaOran, perf, pace }
     })
     .filter(Boolean)
 
@@ -239,24 +254,51 @@ function ManagerDashboard() {
             </div>
           </dl>
 
-          {planRows.length > 0 && (
+          {productRows.length > 0 && (
             <div className="plan-stack">
-              {planRows.map(({ run, pace, isActive }) => (
+              {productRows.map(({ run, acikKalmaOran, perf, pace, isActive }) => (
                 <div
                   key={run.id}
-                  className={`plan-row plan-row--${pace.durum}${isActive ? '' : ' plan-row--frozen'}`}
+                  className={`plan-row${pace ? ` plan-row--${pace.durum}` : ''}${
+                    isActive ? '' : ' plan-row--frozen'
+                  }`}
                 >
-                  <span className="plan-row-label plate">{run.urun_adi}</span>
-                  <span className="plan-row-figure tnum">
-                    {pace.uretilenKoli} / {pace.hedefKoli} koli
-                  </span>
-                  <span className="plan-row-status">
-                    {pace.durum === 'tamam'
-                      ? 'Hedef tamam'
-                      : pace.durum === 'planinda'
-                        ? 'Planında'
-                        : `${formatDelta(pace.farkDk)} ${pace.durum === 'onde' ? 'önde' : 'geride'}`}
-                  </span>
+                  <div className="plan-row-head">
+                    <span className="plan-row-label plate">{run.urun_adi}</span>
+                    <div className="plan-row-metrics tnum">
+                      <span className="plan-row-metric">
+                        <span className="plan-row-metric-value">
+                          {acikKalmaOran != null ? `%${Math.round(acikKalmaOran * 100)}` : '—'}
+                        </span>
+                        <span className="plan-row-metric-label plate">açık kalma</span>
+                      </span>
+                      <span className="plan-row-metric">
+                        <span className="plan-row-metric-value">
+                          {perf ? `%${Math.round(perf.oran * 100)}` : '—'}
+                        </span>
+                        <span className="plan-row-metric-label plate">hız verimi</span>
+                      </span>
+                    </div>
+                    {pace && (
+                      <>
+                        <span className="plan-row-figure tnum">
+                          {pace.uretilenKoli} / {pace.hedefKoli} koli
+                        </span>
+                        <span className="plan-row-status">
+                          {pace.durum === 'tamam'
+                            ? 'Hedef tamam'
+                            : pace.durum === 'planinda'
+                              ? 'Planında'
+                              : `${formatDelta(pace.farkDk)} ${pace.durum === 'onde' ? 'önde' : 'geride'}`}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {pace && (
+                    <div className="plan-row-track">
+                      <div className="plan-row-fill" style={{ width: `${pace.ilerleme * 100}%` }} />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

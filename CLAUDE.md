@@ -175,12 +175,22 @@ bir kavram: tek bir ürünün kendi hedefine göre önde/geride olması. Bu
 yüzden ayrı bir yerde (`.plan-stack`) altta gösterilir.
 
 **Ürün planı da ürün bazlı satırlara ayrılır:** vardiyada birden çok ürün
-varsa (`runs`, `sira` sırasıyla) her birinin kendi hedef satırı olur, en
-eski üstte. Aktif ürünün satırı canlıdır (`nowMs = now`); üretimi bitmiş
-bir ürünün satırı kendi son anına (`runSpans(...).endMs`) dondurulur ve
+varsa (`runs`, `sira` sırasıyla) her birinin kendi satırı olur, en eski
+üstte. Aktif ürünün satırı canlıdır (`nowMs = now`); üretimi bitmiş bir
+ürünün satırı kendi son anına (`runSpans(...).endMs`) dondurulur ve
 `.plan-row--frozen` ile soluklaştırılır — "üretimi bitti, bir daha
 değişmez" anlamında üstte asılı kalır. Yeni ürüne geçince onun kendi
-satırı altta, canlı olarak belirir.
+satırı altta, canlı olarak belirir. Her satır kendi ilerleme çubuğunu
+(`.plan-row-track`/`.plan-row-fill`) taşır — sadece sayı değil, görsel bir
+"çubuk" da olsun istendi.
+
+**Her ürünün kendi açık kalma / hız verimi de satırında gösterilir**
+(`.plan-row-metrics`): üsttekiler (`.oran-group`) genel/aktif ürüne göreyken,
+buradakiler o SATIRIN kendi `product_run_id`'sine ait `totalsByRun`/
+`palletTotalsByRun` değerlerinden hesaplanır — geçmiş bir ürünün kendi
+performansı da kalıcı olarak görünür kalsın diye. Hedefi olmayan bir ürün
+de (ilerleme çubuğu/hedef metni olmadan) yine de bu iki metrikle listeye
+girer; sadece hedefe bağlı kısımlar (`pace`) opsiyoneldir.
 
 ## Ürün geçmişi ve ürün değiştirme
 
@@ -264,9 +274,10 @@ düzeltme (kaydırmalı saat çarkı), kodsuz duruş notu, olay geçmişi
 (düzenle/sil), ayarlanabilir palet/koli, vardiya planı ilerlemesi ve tempo
 göstergesi, çoklu hat seçici, aynı vardiyada birden çok ürün (ürün
 değiştir akışı), ürün geçmişi kartları, çalışma hızını her an düzenleme,
-ambalaj firesi hesabı.
+ambalaj firesi hesabı, müdür panosunda ürün bazlı + genel verim ayrımı
+(açık kalma/hız verimi hem vardiya genelinde/aktif üründe hem her ürünün
+kendi satırında).
 
 **Yapılmadı:** eski ürüne geri dönüp üretime devam etme UI'ı (şema/`
-runSpans` bunu zaten destekliyor, sadece "bu ürüne dön" butonu yok), ürün
-bazlı + genel verim ayrımının müdür panosunda ayrı gösterimi, not→kod
+runSpans` bunu zaten destekliyor, sadece "bu ürüne dön" butonu yok), not→kod
 terfi arayüzü (`stop_reasons` tablosu şemada duruyor, kullanılmıyor).
