@@ -115,8 +115,20 @@ ne başlangıç saati ne de hedef koli. Vardiyaların saatleri sahada sabit
 ve belli (1. 07-15, 2. 15-23, 3. 23-07, üçü de 8 saat) — `createShift`
 bunu operatöre sormaz, `src/lib/time.js#vardiyaBaslangici` ile hesaplar
 (3. vardiya gece yarısını geçtiği için "bugünkü" saat henüz gelmediyse
-bir gün geriye düşer). Hedef koli ürün bazlı olduğu için (`product_runs.
-hedef_koli`, her ürün kendi hedefini `ShiftWizard mode="product"`'ta
+bir gün geriye düşer).
+
+**Vardiya seçimi otomatik ön-doldurulur:** operatör segmentli seçiciden
+istediği vardiyayı seçebilir ama sihirbaz açılışta `src/lib/time.js#
+aktifVardiyaNo` ile şu an içinde bulunulan vardiyayı önceden işaretler.
+Sebep: yanlış vardiya seçilirse (`vardiyaBaslangici` gerçek saatle
+tutarsız bir seçim için de kör kör bir başlangıç hesaplar) o vardiyanın
+"duruş" süresi saatlerce geriye gidebiliyor — sahada yaşandı (23:10'da
+"1. vardiya" seçilince o sabah 07:00'den beri "durdu" gösteren bir
+vardiya oluştu). Otomatik ön-doldurma bu sınıf hatayı ortadan kaldırır;
+tamamen engellemek istenmedi çünkü operatör vardiyasından birkaç dakika
+önce/sonra girip bilerek farklı bir vardiya seçebilmeli. Hedef koli ürün
+bazlı olduğu için (`product_runs.hedef_koli`, her ürün kendi hedefini
+`ShiftWizard mode="product"`'ta
 sorar) vardiya kurulumunda hiç sorulmaz.
 
 Vardiya açılınca `createShift` bir `product_run` oluşturmaz, sadece
@@ -136,6 +148,28 @@ değil `activeRun.hedef_koli` ile çalışır; pencere aktif ürünün kendi
 başlangıcından (`runSpans`) vardiyanın planlı bitişine kadardır. Bir
 ürünün hedefi yoksa (boş bırakılmışsa) plan bloğu hiç gösterilmez —
 vardiya genelinde ayrı bir hedef kolonu artık yok.
+
+## Müdür panosu: iki oran, birbirine karıştırılmasın
+
+`ManagerDashboard`'daki "Vardiya" bölgesi iki ayrı, her zaman görünen
+oran gösterir (`src/pages/ManagerDashboard.jsx`, `.oran-group`):
+
+- **Açık kalma oranı** — `shiftTotals(intervals).zamanKullanimi`: vardiya
+  boyunca makinenin ne kadarının "uretim" durumunda geçtiği (duruşlar
+  dahil toplam süreye oran). Vardiya geneli, aktif ürüne bağlı değil.
+- **Hız verimi** — `timeline.js#hizVerimi`: makine açık kaldığı sürede
+  girilen `calisma_hizi_pkt_dk`'ya göre üretilen paket sayısının kaç
+  saatlik "net iş"e karşılık geldiği. Örnek: 6 saat açık kaldı ama
+  üretilen paket hıza göre yalnızca 5 saatlik işe denk geliyorsa %83 —
+  mikro-duruşları ve hız düşüşünü, açık kalma oranından bağımsız olarak
+  yakalar.
+
+Bu ikisi eskiden tek bir slotu paylaşıyordu (ürün hedefi varsa açık kalma
+oranı hiç gösterilmiyordu) — kullanıcı ikisinin de HER ZAMAN ayrı ayrı
+görünmesini istedi. Ürün hedefi ilerlemesi (`paceStatus`) üçüncü, farklı
+bir kavram: tek bir ürünün kendi hedefine göre önde/geride olması. Bu
+yüzden ayrı bir satırda (`.plan-row`) altta, sadece aktif ürünün hedefi
+varsa gösterilir — üç metriği aynı slotta gösterip birbirine karıştırmayın.
 
 ## Ürün geçmişi ve ürün değiştirme
 

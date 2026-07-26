@@ -6,6 +6,7 @@ import {
   buildIntervals,
   currentState,
   downtimeByNote,
+  hizVerimi,
   koliToPaket,
   paceStatus,
   palletTotals,
@@ -22,6 +23,14 @@ const RECENT_EVENTS_LIMIT = 8
 const TOP_REASONS_LIMIT = 5
 const NO_REASON_LABEL = 'Sebep girilmemiş'
 const TAM_ISRAR_MS = 30 * 60 * 1000
+
+/** Bir oranı andon renk sınıfına çevirir — iyi/orta/kötü eşiği. */
+function seviyeDurumu(oran, { iyi = 0.85, kotu = 0.6 } = {}) {
+  if (oran == null) return null
+  if (oran >= iyi) return 'iyi'
+  if (oran < kotu) return 'kotu'
+  return 'orta'
+}
 
 function ManagerDashboard() {
   const { lineCode, selectLine, clearLine } = useLineCode()
@@ -103,6 +112,23 @@ function ManagerDashboard() {
       : null
 
   const zamanKullanimi = Math.round(totals.zamanKullanimi * 100)
+  const acikKalmaDurum = seviyeDurumu(totals.zamanKullanimi)
+
+  /*
+   * İkinci oran: makine açık kaldığı sürede, girilen çalışma hızına göre
+   * ne kadarı gerçekten "net iş"ti. Ör. 6 saat açık kaldı ama üretilen
+   * paket sayısı hıza göre yalnızca 5 saatlik işe karşılık geliyorsa
+   * %83 — duruşlardan bağımsız, hızdaki düşüşü/mikro-duruşları yakalar.
+   */
+  const performans = activeRun?.calisma_hizi_pkt_dk
+    ? hizVerimi({
+        paketAdedi: paket ?? 0,
+        uretimMs: totals.uretimMs,
+        hedefHizPktDk: activeRun.calisma_hizi_pkt_dk,
+      })
+    : null
+  const performansDurum = performans ? seviyeDurumu(performans.oran) : null
+  const performansYuzde = performans ? Math.round(performans.oran * 100) : null
 
   return (
     <div className={`manager-shell is-${state}`}>
@@ -149,31 +175,22 @@ function ManagerDashboard() {
         <section className="zone zone--today">
           <div className="zone-head">
             <h2 className="zone-title plate">Vardiya</h2>
-            {pace ? (
-              <span className={`usage-figure usage-figure--${pace.durum} tnum`}>
-                {pace.uretilenKoli} / {pace.hedefKoli}
-                <span className="usage-figure-note plate">
-                  {pace.durum === 'tamam'
-                    ? 'hedef tamam'
-                    : pace.durum === 'planinda'
-                      ? 'planında'
-                      : `${formatDelta(pace.farkDk)} ${
-                          pace.durum === 'onde' ? 'önde' : 'geride'
-                        }`}
-                </span>
-              </span>
-            ) : (
-              <span className="usage-figure tnum">
+            <div className="oran-group">
+              <span className={`usage-figure${acikKalmaDurum ? ` usage-figure--${acikKalmaDurum}` : ''} tnum`}>
                 %{zamanKullanimi}
-                <span className="usage-figure-note plate">çalışma oranı</span>
+                <span className="usage-figure-note plate">açık kalma</span>
               </span>
-            )}
+              <span className={`usage-figure${performansDurum ? ` usage-figure--${performansDurum}` : ''} tnum`}>
+                {performansYuzde != null ? `%${performansYuzde}` : '—'}
+                <span className="usage-figure-note plate">hız verimi</span>
+              </span>
+            </div>
           </div>
 
           <div
             className="split-bar"
             role="img"
-            aria-label={`Çalışma oranı yüzde ${zamanKullanimi}`}
+            aria-label={`Açık kalma oranı yüzde ${zamanKullanimi}`}
           >
             <div className="split-bar-run" style={{ width: `${totals.zamanKullanimi * 100}%` }} />
           </div>
@@ -200,6 +217,22 @@ function ManagerDashboard() {
               <dd className="figure-value tnum">{paket ?? '—'}</dd>
             </div>
           </dl>
+
+          {pace && (
+            <div className={`plan-row plan-row--${pace.durum}`}>
+              <span className="plan-row-label plate">Ürün planı</span>
+              <span className="plan-row-figure tnum">
+                {pace.uretilenKoli} / {pace.hedefKoli} koli
+              </span>
+              <span className="plan-row-status">
+                {pace.durum === 'tamam'
+                  ? 'Hedef tamam'
+                  : pace.durum === 'planinda'
+                    ? 'Planında'
+                    : `${formatDelta(pace.farkDk)} ${pace.durum === 'onde' ? 'önde' : 'geride'}`}
+              </span>
+            </div>
+          )}
         </section>
 
         {/* NEDEN */}

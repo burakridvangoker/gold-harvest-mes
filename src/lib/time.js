@@ -79,3 +79,15 @@ export function vardiyaBaslangici(vardiyaNo, nowMs = Date.now()) {
   const bugun = fromTimeInputValue(nowMs, `${String(saat).padStart(2, '0')}:00`)
   return bugun > nowMs ? bugun - 24 * 60 * 60 * 1000 : bugun
 }
+
+/**
+ * Şu an hangi vardiyanın penceresi içindeyiz. Vardiya sihirbazı açılış
+ * seçimini buna göre yapar — operatör yanlış vardiyayı seçip saatini
+ * (dolayısıyla o vardiyanın "duruş" süresini) saatlerce geriye çekmesin diye.
+ */
+export function aktifVardiyaNo(nowMs = Date.now()) {
+  const saat = new Date(nowMs + TR_OFFSET_MS).getUTCHours()
+  if (saat >= VARDIYA_SAATLERI[1] && saat < VARDIYA_SAATLERI[2]) return 1
+  if (saat >= VARDIYA_SAATLERI[2] && saat < VARDIYA_SAATLERI[3]) return 2
+  return 3
+}

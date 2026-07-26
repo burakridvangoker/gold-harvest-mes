@@ -7,6 +7,7 @@ import {
   currentState,
   downtimeByNote,
   frequentNotes,
+  hizVerimi,
   packagingWaste,
   paceStatus,
   palletTotals,
@@ -360,5 +361,22 @@ describe('duruş notları', () => {
     assert.equal(dokum[0].note, 'Bobin')
     assert.equal(dokum[0].ms, 40 * DK)
     assert.equal(dokum[0].adet, 2)
+  })
+})
+
+describe('hizVerimi', () => {
+  it('makine 6 saat açık kaldı ama üretilen paket 5 saatlik net işe karşılık geliyorsa %83 verir', () => {
+    // 100 pkt/dk hedefte 5 saatlik iş = 30.000 paket, 6 saatlik açık kalmaya bölünce
+    const sonuc = hizVerimi({ paketAdedi: 30000, uretimMs: 6 * 60 * DK, hedefHizPktDk: 100 })
+
+    assert.equal(sonuc.hedefPktDk, 100)
+    assert.ok(Math.abs(sonuc.mevcutPktDk - 83.33) < 0.01)
+    assert.ok(Math.abs(sonuc.oran - 0.8333) < 0.001)
+  })
+
+  it('eksik girdide null döner', () => {
+    assert.equal(hizVerimi({ paketAdedi: 0, uretimMs: 1000, hedefHizPktDk: 100 }), null)
+    assert.equal(hizVerimi({ paketAdedi: 10, uretimMs: 0, hedefHizPktDk: 100 }), null)
+    assert.equal(hizVerimi({ paketAdedi: 10, uretimMs: 1000, hedefHizPktDk: null }), null)
   })
 })

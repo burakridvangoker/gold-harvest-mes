@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { aktifVardiyaNo } from '../lib/time'
 import './ShiftWizard.css'
 
 /*
@@ -77,9 +78,15 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
   useEffect(() => {
     if (open) {
       setStep(0)
-      setForm(INITIAL_FORM)
+      /*
+       * Vardiya adımı şu an içinde bulunulan vardiyayla önceden doldurulur —
+       * operatör yanlış vardiyayı seçip saatini (dolayısıyla o vardiyanın
+       * "duruş" süresini) saatlerce geriye çekmesin diye. Yine de segmentli
+       * seçiciden değiştirilebilir.
+       */
+      setForm(mode === 'shift' ? { ...INITIAL_FORM, vardiya: String(aktifVardiyaNo()) } : INITIAL_FORM)
     }
-  }, [open])
+  }, [open, mode])
 
   if (!open) return null
 

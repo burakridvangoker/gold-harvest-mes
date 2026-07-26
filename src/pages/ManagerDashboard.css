@@ -165,6 +165,13 @@
 
 /* BUGÜN */
 
+.oran-group {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(1.5rem, 3vw, 3.5rem);
+  flex-wrap: wrap;
+}
+
 .usage-figure {
   --usage-color: var(--film);
 
@@ -177,18 +184,57 @@
   color: var(--usage-color);
 }
 
-.usage-figure--onde,
-.usage-figure--tamam {
+.usage-figure--iyi {
   --usage-color: var(--signal-run);
 }
 
-.usage-figure--geride {
+.usage-figure--orta {
+  --usage-color: var(--signal-idle);
+}
+
+.usage-figure--kotu {
   --usage-color: var(--signal-stop);
 }
 
 .usage-figure-note {
   font-size: clamp(0.95rem, 1.05vw, 1.5rem);
   color: var(--usage-color);
+}
+
+/*
+ * Ürün hedefi (plan) — iki oranın altında ikincil bir satır. Bunlar
+ * makinenin genel verimliliği (açık kalma / hız verimi), o ise tek bir
+ * ürünün kendi hedefine göre ilerlemesi; karıştırılmasın diye ayrı yer.
+ */
+.plan-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: clamp(0.6rem, 1.2vw, 1.5rem);
+  font-size: clamp(1.05rem, 1.2vw, 1.8rem);
+  --plan-color: var(--film);
+}
+
+.plan-row--onde,
+.plan-row--tamam {
+  --plan-color: var(--signal-run);
+}
+
+.plan-row--geride {
+  --plan-color: var(--signal-stop);
+}
+
+.plan-row-label {
+  color: var(--film-dim);
+}
+
+.plan-row-figure {
+  font-weight: 600;
+}
+
+.plan-row-status {
+  color: var(--plan-color);
+  font-weight: 600;
 }
 
 /*

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { fromTimeInputValue, vardiyaBaslangici } from './time.js'
+import { aktifVardiyaNo, fromTimeInputValue, vardiyaBaslangici } from './time.js'
 
 /* 2026-07-26 öğlen UTC, güvenli bir gün-ortası çapa; T() bu günün TR duvar
  * saatini üretir (fromTimeInputValue ile aynı dönüşüm, testte de o kullanılır). */
@@ -29,5 +29,22 @@ describe('vardiyaBaslangici', () => {
 
   it('tanımsız vardiya için null döner', () => {
     assert.equal(vardiyaBaslangici('9', T(9, 0)), null)
+  })
+})
+
+describe('aktifVardiyaNo', () => {
+  it('vardiya sınırlarının içinde doğru vardiyayı verir', () => {
+    assert.equal(aktifVardiyaNo(T(9, 0)), 1)
+    assert.equal(aktifVardiyaNo(T(16, 0)), 2)
+    assert.equal(aktifVardiyaNo(T(2, 0)), 3)
+  })
+
+  it('sınır saatlerinde bir sonraki vardiyaya geçer', () => {
+    assert.equal(aktifVardiyaNo(T(6, 59)), 3)
+    assert.equal(aktifVardiyaNo(T(7, 0)), 1)
+    assert.equal(aktifVardiyaNo(T(14, 59)), 1)
+    assert.equal(aktifVardiyaNo(T(15, 0)), 2)
+    assert.equal(aktifVardiyaNo(T(22, 59)), 2)
+    assert.equal(aktifVardiyaNo(T(23, 0)), 3)
   })
 })
