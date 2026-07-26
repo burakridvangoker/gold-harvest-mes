@@ -15,10 +15,11 @@ import './TimeSheet.css'
  * Saat girişi kaydırmalı çark (telefonda tek elle, bakmadan bile kullanılır).
  * Klavyeyle iki haneli sayı yazmaktan (özellikle native <input type="time">
  * — AM/PM sorunu CLAUDE.md'de kayıtlı) daha hızlı ve dokunmatik ekrana daha
- * uygun. Fare tekerleği ve trackpad ile masaüstünde de çalışır.
+ * uygun. Fare tekerleği ve trackpad ile masaüstünde de çalışır. Çark saati
+ * doğrudan seçtirdiği için ayrı bir "−5dk" gibi hızlı geri alma çipine
+ * gerek kalmadı, kaldırıldı.
  */
 
-const QUICK_STEPS = [1, 5, 10, 15, 30]
 const ITEM_HEIGHT = 48
 const VISIBLE_COUNT = 5
 const PAD_COUNT = Math.floor(VISIBLE_COUNT / 2)
@@ -156,10 +157,6 @@ function TimeSheet({
   const hour = Number(hourStr)
   const minute = Number(minuteStr)
 
-  const shiftBy = (dakika) => {
-    setValueMs((current) => clampToWindow(current - dakika * 60000, effectiveRange))
-  }
-
   const setHour = (h) => {
     const composed = fromTimeInputValue(valueMs, `${pad2(h)}:${minuteStr}`)
     if (composed != null) setValueMs(clampToWindow(composed, effectiveRange))
@@ -202,25 +199,6 @@ function TimeSheet({
         <p className={`timesheet-relative${atFloor ? ' timesheet-relative--floor' : ''}`}>
           {atFloor ? 'Daha geriye gidilemez' : relativeLabel(valueMs, nowMs)}
         </p>
-
-        <div className="timesheet-steps">
-          {QUICK_STEPS.map((dakika) => {
-            const wouldBe = valueMs - dakika * 60000
-            const blocked = effectiveRange.minMs != null && wouldBe < effectiveRange.minMs
-
-            return (
-              <button
-                key={dakika}
-                type="button"
-                className="timesheet-step"
-                onClick={() => shiftBy(dakika)}
-                disabled={blocked}
-              >
-                −{dakika}dk
-              </button>
-            )
-          })}
-        </div>
 
         {children ? <div className="timesheet-extra">{children}</div> : null}
 

@@ -180,39 +180,6 @@
   color: var(--signal-idle);
 }
 
-/* Hızlı geri alma: geç girenin tek dokunuşu. */
-
-.timesheet-steps {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
-}
-
-.timesheet-step {
-  min-height: 3.5rem;
-  border: 1px solid var(--steel-600);
-  background: var(--steel-700);
-  color: var(--film);
-  font-family: var(--data);
-  font-size: clamp(0.95rem, 3.5vw, 1.15rem);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-
-.timesheet-step:not(:disabled):active {
-  transform: scale(0.96);
-  background: var(--steel-600);
-}
-
-.timesheet-step:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
 .timesheet-extra {
   margin-top: 1.25rem;
 }
