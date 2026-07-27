@@ -165,6 +165,15 @@ ayrıca sorulmaz), üretim ancak BAŞLAT'a basılınca başlar. Sahada makine
 moladan hemen sonra anında çalışmıyor, bir-iki dakika içinde tekrar
 başlıyor — bu ara boşluk gerçek bir "duruş", mola değil.
 
+**Mola bir ürüne bağlı değil:** vardiya "durdu" durumunda başlar (bkz.
+yukarısı) ve operatör ilk ürünü girmeden de dakikalarca durabilir; MOLA
+butonu bu yüzden `activeRun` şartına BAĞLI DEĞİL (`+1 PALET`'in aksine —
+o gerçekten bir ürüne ait olmak zorunda, `pallet_records.product_run_id`
+`not null`). `OperatorPanel`'in ana buton mantığında `isMola` kontrolü
+her zaman `!activeRun` kontrolünden ÖNCE gelmeli — aksi halde ürün
+girilmeden başlatılan bir mola bitirilemez, buton "ÜRÜN BAŞLAT" gösterip
+ürün sihirbazını açar (yaşanmış hata, tekrar düşmeyin).
+
 **Açık kalma oranının paydasına hiç girmez:** `shiftTotals`/`totalsByRun`
 artık `molaMs`'i `uretimMs`/`durusMs`'ten ayrı tutuyor (`emptyTotals()`),
 ve `toplamMs` (açık kalma paydası) SADECE `uretimMs + durusMs`'ten
@@ -271,13 +280,15 @@ ama pratikte ulaşılamıyordu.
   varken üstte "Geçmiş vardiyalar" girişi var — vardiya bitmeden de geçmişe
   bakılabilsin diye.
 
-## Müdür panosunda "son olaylar" artık tam liste
+## Müdür panosunda liste kesmeleri kaldırıldı
 
-Eskiden `RECENT_EVENTS_LIMIT = 8` ile kesiliyordu (o zaman sayfa hiç
-kaydırılamıyordu, sabit yükseklik vardı). Sayfa artık kaydırılabilir
-olduğu için bu keyfi kesme kaldırıldı — operatörün "Olay geçmişi"nde
-gördüğü olay sayısıyla aynı, hiçbir şey gizlenmiyor. `ShiftHistoryDetail`
-de aynı ilkeyle tam liste gösterir.
+Eskiden "Son olaylar" `RECENT_EVENTS_LIMIT = 8` ile, "Duruş sebepleri"
+`downtimeByNote`'un varsayılan `limit = 5`'i ile kesiliyordu (o zaman
+sayfa hiç kaydırılamıyordu, sabit yükseklik vardı). Sayfa artık
+kaydırılabilir olduğu için bu keyfi kesmeler kaldırıldı —
+`downtimeByNote`'un varsayılanı artık `Infinity`, çağıran yer limit
+vermedikçe hiçbir sebep gizlenmiyor. Operatörün "Olay geçmişi"nde gördüğü
+sayıyla aynı. `ShiftHistoryDetail` de aynı ilkeyle tam liste gösterir.
 
 ## Ürün geçmişi ve ürün değiştirme
 

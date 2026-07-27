@@ -24,7 +24,6 @@ import { formatClock, formatDateLabel, formatShortTime } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import './ManagerDashboard.css'
 
-const TOP_REASONS_LIMIT = 5
 const NO_REASON_LABEL = 'Sebep girilmemiş'
 const TAM_ISRAR_MS = 30 * 60 * 1000
 
@@ -46,7 +45,8 @@ function ManagerDashboard() {
   const totals = useMemo(() => shiftTotals(intervals), [intervals])
   const paletler = useMemo(() => palletTotals(pallets), [pallets])
   const state = useMemo(() => currentState(events), [events])
-  const topReasons = useMemo(() => downtimeByNote(intervals, TOP_REASONS_LIMIT), [intervals])
+  /* Limitsiz — sayfa kaydırılabilir, hiçbir duruş sebebi gizlenmesin. */
+  const topReasons = useMemo(() => downtimeByNote(intervals), [intervals])
 
   const shiftStartMs = shift ? new Date(shift.started_at).getTime() : null
 

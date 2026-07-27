@@ -367,8 +367,12 @@ export function seviyeDurumu(oran, { iyi = 0.85, kotu = 0.6 } = {}) {
   return 'orta'
 }
 
-/** Duruş sebeplerinin süreye göre dökümü — müdür panosu için. */
-export function downtimeByNote(intervals, limit = 5) {
+/**
+ * Duruş sebeplerinin süreye göre dökümü — müdür panosu için. Varsayılan
+ * limitsiz: sayfa kaydırılabilir olduğu için hiçbir sebep gizlenmesin,
+ * hepsi görünsün (en çok süreye sahip en üstte).
+ */
+export function downtimeByNote(intervals, limit = Infinity) {
   const totals = new Map()
 
   for (const interval of intervals) {

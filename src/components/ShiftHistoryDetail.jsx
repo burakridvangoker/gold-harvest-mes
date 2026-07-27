@@ -20,7 +20,6 @@ import EventLog from './EventLog'
 import './Sheet.css'
 import './ShiftHistoryDetail.css'
 
-const TOP_REASONS_LIMIT = 5
 const NO_REASON_LABEL = 'Sebep girilmemiş'
 
 /*
@@ -58,7 +57,7 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
   const intervals = buildIntervals(events, nowMs)
   const totals = shiftTotals(intervals)
   const paletler = palletTotals(pallets)
-  const topReasons = downtimeByNote(intervals, TOP_REASONS_LIMIT)
+  const topReasons = downtimeByNote(intervals)
   const maxReasonMs = topReasons[0]?.ms ?? 0
   const segments = shiftSegments(events, { shiftStartMs, endMs: nowMs })
 

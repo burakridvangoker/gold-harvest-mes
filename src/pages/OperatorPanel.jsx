@@ -640,22 +640,22 @@ function OperatorPanel() {
             <button
               type="button"
               className={`action-primary action-primary--${
-                !activeRun ? 'start' : isMola ? 'mola' : isRunning ? 'stop' : 'start'
+                isMola ? 'mola' : !activeRun ? 'start' : isRunning ? 'stop' : 'start'
               }`}
               onClick={() => {
-                if (!activeRun) {
-                  setProductWizardOpen(true)
-                  return
-                }
                 if (isMola) {
                   setPending({ type: 'mola-end' })
+                  return
+                }
+                if (!activeRun) {
+                  setProductWizardOpen(true)
                   return
                 }
                 setPending({ type: isRunning ? 'stop' : 'start' })
               }}
               disabled={busy}
             >
-              {!activeRun ? 'ÜRÜN BAŞLAT' : isMola ? 'MOLA BİTTİ' : isRunning ? 'DURDUR' : 'BAŞLAT'}
+              {isMola ? 'MOLA BİTTİ' : !activeRun ? 'ÜRÜN BAŞLAT' : isRunning ? 'DURDUR' : 'BAŞLAT'}
             </button>
             <div className="operator-actions-row">
               {!isMola && (
@@ -663,7 +663,7 @@ function OperatorPanel() {
                   type="button"
                   className="action-secondary"
                   onClick={() => setPending({ type: 'mola-start' })}
-                  disabled={busy || !activeRun}
+                  disabled={busy}
                 >
                   MOLA
                 </button>
