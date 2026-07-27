@@ -24,6 +24,8 @@ import ProductHistory from '../components/ProductHistory'
 import EventLog from '../components/EventLog'
 import ShiftWizard from '../components/ShiftWizard'
 import LineSelect from '../components/LineSelect'
+import ShiftHistoryPicker from '../components/ShiftHistoryPicker'
+import ShiftHistoryDetail from '../components/ShiftHistoryDetail'
 import '../components/Sheet.css'
 import './OperatorPanel.css'
 
@@ -43,6 +45,8 @@ function OperatorPanel() {
   const [operatorOpen, setOperatorOpen] = useState(false)
   const [operatorName, setOperatorName] = useState('')
   const [logOpen, setLogOpen] = useState(false)
+  const [historyPickerOpen, setHistoryPickerOpen] = useState(false)
+  const [historyShiftId, setHistoryShiftId] = useState(null)
   const [pending, setPending] = useState(null)
   const [noteEventId, setNoteEventId] = useState(null)
   const [palletKoli, setPalletKoli] = useState('')
@@ -380,6 +384,26 @@ function OperatorPanel() {
     return <LineSelect onSelect={selectLine} />
   }
 
+  if (historyShiftId) {
+    return (
+      <div className="operator-shell is-beklemede">
+        <div className="andon-rail" />
+        <div className="operator-panel">
+          <header className="operator-header">
+            <button type="button" className="operator-line-code" onClick={clearLine}>
+              {lineCode}
+            </button>
+          </header>
+          <ShiftHistoryDetail
+            shiftId={historyShiftId}
+            readOnly={false}
+            onBack={() => setHistoryShiftId(null)}
+          />
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="operator-shell is-beklemede">
@@ -409,6 +433,13 @@ function OperatorPanel() {
           >
             VARDİYA BAŞLAT
           </button>
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={() => setHistoryPickerOpen(true)}
+          >
+            Geçmiş vardiyalar
+          </button>
         </div>
 
         <ShiftWizard
@@ -419,6 +450,16 @@ function OperatorPanel() {
             setWizardOpen(false)
             createShift(payload)
           }}
+        />
+
+        <ShiftHistoryPicker
+          open={historyPickerOpen}
+          lineCode={lineCode}
+          onSelect={(id) => {
+            setHistoryPickerOpen(false)
+            setHistoryShiftId(id)
+          }}
+          onClose={() => setHistoryPickerOpen(false)}
         />
       </div>
     )
@@ -485,6 +526,13 @@ function OperatorPanel() {
             onClick={() => setPending({ type: 'shift-end' })}
           >
             Vardiyayı bitir
+          </button>
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={() => setHistoryPickerOpen(true)}
+          >
+            Geçmiş vardiyalar
           </button>
         </div>
 
@@ -740,6 +788,16 @@ function OperatorPanel() {
           onSavePallet={updatePallet}
           onDeletePallet={deletePallet}
           onClose={() => setLogOpen(false)}
+        />
+
+        <ShiftHistoryPicker
+          open={historyPickerOpen}
+          lineCode={lineCode}
+          onSelect={(id) => {
+            setHistoryPickerOpen(false)
+            setHistoryShiftId(id)
+          }}
+          onClose={() => setHistoryPickerOpen(false)}
         />
       </div>
     </div>

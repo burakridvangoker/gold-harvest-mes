@@ -329,6 +329,14 @@ export function frequentNotes(events, limit = 6) {
     .slice(0, limit)
 }
 
+/** Bir oranı andon renk sınıfına çevirir — iyi/orta/kötü eşiği. */
+export function seviyeDurumu(oran, { iyi = 0.85, kotu = 0.6 } = {}) {
+  if (oran == null) return null
+  if (oran >= iyi) return 'iyi'
+  if (oran < kotu) return 'kotu'
+  return 'orta'
+}
+
 /** Duruş sebeplerinin süreye göre dökümü — müdür panosu için. */
 export function downtimeByNote(intervals, limit = 5) {
   const totals = new Map()

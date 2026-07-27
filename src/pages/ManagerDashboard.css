@@ -82,6 +82,25 @@
   text-transform: uppercase;
 }
 
+.manager-history-button {
+  border: 1px solid var(--steel-600);
+  background: transparent;
+  color: var(--film-dim);
+  font-family: var(--plate);
+  font-size: clamp(0.85rem, 1vw, 1.3rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: clamp(0.4rem, 0.7vw, 0.75rem) clamp(0.75rem, 1.2vw, 1.25rem);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.manager-history-button:active {
+  background: var(--steel-700);
+}
+
 .manager-clock {
   margin-left: auto;
   font-size: clamp(2.25rem, 3.2vw, 4.5rem);

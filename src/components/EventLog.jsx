@@ -33,6 +33,7 @@ function EventLog({
   onSavePallet,
   onDeletePallet,
   onClose,
+  frozen = false,
 }) {
   const [editing, setEditing] = useState(null)
   const [draftNote, setDraftNote] = useState('')
@@ -161,7 +162,11 @@ function EventLog({
                     </span>
                     <span className="eventlog-row-meta tnum">
                       {interval ? formatDuration(interval.durationMs) : ''}
-                      {interval?.ongoing ? <span className="eventlog-row-live"> sürüyor</span> : null}
+                      {/* Kapanmış vardiyada son aralık yapısal olarak
+                       * ongoing çıkar ama gerçekten sürmüyor. */}
+                      {!frozen && interval?.ongoing ? (
+                        <span className="eventlog-row-live"> sürüyor</span>
+                      ) : null}
                     </span>
                   </button>
                 </li>

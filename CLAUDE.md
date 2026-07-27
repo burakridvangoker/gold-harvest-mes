@@ -192,6 +192,54 @@ performansı da kalıcı olarak görünür kalsın diye. Hedefi olmayan bir ür�
 de (ilerleme çubuğu/hedef metni olmadan) yine de bu iki metrikle listeye
 girer; sadece hedefe bağlı kısımlar (`pace`) opsiyoneldir.
 
+## Geçmiş vardiyalar: vardiyayı bitirmek veri silmez
+
+Sahada yaşanan bir korku: "vardiyayı bitir dersem her şey sıfırlanacak
+sanıyorum". Yanlış — `useShift.js`'in gerçeği: "Vardiyayı bitir" sadece
+`shifts.ended_at`'i doldurur; o satır ve ona bağlı `product_runs`/
+`timeline_events`/`pallet_records` veritabanında SONSUZA KADAR kalır
+(CLAUDE.md'nin en üstteki "olay kaydı, birikmiş sayaç değil" ilkesi zaten
+bunu garanti ediyor — hiçbir yerde otomatik/saat bazlı bir silme veya
+sıfırlama YOK). Asıl eksik canlı `useShift`'in SADECE `ended_at is null`
+olan vardiyayı çekmesiydi — vardiya kapanınca ekran "Açık vardiya yok"
+diyordu ve kapanan vardiyaya bakacak hiçbir yol yoktu; veri kaybolmamıştı
+ama pratikte ulaşılamıyordu.
+
+**Çözüm — "Geçmiş vardiyalar":**
+- `src/hooks/useShiftList.js` — bir hattın KAPANMIŞ vardiyalarını listeler.
+- `src/hooks/useShiftById.js` — `useShift.js` ile birebir aynı üç sorgu
+  deseni, sadece "açık vardiya" filtresi yerine doğrudan `shiftId`. Açık
+  ya da kapanmış fark etmez, herhangi bir vardiyanın tam paketini çeker.
+- `src/components/ShiftHistoryPicker.jsx` — her iki ekranın da kullandığı
+  paylaşılan seçici sheet.
+- `src/components/ShiftHistoryDetail.jsx` — donmuş özet. `nowMs` HER ZAMAN
+  `shift.ended_at`'e sabit (canlı saat değil) — vardiya o an nasıl
+  bittiyse öyle kalır, "bir paket gibi durur". Hesaplar `timeline.js`'teki
+  AYNI saf fonksiyonlarla (yeni bir hesap yok). BAŞLAT/DURDUR/+1 PALET/
+  Ürün değiştir/Vardiyayı bitir hiç yok — bunlar "şu an bir şey oluyor"
+  demek, kapanmış bir vardiyada anlamsız.
+- **Operatör ekranı düzeltebilir, müdür panosu salt-okunur**: `readOnly`
+  prop'u bunu ayırıyor. OperatorPanel zaten tüm yazma altyapısını (guard,
+  EventLog, ProductHistory'nin Düzenle'si) taşıyor; kapanmış bir vardiyada
+  unutulan duruş notu/yanlış palet/eksik ürün bilgisi hâlâ düzeltilebilir.
+  ManagerDashboard hiç yazma çağrısı içermiyor, sadece rakamlar.
+- `ProductHistory`/`EventLog`'a `frozen` prop'u eklendi: kapanmış bir
+  vardiyanın SON aralığı yapısal olarak `ongoing:true` çıkar (bir sonraki
+  olay olmadığı için), ama bu "hâlâ üretimde/sürüyor" demek değil —
+  `frozen` bu yanıltıcı etiketi bastırır, süre zaten donuk olduğu için
+  değişmiyor.
+- Her iki ekranda da hem "Açık vardiya yok" boş ekranında hem canlı vardiya
+  varken üstte "Geçmiş vardiyalar" girişi var — vardiya bitmeden de geçmişe
+  bakılabilsin diye.
+
+## Müdür panosunda "son olaylar" artık tam liste
+
+Eskiden `RECENT_EVENTS_LIMIT = 8` ile kesiliyordu (o zaman sayfa hiç
+kaydırılamıyordu, sabit yükseklik vardı). Sayfa artık kaydırılabilir
+olduğu için bu keyfi kesme kaldırıldı — operatörün "Olay geçmişi"nde
+gördüğü olay sayısıyla aynı, hiçbir şey gizlenmiyor. `ShiftHistoryDetail`
+de aynı ilkeyle tam liste gösterir.
+
 ## Ürün geçmişi ve ürün değiştirme
 
 Aynı vardiyada birden çok ürün üretilebilir. Bir ürün üretimdeyken ikinci/
@@ -285,12 +333,20 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
 - `src/components/RunEndSheet.jsx` — ürün bitişinde numaratör + ambalaj
   fire önizlemesi.
 - `src/components/ProductHistory.jsx` — vardiyadaki ürün kartları + detay.
+  `frozen` prop'u kapanmış vardiya görünümünde "sürüyor" yanlış etiketini
+  bastırır.
 - `src/components/Sheet.css` — SpeedSheet/RunEndSheet/ProductHistory'nin
   paylaştığı nötr alttan-açılan sayfa iskeleti (TimeSheet/StopNoteSheet
   kendi tonlarını taşıdığı için ayrı kaldı).
 - `src/components/LineSelect.jsx` + `src/hooks/useLineCode.js` — hat
   seçimi, cihaz başına `localStorage`'da.
 - `src/lib/lines.js` — sahadaki hatların tek kaynağı (`LINE_CODES`).
+- `src/hooks/useShiftList.js` + `src/hooks/useShiftById.js` — geçmiş
+  vardiyalar veri katmanı (bkz. "Geçmiş vardiyalar" bölümü).
+- `src/components/ShiftHistoryPicker.jsx` + `ShiftHistoryDetail.jsx` —
+  geçmiş vardiya seçici ve donmuş özet; ManagerDashboard.css'in vw/clamp
+  ölçeğini KULLANMAZ, kendi taşınabilir rem ölçeği var (telefonda da
+  duvar ekranında da gömülüyor).
 
 ## Faz durumu
 
@@ -301,7 +357,8 @@ göstergesi, çoklu hat seçici, aynı vardiyada birden çok ürün (ürün
 değiştir akışı), ürün geçmişi kartları, çalışma hızını her an düzenleme,
 ambalaj firesi hesabı, müdür panosunda ürün bazlı + genel verim ayrımı
 (açık kalma/hız verimi hem vardiya genelinde/aktif üründe hem her ürünün
-kendi satırında).
+kendi satırında), geçmiş vardiyalar (donmuş özet + operatörde düzeltme,
+müdürde salt-okunur).
 
 **Yapılmadı:** eski ürüne geri dönüp üretime devam etme UI'ı (şema/`
 runSpans` bunu zaten destekliyor, sadece "bu ürüne dön" butonu yok), not→kod

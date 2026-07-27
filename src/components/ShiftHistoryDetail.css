@@ -1,0 +1,264 @@
+/*
+ * Kapanmış vardiya özeti — hem operatör (telefon) hem müdür (duvar ekranı)
+ * içine gömülür, bu yüzden KENDİ, taşınabilir rem ölçeğini taşır;
+ * ManagerDashboard.css'in vw/clamp ölçeği burada kullanılmaz (o duvar
+ * ekranına özel, telefonda devasa görünürdü).
+ */
+
+.history-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1rem 0 2rem;
+  color: var(--film);
+}
+
+.history-detail-status {
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.history-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.history-detail-back {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--film);
+  font-family: var(--data);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.history-detail-badge {
+  font-size: 0.8rem;
+  color: var(--signal-idle);
+}
+
+.history-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.history-detail-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.history-detail-operator {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--data);
+  font-size: 0.9rem;
+  color: var(--film-dim);
+}
+
+.history-detail-operator--button {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.history-detail-time {
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+.history-detail-error {
+  background: rgba(255, 59, 47, 0.14);
+  border-left: 3px solid var(--signal-stop);
+  color: #ffd9d5;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+.history-detail-ratios {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.history-detail-ratio {
+  --ratio-color: var(--film);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.history-detail-ratio--iyi {
+  --ratio-color: var(--signal-run);
+}
+
+.history-detail-ratio--orta {
+  --ratio-color: var(--signal-idle);
+}
+
+.history-detail-ratio--kotu {
+  --ratio-color: var(--signal-stop);
+}
+
+.history-detail-ratio-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ratio-color);
+}
+
+.history-detail-ratio-label {
+  font-size: 0.8rem;
+  color: var(--ratio-color);
+}
+
+.history-detail-figures {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.9rem;
+}
+
+.history-detail-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--steel-600);
+}
+
+.history-detail-figure dt {
+  font-size: 0.75rem;
+  color: var(--film-dim);
+}
+
+.history-detail-figure dd {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.history-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.history-detail-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+.history-detail-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+.history-detail-reasons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.history-detail-reasons-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.history-detail-reasons-label {
+  font-size: 0.95rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-detail-reasons-value {
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.history-detail-reasons-count {
+  color: var(--film-dim);
+  font-weight: 500;
+}
+
+.history-detail-reasons-track {
+  height: 0.4rem;
+  background: rgba(232, 234, 230, 0.08);
+}
+
+.history-detail-reasons-fill {
+  height: 100%;
+  background: var(--signal-stop);
+}
+
+.history-detail-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.history-detail-events-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--steel-600);
+  font-size: 0.9rem;
+}
+
+.history-detail-events-row--uretim {
+  border-left-color: var(--signal-run);
+}
+
+.history-detail-events-row--durus {
+  border-left-color: var(--signal-stop);
+}
+
+.history-detail-events-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-detail-log-button {
+  align-self: flex-start;
+  min-height: 3rem;
+  padding: 0 1.25rem;
+  border: 1px solid var(--steel-600);
+  background: transparent;
+  color: var(--film);
+  font-family: var(--plate);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.history-detail-log-button:active {
+  background: var(--steel-700);
+}

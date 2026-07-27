@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useShift } from '../hooks/useShift'
 import { useLineCode } from '../hooks/useLineCode'
 import LineSelect from '../components/LineSelect'
+import ShiftHistoryPicker from '../components/ShiftHistoryPicker'
+import ShiftHistoryDetail from '../components/ShiftHistoryDetail'
 import {
   buildIntervals,
   currentState,
@@ -12,6 +14,7 @@ import {
   palletTotals,
   palletTotalsByRun,
   runSpans,
+  seviyeDurumu,
   shiftTotals,
   totalsByRun,
 } from '../lib/timeline'
@@ -20,23 +23,16 @@ import { formatClock, formatDateLabel, formatShortTime } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import './ManagerDashboard.css'
 
-const RECENT_EVENTS_LIMIT = 8
 const TOP_REASONS_LIMIT = 5
 const NO_REASON_LABEL = 'Sebep girilmemiş'
 const TAM_ISRAR_MS = 30 * 60 * 1000
-
-/** Bir oranı andon renk sınıfına çevirir — iyi/orta/kötü eşiği. */
-function seviyeDurumu(oran, { iyi = 0.85, kotu = 0.6 } = {}) {
-  if (oran == null) return null
-  if (oran >= iyi) return 'iyi'
-  if (oran < kotu) return 'kotu'
-  return 'orta'
-}
 
 function ManagerDashboard() {
   const { lineCode, selectLine, clearLine } = useLineCode()
   const { shift, runs, events, pallets, loading, error } = useShift(lineCode)
   const [now, setNow] = useState(() => Date.now())
+  const [historyPickerOpen, setHistoryPickerOpen] = useState(false)
+  const [historyShiftId, setHistoryShiftId] = useState(null)
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -51,7 +47,9 @@ function ManagerDashboard() {
   const state = useMemo(() => currentState(events), [events])
   const topReasons = useMemo(() => downtimeByNote(intervals, TOP_REASONS_LIMIT), [intervals])
 
-  const recentIntervals = useMemo(() => [...intervals].reverse().slice(0, RECENT_EVENTS_LIMIT), [intervals])
+  /* Sayfa artık kaydırılabilir (bkz. .manager-shell), o yüzden tüm olaylar
+   * gösterilir — operatörün "Olay geçmişi"nde gördüğü sayıyla aynı. */
+  const recentIntervals = useMemo(() => [...intervals].reverse(), [intervals])
 
   const activeRun = useMemo(() => {
     const last = intervals[intervals.length - 1]
@@ -62,6 +60,24 @@ function ManagerDashboard() {
 
   if (!lineCode) {
     return <LineSelect onSelect={selectLine} />
+  }
+
+  if (historyShiftId) {
+    return (
+      <div className="manager-shell is-beklemede">
+        <div className="andon-rail" />
+        <div className="manager-dashboard">
+          <button type="button" className="manager-line-code" onClick={clearLine}>
+            {lineCode}
+          </button>
+          <ShiftHistoryDetail
+            shiftId={historyShiftId}
+            readOnly
+            onBack={() => setHistoryShiftId(null)}
+          />
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
@@ -84,6 +100,22 @@ function ManagerDashboard() {
             {lineCode}
           </button>
           <p className="plate">Açık vardiya yok</p>
+          <button
+            type="button"
+            className="manager-history-button"
+            onClick={() => setHistoryPickerOpen(true)}
+          >
+            Geçmiş vardiyalar
+          </button>
+          <ShiftHistoryPicker
+            open={historyPickerOpen}
+            lineCode={lineCode}
+            onSelect={(id) => {
+              setHistoryPickerOpen(false)
+              setHistoryShiftId(id)
+            }}
+            onClose={() => setHistoryPickerOpen(false)}
+          />
         </div>
       </div>
     )
@@ -182,8 +214,25 @@ function ManagerDashboard() {
             {formatDateLabel(nowDate)} · {shift.vardiya}. vardiya
             {shift.operator ? ` · ${shift.operator}` : ''}
           </span>
+          <button
+            type="button"
+            className="manager-history-button"
+            onClick={() => setHistoryPickerOpen(true)}
+          >
+            Geçmiş vardiyalar
+          </button>
           <span className="manager-clock tnum">{formatClock(nowDate)}</span>
         </header>
+
+        <ShiftHistoryPicker
+          open={historyPickerOpen}
+          lineCode={lineCode}
+          onSelect={(id) => {
+            setHistoryPickerOpen(false)
+            setHistoryShiftId(id)
+          }}
+          onClose={() => setHistoryPickerOpen(false)}
+        />
 
         {error && <div className="manager-error">{error}</div>}
 

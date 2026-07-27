@@ -12,6 +12,7 @@ import {
   paceStatus,
   palletTotals,
   runSpans,
+  seviyeDurumu,
   shiftTotals,
   totalsByRun,
   validEditWindow,
@@ -378,5 +379,19 @@ describe('hizVerimi', () => {
     assert.equal(hizVerimi({ paketAdedi: 0, uretimMs: 1000, hedefHizPktDk: 100 }), null)
     assert.equal(hizVerimi({ paketAdedi: 10, uretimMs: 0, hedefHizPktDk: 100 }), null)
     assert.equal(hizVerimi({ paketAdedi: 10, uretimMs: 1000, hedefHizPktDk: null }), null)
+  })
+})
+
+describe('seviyeDurumu', () => {
+  it('eşiklere göre iyi/orta/kötü döner', () => {
+    assert.equal(seviyeDurumu(0.9), 'iyi')
+    assert.equal(seviyeDurumu(0.85), 'iyi')
+    assert.equal(seviyeDurumu(0.7), 'orta')
+    assert.equal(seviyeDurumu(0.6), 'orta')
+    assert.equal(seviyeDurumu(0.59), 'kotu')
+  })
+
+  it('null oran için null döner', () => {
+    assert.equal(seviyeDurumu(null), null)
   })
 })

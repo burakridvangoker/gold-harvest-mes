@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   buildIntervals,
+  hizVerimi,
   koliToPaket,
   packagingWaste,
   palletTotalsByRun,
@@ -46,7 +47,7 @@ const runToForm = (run) => ({
  * gramaj, hedef koli, numaratör başlangıcı...) sonradan düzeltilebilir —
  * sahada bu bilgiler genelde eksik girilip sonra hatırlanıyor.
  */
-function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun }) {
+function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun, frozen = false }) {
   const [openId, setOpenId] = useState(null)
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState(null)
@@ -65,12 +66,23 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun }) {
     return [...runs]
       .sort((a, b) => a.sira - b.sira)
       .map((run) => {
-        const span = spans.get(run.id) ?? null
+        const rawSpan = spans.get(run.id) ?? null
+        /*
+         * Kapanmış bir vardiyada hiçbir ürün gerçekten "sürüyor" değildir —
+         * son aralık yapısal olarak ongoing=true çıkar (vardiya bitince
+         * kesildiği için), ama bu "hâlâ üretimde" anlamına gelmez.
+         */
+        const span = rawSpan && frozen ? { ...rawSpan, ongoing: false } : rawSpan
         const zaman = zamanByRun.get(run.id) ?? { uretimMs: 0, durusMs: 0 }
         const palet = paletByRun.get(run.id) ?? { paletAdedi: 0, koliAdedi: 0 }
         const paket = koliToPaket(palet.koliAdedi, run.koli_ici_adet)
         const gercekPktDk =
           zaman.uretimMs > 0 && paket ? paket / (zaman.uretimMs / 60000) : null
+        const toplamMs = zaman.uretimMs + zaman.durusMs
+        const acikKalmaOran = toplamMs > 0 ? zaman.uretimMs / toplamMs : null
+        const performans = run.calisma_hizi_pkt_dk
+          ? hizVerimi({ paketAdedi: paket ?? 0, uretimMs: zaman.uretimMs, hedefHizPktDk: run.calisma_hizi_pkt_dk })
+          : null
         const waste = packagingWaste({
           doluBaslangic: run.dolu_paket_baslangic,
           doluBitis: run.dolu_paket_bitis,
@@ -80,9 +92,9 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun }) {
           bosPaketAgirlikG: run.bos_paket_agirlik_g,
         })
 
-        return { run, span, zaman, palet, paket, gercekPktDk, waste }
+        return { run, span, zaman, palet, paket, gercekPktDk, acikKalmaOran, performans, waste }
       })
-  }, [runs, events, pallets, nowMs])
+  }, [runs, events, pallets, nowMs, frozen])
 
   if (summaries.length === 0) return null
 
@@ -332,6 +344,26 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun }) {
                       {open.gercekPktDk ? `${open.gercekPktDk.toFixed(1)} pkt/dk` : '—'}
                     </span>
                   </div>
+                  <div className="sheet-stat-row">
+                    <span className="sheet-stat-label">Açık kalma</span>
+                    <span className="sheet-stat-value tnum">
+                      {open.acikKalmaOran != null ? `%${Math.round(open.acikKalmaOran * 100)}` : '—'}
+                    </span>
+                  </div>
+                  <div className="sheet-stat-row">
+                    <span className="sheet-stat-label">Hız verimi</span>
+                    <span className="sheet-stat-value tnum">
+                      {open.performans ? `%${Math.round(open.performans.oran * 100)}` : '—'}
+                    </span>
+                  </div>
+                  {open.run.hedef_koli ? (
+                    <div className="sheet-stat-row">
+                      <span className="sheet-stat-label">Hedef</span>
+                      <span className="sheet-stat-value tnum">
+                        {open.palet.koliAdedi} / {open.run.hedef_koli} koli
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
 
                 {open.waste ? (
@@ -357,9 +389,11 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun }) {
                 ) : null}
 
                 <div className="sheet-actions">
-                  <button type="button" className="sheet-button sheet-button--secondary" onClick={startEdit}>
-                    Düzenle
-                  </button>
+                  {onUpdateRun && (
+                    <button type="button" className="sheet-button sheet-button--secondary" onClick={startEdit}>
+                      Düzenle
+                    </button>
+                  )}
                   <button type="button" className="sheet-button sheet-button--primary" onClick={closeSheet}>
                     Kapat
                   </button>
