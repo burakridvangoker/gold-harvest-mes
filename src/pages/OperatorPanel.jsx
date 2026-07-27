@@ -14,7 +14,7 @@ import {
   runSpans,
 } from '../lib/timeline'
 import { formatDelta, formatDuration } from '../lib/duration'
-import { formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
+import { formatDateLabel, formatShortTime, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import TimeSheet from '../components/TimeSheet'
 import StopNoteSheet from '../components/StopNoteSheet'
@@ -109,6 +109,7 @@ function OperatorPanel() {
   )
 
   const isRunning = state === 'uretimde'
+  const isMola = state === 'molada'
 
   /* ---- Yazma işlemleri ---- */
 
@@ -217,7 +218,7 @@ function OperatorPanel() {
   )
 
   const addEvent = useCallback(
-    async (kind, atMs) => {
+    async (kind, atMs, note = null) => {
       if (busy || !shift) return null
       setBusy(true)
       setError(null)
@@ -230,6 +231,7 @@ function OperatorPanel() {
           product_run_id: activeRun?.id ?? null,
           at: new Date(atMs).toISOString(),
           kind,
+          note,
         })
         .select('id')
         .single()
@@ -264,6 +266,22 @@ function OperatorPanel() {
       if (action.type === 'stop') {
         const id = await addEvent('durus', atMs)
         if (id) setNoteEventId(id)
+        return
+      }
+
+      if (action.type === 'mola-start') {
+        await addEvent('mola', atMs)
+        return
+      }
+
+      if (action.type === 'mola-end') {
+        /*
+         * Mola dönüşü direkt üretime değil duruşa geçer: makine molaya
+         * girdikten sonra genelde bir-iki dakika içinde tekrar başlıyor ama
+         * anında değil — operatör BAŞLAT'a ayrıca basar. Not otomatik
+         * dolduruluyor, operatöre ayrıca "neden durdu" sorulmaz.
+         */
+        await addEvent('durus', atMs, 'Moladan dönüş')
         return
       }
 
@@ -465,7 +483,7 @@ function OperatorPanel() {
     )
   }
 
-  const durationLabel = isRunning ? 'Çalışma süresi' : 'Duruş süresi'
+  const durationLabel = isRunning ? 'Çalışma süresi' : isMola ? 'Mola süresi' : 'Duruş süresi'
   const urgency = state === 'durdu' && son ? Math.min(1, son.durationMs / TAM_ISRAR_MS) : 0
 
   return (
@@ -595,6 +613,20 @@ function OperatorPanel() {
               </div>
             </div>
 
+            {pallets.length > 0 && (
+              <div className="operator-pallet-log">
+                <span className="operator-pallet-log-label plate">Palet çıkış saatleri</span>
+                <ul className="operator-pallet-log-list">
+                  {[...pallets].reverse().map((pallet) => (
+                    <li key={pallet.id} className="operator-pallet-log-row">
+                      <span className="tnum">{formatShortTime(new Date(pallet.completed_at))}</span>
+                      <span className="tnum">{pallet.koli_count} koli</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <ProductHistory
               runs={runs}
               events={events}
@@ -607,29 +639,47 @@ function OperatorPanel() {
           <div className="operator-actions">
             <button
               type="button"
-              className={`action-primary action-primary--${isRunning ? 'stop' : 'start'}`}
+              className={`action-primary action-primary--${
+                !activeRun ? 'start' : isMola ? 'mola' : isRunning ? 'stop' : 'start'
+              }`}
               onClick={() => {
                 if (!activeRun) {
                   setProductWizardOpen(true)
+                  return
+                }
+                if (isMola) {
+                  setPending({ type: 'mola-end' })
                   return
                 }
                 setPending({ type: isRunning ? 'stop' : 'start' })
               }}
               disabled={busy}
             >
-              {!activeRun ? 'ÜRÜN BAŞLAT' : isRunning ? 'DURDUR' : 'BAŞLAT'}
+              {!activeRun ? 'ÜRÜN BAŞLAT' : isMola ? 'MOLA BİTTİ' : isRunning ? 'DURDUR' : 'BAŞLAT'}
             </button>
-            <button
-              type="button"
-              className="action-secondary"
-              onClick={() => {
-                setPalletKoli(String(activeRun?.koli_per_palet ?? ''))
-                setPending({ type: 'pallet' })
-              }}
-              disabled={busy || !activeRun}
-            >
-              +1 PALET
-            </button>
+            <div className="operator-actions-row">
+              {!isMola && (
+                <button
+                  type="button"
+                  className="action-secondary"
+                  onClick={() => setPending({ type: 'mola-start' })}
+                  disabled={busy || !activeRun}
+                >
+                  MOLA
+                </button>
+              )}
+              <button
+                type="button"
+                className="action-secondary"
+                onClick={() => {
+                  setPalletKoli(String(activeRun?.koli_per_palet ?? ''))
+                  setPending({ type: 'pallet' })
+                }}
+                disabled={busy || !activeRun || isMola}
+              >
+                +1 PALET
+              </button>
+            </div>
           </div>
         </div>
 
@@ -649,6 +699,28 @@ function OperatorPanel() {
           title="Makine ne zaman durdu?"
           confirmLabel="Durdur"
           tone="stop"
+          initialMs={now}
+          range={eventRange}
+          onConfirm={handleTimeConfirm}
+          onCancel={() => setPending(null)}
+        />
+
+        <TimeSheet
+          open={pending?.type === 'mola-start'}
+          title="Mola ne zaman başladı?"
+          confirmLabel="Mola başlat"
+          tone="mola"
+          initialMs={now}
+          range={eventRange}
+          onConfirm={handleTimeConfirm}
+          onCancel={() => setPending(null)}
+        />
+
+        <TimeSheet
+          open={pending?.type === 'mola-end'}
+          title="Mola ne zaman bitti?"
+          confirmLabel="Molayı bitir"
+          tone="mola"
           initialMs={now}
           range={eventRange}
           onConfirm={handleTimeConfirm}

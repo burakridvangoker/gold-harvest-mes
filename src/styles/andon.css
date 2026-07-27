@@ -62,6 +62,13 @@
   --status-wash: var(--wash-idle);
 }
 
+/* Mola, beklemede ile aynı ton (amber): planlı, acil değil — kırmızı duruş
+ * ile karışmasın diye kasıtlı olarak farklı renk. */
+.is-molada {
+  --status: var(--signal-idle);
+  --status-wash: var(--wash-idle);
+}
+
 /* Makine plakası etiketi: büyük harf, sıkışık, geniş harf aralığı */
 .plate {
   font-family: var(--plate);

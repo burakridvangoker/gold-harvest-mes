@@ -54,5 +54,23 @@ export function useShiftList(lineCode) {
     }
   }, [lineCode, refresh])
 
+  /* Mobil tarayıcılar arka planda websocket'i askıya alabiliyor — sekme
+   * tekrar görünür olduğunda yeniden çekerek olası boşluğu kapatır. */
+  useEffect(() => {
+    if (!lineCode) return undefined
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
+  }, [lineCode, refresh])
+
   return { shifts, loading }
 }

@@ -15,6 +15,7 @@ import {
   palletTotalsByRun,
   runSpans,
   seviyeDurumu,
+  shiftSegments,
   shiftTotals,
   totalsByRun,
 } from '../lib/timeline'
@@ -47,9 +48,17 @@ function ManagerDashboard() {
   const state = useMemo(() => currentState(events), [events])
   const topReasons = useMemo(() => downtimeByNote(intervals, TOP_REASONS_LIMIT), [intervals])
 
-  /* Sayfa artık kaydırılabilir (bkz. .manager-shell), o yüzden tüm olaylar
-   * gösterilir — operatörün "Olay geçmişi"nde gördüğü sayıyla aynı. */
-  const recentIntervals = useMemo(() => [...intervals].reverse(), [intervals])
+  const shiftStartMs = shift ? new Date(shift.started_at).getTime() : null
+
+  /*
+   * "Tüm vardiya alt alta" yerine mola başlangıçlarına göre bölümlere
+   * ayrılmış, yan yana bir görünüm — 3 mola varsa 4 bölüm çıkar. Her
+   * bölümün kendi olay listesi kendi içinde alt alta.
+   */
+  const segments = useMemo(
+    () => shiftSegments(events, { shiftStartMs, endMs: now }),
+    [events, shiftStartMs, now],
+  )
 
   const activeRun = useMemo(() => {
     const last = intervals[intervals.length - 1]
@@ -289,6 +298,10 @@ function ManagerDashboard() {
               <dt className="figure-label plate">Duruş</dt>
               <dd className="figure-value tnum">{formatDuration(totals.durusMs)}</dd>
             </div>
+            <div className="figure figure--mola">
+              <dt className="figure-label plate">Mola</dt>
+              <dd className="figure-value tnum">{formatDuration(totals.molaMs)}</dd>
+            </div>
             <div className="figure">
               <dt className="figure-label plate">Palet</dt>
               <dd className="figure-value tnum">{paletler.paletAdedi}</dd>
@@ -302,6 +315,20 @@ function ManagerDashboard() {
               <dd className="figure-value tnum">{paket ?? '—'}</dd>
             </div>
           </dl>
+
+          {pallets.length > 0 && (
+            <div className="pallet-log">
+              <span className="pallet-log-label plate">Palet çıkış saatleri</span>
+              <ul className="pallet-log-list">
+                {[...pallets].reverse().map((pallet) => (
+                  <li key={pallet.id} className="pallet-log-row">
+                    <span className="tnum">{formatShortTime(new Date(pallet.completed_at))}</span>
+                    <span className="tnum">{pallet.koli_count} koli</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {productRows.length > 0 && (
             <div className="plan-stack">
@@ -356,59 +383,79 @@ function ManagerDashboard() {
 
         {/* NEDEN */}
         <section className="zone zone--why">
-          <div className="why-col">
-            <h2 className="zone-title plate">Duruş sebepleri</h2>
-            {topReasons.length === 0 ? (
-              <p className="zone-empty plate">Duruş kaydı yok</p>
-            ) : (
-              <ul className="reasons-list">
-                {topReasons.map((reason) => (
-                  <li key={reason.note ?? '__yok__'} className="reasons-row">
-                    <div className="reasons-row-head">
-                      <span className="reasons-row-label">{reason.note ?? NO_REASON_LABEL}</span>
-                      <span className="reasons-row-value tnum">
-                        {formatDuration(reason.ms)}
-                        <span className="reasons-row-count"> ×{reason.adet}</span>
-                      </span>
-                    </div>
-                    <div className="reasons-row-bar-track">
-                      <div
-                        className="reasons-row-bar-fill"
-                        style={{ width: `${maxReasonMs > 0 ? (reason.ms / maxReasonMs) * 100 : 0}%` }}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <h2 className="zone-title plate">Duruş sebepleri</h2>
+          {topReasons.length === 0 ? (
+            <p className="zone-empty plate">Duruş kaydı yok</p>
+          ) : (
+            <ul className="reasons-list">
+              {topReasons.map((reason) => (
+                <li key={reason.note ?? '__yok__'} className="reasons-row">
+                  <div className="reasons-row-head">
+                    <span className="reasons-row-label">{reason.note ?? NO_REASON_LABEL}</span>
+                    <span className="reasons-row-value tnum">
+                      {formatDuration(reason.ms)}
+                      <span className="reasons-row-count"> ×{reason.adet}</span>
+                    </span>
+                  </div>
+                  <div className="reasons-row-bar-track">
+                    <div
+                      className="reasons-row-bar-fill"
+                      style={{ width: `${maxReasonMs > 0 ? (reason.ms / maxReasonMs) * 100 : 0}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-          <div className="why-col">
-            <h2 className="zone-title plate">Son olaylar</h2>
-            {recentIntervals.length === 0 ? (
-              <p className="zone-empty plate">Olay yok</p>
-            ) : (
-              <ul className="feed-list">
-                {recentIntervals.map((interval) => (
-                  <li
-                    key={interval.eventId}
-                    className={`feed-row${interval.ongoing ? ' feed-row--ongoing' : ''} feed-row--${interval.kind}`}
-                  >
-                    <span className="feed-row-time tnum">
-                      {formatShortTime(new Date(interval.startMs))}
+        {/* ÇEYREKLER — molalara göre bölünmüş, yan yana */}
+        <section className="zone zone--quarters">
+          <h2 className="zone-title plate">Vardiya bölümleri</h2>
+          <div className="quarters-row">
+            {segments.map((segment) => {
+              const segIntervals = intervals
+                .filter((interval) => interval.startMs >= segment.startMs && interval.startMs < segment.endMs)
+                .reverse()
+
+              return (
+                <div key={segment.index} className="quarter-col">
+                  <div className="quarter-col-head">
+                    <span className="quarter-col-title plate">{segment.index}. Bölüm</span>
+                    <span className="quarter-col-time tnum">
+                      {formatShortTime(new Date(segment.startMs))} –{' '}
+                      {segment.endMs >= now ? 'şimdi' : formatShortTime(new Date(segment.endMs))}
                     </span>
-                    <span className="feed-row-label">
-                      {interval.kind === 'durus'
-                        ? interval.note || NO_REASON_LABEL
-                        : runsById.get(interval.productRunId)?.urun_adi || 'Üretim'}
-                    </span>
-                    <span className="feed-row-duration tnum">
-                      {formatDuration(interval.durationMs)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+                  </div>
+                  {segIntervals.length === 0 ? (
+                    <p className="zone-empty plate">Olay yok</p>
+                  ) : (
+                    <ul className="quarter-col-list">
+                      {segIntervals.map((interval) => (
+                        <li
+                          key={interval.eventId}
+                          className={`quarter-row${interval.ongoing ? ' quarter-row--ongoing' : ''} quarter-row--${interval.kind}`}
+                        >
+                          <span className="quarter-row-time tnum">
+                            {formatShortTime(new Date(interval.startMs))}
+                          </span>
+                          <span className="quarter-row-label">
+                            {interval.kind === 'durus'
+                              ? interval.note || NO_REASON_LABEL
+                              : interval.kind === 'mola'
+                                ? 'Mola'
+                                : runsById.get(interval.productRunId)?.urun_adi || 'Üretim'}
+                          </span>
+                          <span className="quarter-row-duration tnum">
+                            {formatDuration(interval.durationMs)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </section>
       </div>

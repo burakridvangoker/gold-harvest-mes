@@ -56,3 +56,7 @@
 .status-badge--durdu {
   --badge-color: var(--signal-stop);
 }
+
+.status-badge--molada {
+  --badge-color: var(--signal-idle);
+}

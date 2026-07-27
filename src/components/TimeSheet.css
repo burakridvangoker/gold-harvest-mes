@@ -42,6 +42,10 @@
   --tone: var(--signal-stop);
 }
 
+.timesheet-sheet--mola {
+  --tone: var(--signal-idle);
+}
+
 .timesheet-handle {
   width: 2.75rem;
   height: 0.25rem;

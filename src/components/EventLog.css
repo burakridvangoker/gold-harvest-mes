@@ -103,6 +103,10 @@
   border-left-color: var(--signal-stop);
 }
 
+.eventlog-row--mola {
+  border-left-color: var(--signal-idle);
+}
+
 .eventlog-row--palet {
   border-left-color: var(--film-dim);
 }

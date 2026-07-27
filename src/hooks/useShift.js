@@ -116,5 +116,27 @@ export function useShift(lineCode) {
     }
   }, [lineCode, refresh])
 
+  /*
+   * Telefon ekranı kilitlenip açıldığında ya da sekme arka planda kalıp
+   * geri gelindiğinde mobil tarayıcılar websocket bağlantısını askıya
+   * alabiliyor — realtime olayı hiç gelmeyebilir. Sekme/pencere tekrar
+   * görünür olduğunda yeniden çekerek bu boşluğu kapatıyoruz.
+   */
+  useEffect(() => {
+    if (!lineCode) return undefined
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
+  }, [lineCode, refresh])
+
   return { shift, runs, events, pallets, loading, error, setError, refresh }
 }

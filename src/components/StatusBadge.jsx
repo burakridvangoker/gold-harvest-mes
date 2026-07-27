@@ -4,6 +4,7 @@ const STATUS_LABELS = {
   beklemede: 'BEKLEMEDE',
   uretimde: 'ÜRETİMDE',
   durdu: 'DURDU',
+  molada: 'MOLADA',
 }
 
 function StatusBadge({ status, size = 'md' }) {

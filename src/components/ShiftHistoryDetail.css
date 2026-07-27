@@ -235,11 +235,65 @@
   border-left-color: var(--signal-stop);
 }
 
+.history-detail-events-row--mola {
+  border-left-color: var(--signal-idle);
+}
+
 .history-detail-events-label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Palet çıkış saatleri */
+.history-detail-pallets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.history-detail-pallets-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  background: var(--steel-700);
+  font-size: 0.85rem;
+}
+
+/* Vardiya bölümleri (çeyrekler) — mola başlangıçlarına göre bölünmüş. */
+.history-detail-quarters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1.25rem;
+}
+
+.history-detail-quarter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.history-detail-quarter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--steel-line);
+}
+
+.history-detail-quarter-title {
+  font-size: 0.9rem;
+}
+
+.history-detail-quarter-time {
+  font-size: 0.8rem;
+  color: var(--film-dim);
 }
 
 .history-detail-log-button {

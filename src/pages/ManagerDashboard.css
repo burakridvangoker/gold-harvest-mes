@@ -333,7 +333,7 @@
 .today-figures {
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: clamp(0.75rem, 1.6vw, 2rem);
 }
 
@@ -353,6 +353,10 @@
   border-left-color: var(--signal-stop);
 }
 
+.figure--mola {
+  border-left-color: var(--signal-idle);
+}
+
 .figure-label {
   font-size: clamp(1rem, 1.05vw, 1.6rem);
 }
@@ -365,22 +369,45 @@
   letter-spacing: -0.02em;
 }
 
+/* Palet çıkış saatleri — her paletin tamamlandığı an, en yeni üstte. */
+.pallet-log {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.4rem, 0.8vh, 0.75rem);
+}
+
+.pallet-log-label {
+  font-size: clamp(0.85rem, 0.95vw, 1.3rem);
+}
+
+.pallet-log-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.5rem, 1vw, 1rem);
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.pallet-log-row {
+  display: flex;
+  gap: 0.6rem;
+  padding: clamp(0.3rem, 0.6vw, 0.6rem) clamp(0.6rem, 1vw, 1rem);
+  background: var(--steel-700);
+  font-size: clamp(0.9rem, 1vw, 1.4rem);
+}
+
 /* NEDEN */
 
 .zone--why {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(1.5rem, 3vw, 3.5rem);
-}
-
-.why-col {
   display: flex;
   flex-direction: column;
   gap: clamp(0.6rem, 1.2vh, 1.25rem);
 }
 
-.reasons-list,
-.feed-list {
+.reasons-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -438,39 +465,94 @@
   transition: width 0.6s ease;
 }
 
-.feed-row {
+/*
+ * ÇEYREKLER — vardiya, mola başlangıçlarına göre bölünmüş, yan yana
+ * bölümler. Her bölümün kendi olay listesi kendi içinde alt alta.
+ */
+.zone--quarters {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.6rem, 1.2vh, 1.25rem);
+}
+
+.quarters-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: clamp(1rem, 2vw, 2rem);
+  align-items: start;
+}
+
+.quarter-col {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vh, 0.9rem);
+  min-width: 0;
+}
+
+.quarter-col-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: clamp(0.4rem, 0.8vh, 0.75rem);
+  border-bottom: 1px solid var(--steel-line);
+}
+
+.quarter-col-title {
+  font-size: clamp(1rem, 1.1vw, 1.6rem);
+}
+
+.quarter-col-time {
+  font-size: clamp(0.85rem, 0.95vw, 1.3rem);
+  color: var(--film-dim);
+}
+
+.quarter-col-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 0.9vh, 0.9rem);
+}
+
+.quarter-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: baseline;
-  gap: clamp(0.75rem, 1.2vw, 1.75rem);
-  padding: clamp(0.4rem, 0.7vh, 0.75rem) 0 clamp(0.4rem, 0.7vh, 0.75rem)
-    clamp(0.6rem, 0.8vw, 1.1rem);
+  gap: clamp(0.6rem, 1vw, 1.25rem);
+  padding: clamp(0.3rem, 0.6vh, 0.6rem) 0 clamp(0.3rem, 0.6vh, 0.6rem)
+    clamp(0.5rem, 0.7vw, 0.9rem);
   border-left: 3px solid var(--steel-600);
-  font-size: clamp(1.15rem, 1.25vw, 1.9rem);
+  font-size: clamp(0.95rem, 1.05vw, 1.5rem);
 }
 
 /* Kenar rengi olayın türünü söyler; "sürüyor" eki hâlâ açık olanı işaretler. */
-.feed-row--uretim {
+.quarter-row--uretim {
   border-left-color: var(--signal-run);
 }
 
-.feed-row--durus {
+.quarter-row--durus {
   border-left-color: var(--signal-stop);
 }
 
-.feed-row-time {
+.quarter-row--mola {
+  border-left-color: var(--signal-idle);
+}
+
+.quarter-row-time {
   color: var(--film-dim);
   font-weight: 500;
 }
 
-.feed-row-label {
+.quarter-row-label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.feed-row--ongoing .feed-row-label::after {
+.quarter-row--ongoing .quarter-row-label::after {
   content: ' · sürüyor';
   color: var(--status);
   font-family: var(--plate);
@@ -479,7 +561,7 @@
   font-size: 0.8em;
 }
 
-.feed-row-duration {
+.quarter-row-duration {
   flex-shrink: 0;
   font-weight: 600;
   white-space: nowrap;
@@ -489,10 +571,6 @@
  * Dar ekran (ofis monitörü, dikey pano): iki sütunlu bölgeler alt alta.
  */
 @media (max-width: 1000px) {
-  .zone--why {
-    grid-template-columns: 1fr;
-  }
-
   .today-figures {
     grid-template-columns: repeat(2, 1fr);
   }

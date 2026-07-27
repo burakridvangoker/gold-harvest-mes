@@ -13,6 +13,7 @@ import {
   palletTotals,
   runSpans,
   seviyeDurumu,
+  shiftSegments,
   shiftTotals,
   totalsByRun,
   validEditWindow,
@@ -144,6 +145,58 @@ describe('currentState', () => {
   it('sıralama bozuk gelse de son olaya bakar', () => {
     const karisik = [ornekOlaylar()[2], ornekOlaylar()[0], ornekOlaylar()[1]]
     assert.equal(currentState(karisik), 'uretimde')
+  })
+
+  it('son olay molaysa molada', () => {
+    const olaylar = [...ornekOlaylar(), { id: 'd', at: T(9, 30), kind: 'mola' }]
+    assert.equal(currentState(olaylar), 'molada')
+  })
+})
+
+describe('mola: açık kalma oranına girmez', () => {
+  it('molaMs ayrı tutulur, toplamMs (payda) mola içermez', () => {
+    // 07:00 üretim (60dk) → 08:00 mola (15dk) → 08:15 üretim (45dk), şimdi 09:00
+    const olaylar = [
+      { id: '1', at: T(7, 0), kind: 'uretim' },
+      { id: '2', at: T(8, 0), kind: 'mola' },
+      { id: '3', at: T(8, 15), kind: 'uretim' },
+    ]
+    const totals = shiftTotals(buildIntervals(olaylar, ms(T(9, 0))))
+
+    assert.equal(totals.uretimMs, 105 * DK) // 60 + 45
+    assert.equal(totals.molaMs, 15 * DK)
+    assert.equal(totals.durusMs, 0)
+    // Payda mola hariç: 105dk üretim / 105dk toplam = %100, mola hiç düşürmüyor
+    assert.equal(totals.toplamMs, 105 * DK)
+    assert.equal(totals.zamanKullanimi, 1)
+  })
+})
+
+describe('shiftSegments', () => {
+  it('mola yoksa tek bölüm döner', () => {
+    const segments = shiftSegments([], { shiftStartMs: ms(T(7, 0)), endMs: ms(T(15, 0)) })
+    assert.equal(segments.length, 1)
+    assert.equal(segments[0].startMs, ms(T(7, 0)))
+    assert.equal(segments[0].endMs, ms(T(15, 0)))
+  })
+
+  it('3 mola 4 bölüm çıkarır', () => {
+    const olaylar = [
+      { id: '1', at: T(9, 0), kind: 'mola' },
+      { id: '2', at: T(11, 0), kind: 'mola' },
+      { id: '3', at: T(13, 0), kind: 'mola' },
+    ]
+    const segments = shiftSegments(olaylar, { shiftStartMs: ms(T(7, 0)), endMs: ms(T(15, 0)) })
+
+    assert.equal(segments.length, 4)
+    assert.deepEqual(
+      segments.map((s) => s.index),
+      [1, 2, 3, 4],
+    )
+    assert.equal(segments[0].startMs, ms(T(7, 0)))
+    assert.equal(segments[0].endMs, ms(T(9, 0)))
+    assert.equal(segments[3].startMs, ms(T(13, 0)))
+    assert.equal(segments[3].endMs, ms(T(15, 0)))
   })
 })
 

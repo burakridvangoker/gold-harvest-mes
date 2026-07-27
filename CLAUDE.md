@@ -43,6 +43,7 @@ SPA rewrite kuralı taşır, olmadan `/operator`/`/mudur` doğrudan girişte 404
 6. `add_run_details.sql` — PFM-4/PFM-10 hat kayıtları, `hedef_hiz_pkt_dk` →
    `calisma_hizi_pkt_dk` yeniden adlandırma, `bos_paket_agirlik_g` /
    `ortalama_gramaj_g` kolonları
+7. `add_mola.sql` — `timeline_events.kind`'a üçüncü değer: `'mola'`
 
 RLS tüm tablolarda açık, tüm politikalar `using (true)` — henüz
 kimlik doğrulama yok, sahada hızlı iterasyon için bilinçli bir tercih.
@@ -148,6 +149,44 @@ değil `activeRun.hedef_koli` ile çalışır; pencere aktif ürünün kendi
 başlangıcından (`runSpans`) vardiyanın planlı bitişine kadardır. Bir
 ürünün hedefi yoksa (boş bırakılmışsa) plan bloğu hiç gösterilmez —
 vardiya genelinde ayrı bir hedef kolonu artık yok.
+
+## Mola: üçüncü durum, açık kalmaya girmez
+
+Vardiyada 3 planlı mola var. Operatör ekranında BAŞLAT/DURDUR'un yanında
+üçüncü bir buton: **MOLA**. Basınca `timeline_events.kind='mola'` yazılır
+(`add_mola.sql` ile şemaya eklendi — eskiden sadece `'uretim'`/`'durus'`
+vardı). `currentState()` üç değerden birini döner: `uretimde` / `durdu` /
+`molada`; andon rengi `molada` için de `--signal-idle` (amber) — kırmızı
+duruşla karışmasın diye kasıtlı.
+
+**Mola dönüşü direkt duruşa geçer, üretime değil:** "MOLA BİTTİ" butonu
+`kind='durus'` bir olay yazar (not otomatik "Moladan dönüş" — operatöre
+ayrıca sorulmaz), üretim ancak BAŞLAT'a basılınca başlar. Sahada makine
+moladan hemen sonra anında çalışmıyor, bir-iki dakika içinde tekrar
+başlıyor — bu ara boşluk gerçek bir "duruş", mola değil.
+
+**Açık kalma oranının paydasına hiç girmez:** `shiftTotals`/`totalsByRun`
+artık `molaMs`'i `uretimMs`/`durusMs`'ten ayrı tutuyor (`emptyTotals()`),
+ve `toplamMs` (açık kalma paydası) SADECE `uretimMs + durusMs`'ten
+oluşuyor. Bilinçli karar: 3 planlı mola yüzünden açık kalma oranı hep
+düşük görünmesin — mola gerçek "makine arızası/duruşu" değil, planlı bir
+ara. `downtimeByNote` de mola'yı zaten hariç tutuyor (`kind !== 'durus'`
+filtresi), "Duruş sebepleri" listesine hiç girmiyor.
+
+**Vardiya bölümleri (çeyrekler):** `timeline.js#shiftSegments` vardiyayı
+mola BAŞLANGIÇLARINA göre böler — N mola → N+1 bölüm (3 mola → 4 bölüm).
+Müdür panosunda "Son olaylar" tek bir uzun liste yerine bu bölümler yan
+yana (`zone--quarters`/`quarters-row`), her bölümün kendi olayları kendi
+içinde alt alta. `ShiftHistoryDetail`'de (donmuş özet) de aynı görünüm var
+— operatörün "Olay geçmişi" (`EventLog`, düzenleme yüzeyi) düz kronolojik
+liste olarak kaldı, düzenlemek için en basiti bu.
+
+**Palet çıkış saatleri:** her paletin `completed_at`'i + koli adedi, hem
+operatör (`.operator-pallet-log`) hem müdür (`.pallet-log`) hem donmuş
+özette (`.history-detail-pallets`) ayrı bir listede — üç ayrı CSS sınıf
+adı bilerek: bu üç yüzeyin ölçeği (telefon rem / duvar ekranı vw / donmuş
+özet rem) çok farklı, aynı class adını paylaşırlarsa (tek CSS paketine
+gömülüyorlar) yanlış ölçek sızabilir.
 
 ## Müdür panosu: iki oran, birbirine karıştırılmasın
 
@@ -320,6 +359,11 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
   Realtime'da **artımlı yama değil yeniden çekme** yapılır: kayıtlar
   düzenlenebilir/silinebilir olduğu için artımlı birleştirme kolayca
   tutarsız düşer. Vardiya başına veri az, yeniden çekmek ucuz.
+  Ayrıca `visibilitychange`/`focus` olayında da yeniden çeker — telefon
+  ekranı kilitlenip açıldığında mobil tarayıcılar websocket'i askıya
+  alabiliyor, realtime olayı hiç gelmeyebilir; sekme tekrar görünür
+  olduğunda bu boşluğu kapatır. `useShiftList.js`/`useShiftById.js` de
+  aynı deseni taşır.
 - `src/components/TimeSheet.jsx` — geriye dönük saat düzeltme, kaydırmalı
   saat/dakika çarkı (`WheelColumn`). Durum değiştiren HER aksiyon
   (başlat/durdur/palet/vardiya bitir/ürün geçişi) buradan geçer.
@@ -358,7 +402,9 @@ değiştir akışı), ürün geçmişi kartları, çalışma hızını her an d�
 ambalaj firesi hesabı, müdür panosunda ürün bazlı + genel verim ayrımı
 (açık kalma/hız verimi hem vardiya genelinde/aktif üründe hem her ürünün
 kendi satırında), geçmiş vardiyalar (donmuş özet + operatörde düzeltme,
-müdürde salt-okunur).
+müdürde salt-okunur), mola (üçüncü durum, açık kalmaya girmez), vardiya
+bölümleri/çeyrekler (mola başlangıçlarına göre yan yana), palet çıkış
+saatleri listesi.
 
 **Yapılmadı:** eski ürüne geri dönüp üretime devam etme UI'ı (şema/`
 runSpans` bunu zaten destekliyor, sadece "bu ürüne dön" butonu yok), not→kod

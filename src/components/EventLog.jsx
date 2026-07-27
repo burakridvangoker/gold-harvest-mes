@@ -18,6 +18,7 @@ import './EventLog.css'
 const KIND_LABELS = {
   uretim: 'Üretim',
   durus: 'Duruş',
+  mola: 'Mola',
   palet: 'Palet',
 }
 
@@ -144,7 +145,13 @@ function EventLog({
               const label =
                 entry.type === 'pallet'
                   ? `${entry.koliCount} koli`
-                  : entry.note || (entry.kind === 'durus' ? 'Sebep girilmemiş' : run?.urun_adi) || '—'
+                  : entry.note ||
+                    (entry.kind === 'durus'
+                      ? 'Sebep girilmemiş'
+                      : entry.kind === 'mola'
+                        ? 'Mola'
+                        : run?.urun_adi) ||
+                    '—'
 
               return (
                 <li key={`${entry.type}-${entry.id}`}>

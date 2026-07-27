@@ -89,5 +89,23 @@ export function useShiftById(shiftId) {
     }
   }, [shiftId, refresh])
 
+  /* Mobil tarayıcılar arka planda websocket'i askıya alabiliyor — sekme
+   * tekrar görünür olduğunda yeniden çekerek olası boşluğu kapatır. */
+  useEffect(() => {
+    if (!shiftId) return undefined
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
+  }, [shiftId, refresh])
+
   return { shift, runs, events, pallets, loading, error, setError, refresh }
 }

@@ -50,34 +50,40 @@ export function buildIntervals(events, endMs = Date.now()) {
 }
 
 function emptyTotals() {
-  return { uretimMs: 0, durusMs: 0 }
+  return { uretimMs: 0, durusMs: 0, molaMs: 0 }
 }
 
-/** Ürün çalışması başına üretim/duruş süresi. Anahtar: product_run_id. */
+/**
+ * Bir aralığın süresini doğru kovaya ekler. Mola, duruş SAYILMAZ — planlı bir
+ * mola makinenin "açık kalma" performansını düşürüyormuş gibi görünmesin diye
+ * ayrı tutuluyor (bkz. shiftTotals'taki toplamMs).
+ */
+function addToTotals(totals, interval) {
+  if (interval.kind === 'uretim') totals.uretimMs += interval.durationMs
+  else if (interval.kind === 'mola') totals.molaMs += interval.durationMs
+  else totals.durusMs += interval.durationMs
+  return totals
+}
+
+/** Ürün çalışması başına üretim/duruş/mola süresi. Anahtar: product_run_id. */
 export function totalsByRun(intervals) {
   const map = new Map()
 
   for (const interval of intervals) {
     const key = interval.productRunId
-    const current = map.get(key) ?? emptyTotals()
-
-    if (interval.kind === 'uretim') current.uretimMs += interval.durationMs
-    else current.durusMs += interval.durationMs
-
-    map.set(key, current)
+    map.set(key, addToTotals(map.get(key) ?? emptyTotals(), interval))
   }
 
   return map
 }
 
-/** Vardiya geneli. Makinenin toplam verimi buradan okunur. */
+/**
+ * Vardiya geneli. Makinenin toplam verimi buradan okunur. Mola, açık kalma
+ * oranının paydasına (toplamMs) hiç girmez — bilinçli karar: 3 planlı mola
+ * yüzünden oran hep düşük görünmesin, mola gerçek "çalışma dışı" zaman değil.
+ */
 export function shiftTotals(intervals) {
-  const totals = intervals.reduce((acc, interval) => {
-    if (interval.kind === 'uretim') acc.uretimMs += interval.durationMs
-    else acc.durusMs += interval.durationMs
-    return acc
-  }, emptyTotals())
-
+  const totals = intervals.reduce(addToTotals, emptyTotals())
   const toplamMs = totals.uretimMs + totals.durusMs
 
   return {
@@ -96,7 +102,9 @@ export function currentState(events) {
   const last = sorted[sorted.length - 1]
 
   if (!last) return 'beklemede'
-  return last.kind === 'uretim' ? 'uretimde' : 'durdu'
+  if (last.kind === 'uretim') return 'uretimde'
+  if (last.kind === 'mola') return 'molada'
+  return 'durdu'
 }
 
 /** Son olay ve ne zamandır sürdüğü — operatör panelindeki büyük sayaç. */
@@ -167,6 +175,28 @@ export function runSpans(events, nowMs = Date.now()) {
   }
 
   return map
+}
+
+/**
+ * Vardiyayı mola başlangıçlarına göre bölümlere ayırır. N mola varsa N+1
+ * bölüm çıkar (3 mola → 4 bölüm, hiç mola yoksa tek bölüm = vardiyanın
+ * tamamı). Müdür panosunda "tüm vardiya alt alta" yerine bölümler yan yana
+ * gösterilsin diye — her bölümün kendi olay listesi olur.
+ */
+export function shiftSegments(events, { shiftStartMs, endMs = Date.now() }) {
+  if (shiftStartMs == null) return []
+
+  const molaStarts = sortEvents(events)
+    .filter((event) => event.kind === 'mola')
+    .map((event) => toMs(event.at))
+
+  const bounds = [shiftStartMs, ...molaStarts, Math.max(shiftStartMs, endMs)]
+
+  return bounds.slice(0, -1).map((startMs, index) => ({
+    index: index + 1,
+    startMs,
+    endMs: bounds[index + 1],
+  }))
 }
 
 /* ---- Palet ve koli ---- */

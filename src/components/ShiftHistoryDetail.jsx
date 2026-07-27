@@ -9,6 +9,7 @@ import {
   palletTotals,
   palletTotalsByRun,
   seviyeDurumu,
+  shiftSegments,
   shiftTotals,
   totalsByRun,
 } from '../lib/timeline'
@@ -58,8 +59,8 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
   const totals = shiftTotals(intervals)
   const paletler = palletTotals(pallets)
   const topReasons = downtimeByNote(intervals, TOP_REASONS_LIMIT)
-  const recentIntervals = [...intervals].reverse()
   const maxReasonMs = topReasons[0]?.ms ?? 0
+  const segments = shiftSegments(events, { shiftStartMs, endMs: nowMs })
 
   const lastInterval = intervals[intervals.length - 1] ?? null
   const lastRun =
@@ -187,6 +188,10 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
           <dd className="tnum">{formatDuration(totals.durusMs)}</dd>
         </div>
         <div className="history-detail-figure">
+          <dt>Mola</dt>
+          <dd className="tnum">{formatDuration(totals.molaMs)}</dd>
+        </div>
+        <div className="history-detail-figure">
           <dt>Palet</dt>
           <dd className="tnum">{paletler.paletAdedi}</dd>
         </div>
@@ -199,6 +204,20 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
           <dd className="tnum">{paket ?? '—'}</dd>
         </div>
       </dl>
+
+      {pallets.length > 0 && (
+        <div className="history-detail-section">
+          <h3 className="history-detail-subtitle plate">Palet çıkış saatleri</h3>
+          <ul className="history-detail-pallets">
+            {[...pallets].reverse().map((pallet) => (
+              <li key={pallet.id} className="history-detail-pallets-row">
+                <span className="tnum">{formatShortTime(new Date(pallet.completed_at))}</span>
+                <span className="tnum">{pallet.koli_count} koli</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <ProductHistory
         runs={runs}
@@ -237,27 +256,48 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
       </div>
 
       <div className="history-detail-section">
-        <h3 className="history-detail-subtitle plate">Son olaylar</h3>
-        {recentIntervals.length === 0 ? (
-          <p className="history-detail-empty">Olay yok</p>
-        ) : (
-          <ul className="history-detail-events">
-            {recentIntervals.map((interval) => (
-              <li
-                key={interval.eventId}
-                className={`history-detail-events-row history-detail-events-row--${interval.kind}`}
-              >
-                <span className="tnum">{formatShortTime(new Date(interval.startMs))}</span>
-                <span className="history-detail-events-label">
-                  {interval.kind === 'durus'
-                    ? interval.note || NO_REASON_LABEL
-                    : runsById.get(interval.productRunId)?.urun_adi || 'Üretim'}
-                </span>
-                <span className="tnum">{formatDuration(interval.durationMs)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <h3 className="history-detail-subtitle plate">Vardiya bölümleri</h3>
+        <div className="history-detail-quarters">
+          {segments.map((segment) => {
+            const segIntervals = intervals
+              .filter((interval) => interval.startMs >= segment.startMs && interval.startMs < segment.endMs)
+              .reverse()
+
+            return (
+              <div key={segment.index} className="history-detail-quarter">
+                <div className="history-detail-quarter-head">
+                  <span className="history-detail-quarter-title plate">{segment.index}. Bölüm</span>
+                  <span className="history-detail-quarter-time tnum">
+                    {formatShortTime(new Date(segment.startMs))} –{' '}
+                    {formatShortTime(new Date(segment.endMs))}
+                  </span>
+                </div>
+                {segIntervals.length === 0 ? (
+                  <p className="history-detail-empty">Olay yok</p>
+                ) : (
+                  <ul className="history-detail-events">
+                    {segIntervals.map((interval) => (
+                      <li
+                        key={interval.eventId}
+                        className={`history-detail-events-row history-detail-events-row--${interval.kind}`}
+                      >
+                        <span className="tnum">{formatShortTime(new Date(interval.startMs))}</span>
+                        <span className="history-detail-events-label">
+                          {interval.kind === 'durus'
+                            ? interval.note || NO_REASON_LABEL
+                            : interval.kind === 'mola'
+                              ? 'Mola'
+                              : runsById.get(interval.productRunId)?.urun_adi || 'Üretim'}
+                        </span>
+                        <span className="tnum">{formatDuration(interval.durationMs)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {!readOnly && (
