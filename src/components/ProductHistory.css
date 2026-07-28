@@ -51,3 +51,35 @@
   font-size: 0.85rem;
   color: var(--film-dim);
 }
+
+/* Ürünün kendi palet çıkışları — detay sayfasında, bu ürüne ait olanlar. */
+.history-pallets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.history-pallets-label {
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+.history-pallets-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 8rem;
+  overflow-y: auto;
+}
+
+.history-pallets-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  background: var(--steel-800);
+  border: 1px solid var(--steel-600);
+  font-size: 0.9rem;
+}

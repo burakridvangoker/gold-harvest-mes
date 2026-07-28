@@ -246,24 +246,6 @@
   white-space: nowrap;
 }
 
-/* Palet çıkış saatleri */
-.history-detail-pallets {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.history-detail-pallets-row {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.35rem 0.65rem;
-  background: var(--steel-700);
-  font-size: 0.85rem;
-}
-
 /* Vardiya bölümleri (çeyrekler) — mola başlangıçlarına göre bölünmüş. */
 .history-detail-quarters {
   display: grid;

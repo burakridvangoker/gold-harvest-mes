@@ -184,7 +184,17 @@ function ManagerDashboard() {
           })
         : null
 
-      return { run, isActive, acikKalmaOran, perf, pace }
+      /*
+       * Her ürünün kendi palet çıkışları — hangi paletin hangi ürüne ait
+       * olduğu belirsiz kalmasın diye tek, ortak bir liste yerine burada,
+       * ürünün kendi satırında (yaşanmış şikayet: tek ortak liste natura'nın
+       * altında dururken hâlâ kuru üzüm'ün paletlerini gösteriyordu).
+       */
+      const runPallets = [...pallets]
+        .filter((pallet) => pallet.product_run_id === run.id)
+        .reverse()
+
+      return { run, isActive, acikKalmaOran, perf, pace, runPallets }
     })
     .filter(Boolean)
 
@@ -341,23 +351,9 @@ function ManagerDashboard() {
             </div>
           </dl>
 
-          {pallets.length > 0 && (
-            <div className="pallet-log">
-              <span className="pallet-log-label plate">Palet çıkış saatleri</span>
-              <ul className="pallet-log-list">
-                {[...pallets].reverse().map((pallet) => (
-                  <li key={pallet.id} className="pallet-log-row">
-                    <span className="tnum">{formatShortTime(new Date(pallet.completed_at))}</span>
-                    <span className="tnum">{pallet.koli_count} koli</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
           {productRows.length > 0 && (
             <div className="plan-stack">
-              {productRows.map(({ run, acikKalmaOran, perf, pace, isActive }, index) => {
+              {productRows.map(({ run, acikKalmaOran, perf, pace, isActive, runPallets }, index) => {
                 const isFirstFrozen = !isActive && (index === 0 || productRows[index - 1].isActive)
                 return (
                 <div
@@ -400,6 +396,19 @@ function ManagerDashboard() {
                   {pace && (
                     <div className="plan-row-track">
                       <div className="plan-row-fill" style={{ width: `${pace.ilerleme * 100}%` }} />
+                    </div>
+                  )}
+                  {runPallets.length > 0 && (
+                    <div className="plan-row-pallets">
+                      <span className="plan-row-pallets-label plate">Palet çıkış saatleri</span>
+                      <ul className="plan-row-pallets-list">
+                        {runPallets.map((pallet) => (
+                          <li key={pallet.id} className="plan-row-pallets-row tnum">
+                            <span>{formatShortTime(new Date(pallet.completed_at))}</span>
+                            <span>{pallet.koli_count} koli</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>

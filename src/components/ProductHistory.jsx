@@ -91,8 +91,13 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun, frozen = fa
           toplamPaket: paket ?? 0,
           bosPaketAgirlikG: run.bos_paket_agirlik_g,
         })
+        /* Bu ürüne ait paletler — ortak bir liste yerine her ürünün kendi
+         * kartında, hangi paletin hangi ürüne ait olduğu hiç belirsiz kalmasın. */
+        const paletKayitlari = [...pallets]
+          .filter((pallet) => pallet.product_run_id === run.id)
+          .reverse()
 
-        return { run, span, zaman, palet, paket, gercekPktDk, acikKalmaOran, performans, waste }
+        return { run, span, zaman, palet, paket, gercekPktDk, acikKalmaOran, performans, waste, paletKayitlari }
       })
   }, [runs, events, pallets, nowMs, frozen])
 
@@ -385,6 +390,20 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun, frozen = fa
                         <span className="sheet-stat-value tnum">{open.run.ortalama_gramaj_g} g</span>
                       </div>
                     ) : null}
+                  </div>
+                ) : null}
+
+                {open.paletKayitlari.length > 0 ? (
+                  <div className="history-pallets">
+                    <span className="history-pallets-label plate">Palet çıkış saatleri</span>
+                    <ul className="history-pallets-list">
+                      {open.paletKayitlari.map((pallet) => (
+                        <li key={pallet.id} className="history-pallets-row tnum">
+                          <span>{formatShortTime(new Date(pallet.completed_at))}</span>
+                          <span>{pallet.koli_count} koli</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 ) : null}
 

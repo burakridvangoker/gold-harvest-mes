@@ -206,12 +206,22 @@ içinde alt alta. `ShiftHistoryDetail`'de (donmuş özet) de aynı görünüm va
 — operatörün "Olay geçmişi" (`EventLog`, düzenleme yüzeyi) düz kronolojik
 liste olarak kaldı, düzenlemek için en basiti bu.
 
-**Palet çıkış saatleri:** her paletin `completed_at`'i + koli adedi, hem
-operatör (`.operator-pallet-log`) hem müdür (`.pallet-log`) hem donmuş
-özette (`.history-detail-pallets`) ayrı bir listede — üç ayrı CSS sınıf
-adı bilerek: bu üç yüzeyin ölçeği (telefon rem / duvar ekranı vw / donmuş
-özet rem) çok farklı, aynı class adını paylaşırlarsa (tek CSS paketine
-gömülüyorlar) yanlış ölçek sızabilir.
+**Palet çıkış saatleri: her ürünün KENDİ listesi, tek ortak liste değil.**
+İlk sürümde tek, vardiya geneli bir "Palet çıkış saatleri" listesi vardı —
+hangi paletin hangi ürüne ait olduğu belirsizdi (yaşanmış şikayet: yeni
+ürüne (natura karışık) geçildiğinde bu liste hâlâ eski ürünün (kuru üzüm)
+paletlerini gösteriyordu, çünkü `pallets` filtrelenmeden tek listede
+basılıyordu). Artık üç yüzeyde de palet listesi `pallet.product_run_id`'ye
+göre filtrelenip HER ürünün kendi kartında/satırında ayrı ayrı gösteriliyor:
+- `ManagerDashboard` — `.plan-row-pallets`, her ürün satırının
+  (`.plan-row`) içinde, o satırın `run.id`'sine ait paletler.
+- `OperatorPanel`/`ShiftHistoryDetail` — `ProductHistory`'nin detay
+  sayfasında (`.history-pallets`), açılan ürün kartının kendi paletleri.
+`palletTotalsByRun` zaten aggregate rakamlar için run bazlıydı; bu liste de
+aynı prensiple `product_run_id` filtresiyle run bazlı hale getirildi. Üç
+ayrı CSS sınıf adı (`.plan-row-pallets*` / `.history-pallets*`) bilerek:
+bu yüzeylerin ölçeği (duvar ekranı vw / telefon-donmuş özet rem) farklı,
+aynı adı paylaşırlarsa yanlış ölçek sızabilir.
 
 ## Müdür panosu: iki oran, birbirine karıştırılmasın
 

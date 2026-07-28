@@ -14,7 +14,7 @@ import {
   runSpans,
 } from '../lib/timeline'
 import { formatDelta, formatDuration } from '../lib/duration'
-import { formatDateLabel, formatShortTime, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
+import { formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import TimeSheet from '../components/TimeSheet'
 import StopNoteSheet from '../components/StopNoteSheet'
@@ -629,20 +629,6 @@ function OperatorPanel() {
                 {paletlerToplam.paletAdedi} palet · {paletlerToplam.koliAdedi} koli · {paket ?? '—'} paket
               </span>
             </div>
-
-            {pallets.length > 0 && (
-              <div className="operator-pallet-log">
-                <span className="operator-pallet-log-label plate">Palet çıkış saatleri</span>
-                <ul className="operator-pallet-log-list">
-                  {[...pallets].reverse().map((pallet) => (
-                    <li key={pallet.id} className="operator-pallet-log-row">
-                      <span className="tnum">{formatShortTime(new Date(pallet.completed_at))}</span>
-                      <span className="tnum">{pallet.koli_count} koli</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
             <ProductHistory
               runs={runs}

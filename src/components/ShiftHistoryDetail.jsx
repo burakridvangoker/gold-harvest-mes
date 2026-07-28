@@ -204,20 +204,6 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
         </div>
       </dl>
 
-      {pallets.length > 0 && (
-        <div className="history-detail-section">
-          <h3 className="history-detail-subtitle plate">Palet çıkış saatleri</h3>
-          <ul className="history-detail-pallets">
-            {[...pallets].reverse().map((pallet) => (
-              <li key={pallet.id} className="history-detail-pallets-row">
-                <span className="tnum">{formatShortTime(new Date(pallet.completed_at))}</span>
-                <span className="tnum">{pallet.koli_count} koli</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       <ProductHistory
         runs={runs}
         events={events}
