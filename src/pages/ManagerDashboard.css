@@ -302,6 +302,15 @@
   color: var(--film-dim);
 }
 
+/*
+ * Bu ürünün kendi palet/koli/paketi — "Vardiya toplamı" bölümündeki
+ * rakamın hangi üründen geldiğini burada net gösteriyor.
+ */
+.plan-row-counts {
+  font-size: clamp(0.85rem, 0.95vw, 1.3rem);
+  color: var(--film-dim);
+}
+
 .plan-row-track {
   height: clamp(0.4rem, 0.6vw, 0.9rem);
   background: rgba(232, 234, 230, 0.08);

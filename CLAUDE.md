@@ -225,8 +225,14 @@ aynı adı paylaşırlarsa yanlış ölçek sızabilir.
 
 ## Müdür panosu: iki oran, birbirine karıştırılmasın
 
-`ManagerDashboard`'daki "Vardiya" bölgesi iki ayrı, her zaman görünen
-oran gösterir (`src/pages/ManagerDashboard.jsx`, `.oran-group`):
+`ManagerDashboard`'daki "Vardiya toplamı" bölgesi iki ayrı, her zaman
+görünen oran gösterir (`src/pages/ManagerDashboard.jsx`, `.oran-group`).
+Başlık bilerek "Vardiya" değil "**Vardiya toplamı**": tek ürünlü bir
+vardiyada bu bölümün palet/koli/paket rakamları o tek ürünün rakamlarıyla
+birebir aynı görünüyor, "toplamı" ibaresi olmadan aktif ürüne aitmiş gibi
+okunuyordu (yaşanmış karışıklık: "Şimdi" bölgesindeki aktif ürünün kendi
+sayısı 0 iken hemen altındaki "Vardiya" 1 palet/30 koli/360 paket
+gösterince kullanıcı bunun da aktif ürüne ait olduğunu sanmıştı).
 
 - **Açık kalma oranı** — `shiftTotals(intervals).zamanKullanimi`: vardiya
   boyunca makinenin ne kadarının "uretim" durumunda geçtiği (duruşlar
@@ -271,6 +277,14 @@ buradakiler o SATIRIN kendi `product_run_id`'sine ait `totalsByRun`/
 performansı da kalıcı olarak görünür kalsın diye. Hedefi olmayan bir ürün
 de (ilerleme çubuğu/hedef metni olmadan) yine de bu iki metrikle listeye
 girer; sadece hedefe bağlı kısımlar (`pace`) opsiyoneldir.
+
+**Her satır ayrıca kendi ham palet/koli/paket sayısını da taşır**
+(`.plan-row-counts`, açık kalma/hız verimi yüzdelerinin hemen altında) —
+üsteki "Vardiya toplamı" bölümündeki Palet/Koli/Paket rakamının HANGİ
+üründen geldiği tek bakışta görülsün diye. Bu olmadan (yaşanmış
+karışıklık) vardiya toplamı tek bir ürünün rakamıyla birebir aynı
+görününce "bu rakam nereden geliyor" belirsiz kalıyordu; artık aynı
+sayı (ör. 360 paket) doğrudan o ürünün kendi satırında da yazıyor.
 
 ## Geçmiş vardiyalar: vardiyayı bitirmek veri silmez
 

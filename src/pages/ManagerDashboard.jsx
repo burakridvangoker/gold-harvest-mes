@@ -168,6 +168,7 @@ function ManagerDashboard() {
       const rToplamMs = rt.uretimMs + rt.durusMs
       const acikKalmaOran = rToplamMs > 0 ? rt.uretimMs / rToplamMs : null
 
+      const paletAdedi = paletlerByRun.get(run.id)?.paletAdedi ?? 0
       const koli = paletlerByRun.get(run.id)?.koliAdedi ?? 0
       const runPaket = koliToPaket(koli, run.koli_ici_adet)
       const perf = run.calisma_hizi_pkt_dk
@@ -194,7 +195,7 @@ function ManagerDashboard() {
         .filter((pallet) => pallet.product_run_id === run.id)
         .reverse()
 
-      return { run, isActive, acikKalmaOran, perf, pace, runPallets }
+      return { run, isActive, acikKalmaOran, perf, pace, runPallets, paletAdedi, koli, runPaket }
     })
     .filter(Boolean)
 
@@ -303,7 +304,15 @@ function ManagerDashboard() {
         {/* BUGÜN */}
         <section className="zone zone--today">
           <div className="zone-head">
-            <h2 className="zone-title plate">Vardiya</h2>
+            {/*
+             * "Vardiya toplamı" — bilerek TÜM ürünlerin toplamı, aktif
+             * ürünün değil (o "Şimdi" bölgesinde, .now-run-figures'ta).
+             * Sadece "Vardiya" başlığı bunu netleştirmiyordu (yaşanmış
+             * karışıklık: tek ürün varken bu toplam o ürünün rakamlarıyla
+             * birebir aynı görünüyor, "toplamı" ibaresi olmadan aktif
+             * ürüne aitmiş gibi okunuyordu).
+             */}
+            <h2 className="zone-title plate">Vardiya toplamı</h2>
             <div className="oran-group">
               <span className={`usage-figure${acikKalmaDurum ? ` usage-figure--${acikKalmaDurum}` : ''} tnum`}>
                 %{zamanKullanimi}
@@ -353,7 +362,8 @@ function ManagerDashboard() {
 
           {productRows.length > 0 && (
             <div className="plan-stack">
-              {productRows.map(({ run, acikKalmaOran, perf, pace, isActive, runPallets }, index) => {
+              {productRows.map(
+                ({ run, acikKalmaOran, perf, pace, isActive, runPallets, paletAdedi, koli, runPaket }, index) => {
                 const isFirstFrozen = !isActive && (index === 0 || productRows[index - 1].isActive)
                 return (
                 <div
@@ -392,6 +402,16 @@ function ManagerDashboard() {
                         </span>
                       </>
                     )}
+                  </div>
+                  {/*
+                   * Bu ürünün kendi palet/koli/paketi — "Vardiya toplamı"
+                   * bölümündeki rakamın hangi üründen geldiği burada net
+                   * görünsün diye (yaşanmış karışıklık: vardiya toplamı tek
+                   * ürünün üretimiyle birebir aynı görününce o rakamın
+                   * nereden geldiği belirsiz kalıyordu).
+                   */}
+                  <div className="plan-row-counts tnum">
+                    {paletAdedi} palet · {koli} koli · {runPaket ?? '—'} paket
                   </div>
                   {pace && (
                     <div className="plan-row-track">
