@@ -143,6 +143,7 @@ function ManagerDashboard() {
   const shiftEndMs = shift.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null
 
   const activeRunKoli = activeRun ? (paletlerByRun.get(activeRun.id)?.koliAdedi ?? 0) : 0
+  const activeRunPaletAdedi = activeRun ? (paletlerByRun.get(activeRun.id)?.paletAdedi ?? 0) : 0
   const activeRunTotals = activeRun ? runTotals.get(activeRun.id) ?? { uretimMs: 0, durusMs: 0 } : null
 
   /*
@@ -259,6 +260,26 @@ function ManagerDashboard() {
                 {activeRun.parti_no ? `${activeRun.parti_no} · ` : ''}
                 {activeRun.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : ''}
               </span>
+              {/*
+               * Bu ürünün kendi palet/koli/paketi — aşağıdaki "Vardiya"
+               * bölgesindeki toplamla karıştırılmasın diye burada, ürün
+               * adının hemen altında, ayrı ve net (yaşanmış hata: ürün
+               * değişince eski ürünün toplamı yenisinin altında görünüyordu).
+               */}
+              <div className="now-run-figures">
+                <span className="now-run-figure">
+                  <span className="now-run-figure-value tnum">{activeRunPaletAdedi}</span>
+                  <span className="now-run-figure-label plate">palet</span>
+                </span>
+                <span className="now-run-figure">
+                  <span className="now-run-figure-value tnum">{activeRunKoli}</span>
+                  <span className="now-run-figure-label plate">koli</span>
+                </span>
+                <span className="now-run-figure">
+                  <span className="now-run-figure-value tnum">{activeRunPaket ?? '—'}</span>
+                  <span className="now-run-figure-label plate">paket</span>
+                </span>
+              </div>
             </div>
           ) : (
             <div className="now-run-empty plate">Ürün girilmedi</div>

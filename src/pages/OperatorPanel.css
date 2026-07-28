@@ -283,6 +283,17 @@ button.operator-line-code {
 
 /* Sayaçlar: kart değil, saç teli çizgiyle bölünmüş tek satır. */
 
+.operator-counts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-top: clamp(0.4rem, 1.2vh, 0.75rem);
+}
+
+.operator-counts-label {
+  font-size: clamp(0.8rem, 2.6vw, 1rem);
+}
+
 .operator-counts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -299,6 +310,23 @@ button.operator-line-code {
 
 .count-cell + .count-cell {
   border-left: 1px solid var(--steel-line);
+}
+
+/* Vardiya toplamı — bu üründen ayrı, küçük ve soluk: birden çok ürün
+ * varken hangi sayının hangi ürüne ait olduğu karışmasın. */
+.operator-shift-totals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--steel-line);
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+.operator-shift-totals-value {
+  color: var(--film);
 }
 
 /* Palet çıkış saatleri — her paletin tamamlandığı an, en yeni üstte. */

@@ -598,19 +598,36 @@ function OperatorPanel() {
               </div>
             )}
 
-            <div className="operator-counts">
-              <div className="count-cell">
-                <span className="count-label plate">Palet</span>
-                <span className="count-value tnum">{paletlerToplam.paletAdedi}</span>
+            {/*
+             * Bu ürün / vardiya toplamı ayrı ayrı gösterilir — birden
+             * çok ürün üretilen bir vardiyada ikisi karıştırılmasın diye
+             * (yaşanmış hata: ürün değişince eski ürünün toplamı yeni
+             * ürünün altında görünüyordu). Ana ızgara HER ZAMAN aktif
+             * ürünün kendi sayıları, vardiya toplamı ayrı, küçük bir satır.
+             */}
+            <div className="operator-counts-section">
+              <span className="operator-counts-label plate">Bu ürün</span>
+              <div className="operator-counts">
+                <div className="count-cell">
+                  <span className="count-label plate">Palet</span>
+                  <span className="count-value tnum">{activeRunPaletler.paletAdedi}</span>
+                </div>
+                <div className="count-cell">
+                  <span className="count-label plate">Koli</span>
+                  <span className="count-value tnum">{activeRunPaletler.koliAdedi}</span>
+                </div>
+                <div className="count-cell">
+                  <span className="count-label plate">Paket</span>
+                  <span className="count-value tnum">{activeRunPaket ?? '—'}</span>
+                </div>
               </div>
-              <div className="count-cell">
-                <span className="count-label plate">Koli</span>
-                <span className="count-value tnum">{paletlerToplam.koliAdedi}</span>
-              </div>
-              <div className="count-cell">
-                <span className="count-label plate">Paket</span>
-                <span className="count-value tnum">{paket ?? '—'}</span>
-              </div>
+            </div>
+
+            <div className="operator-shift-totals">
+              <span className="operator-shift-totals-label plate">Vardiya toplamı</span>
+              <span className="operator-shift-totals-value tnum">
+                {paletlerToplam.paletAdedi} palet · {paletlerToplam.koliAdedi} koli · {paket ?? '—'} paket
+              </span>
             </div>
 
             {pallets.length > 0 && (

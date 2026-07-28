@@ -150,6 +150,22 @@ başlangıcından (`runSpans`) vardiyanın planlı bitişine kadardır. Bir
 ürünün hedefi yoksa (boş bırakılmışsa) plan bloğu hiç gösterilmez —
 vardiya genelinde ayrı bir hedef kolonu artık yok.
 
+**Bu ürün / vardiya toplamı hiç karıştırılmasın:** Yaşanmış hata — ürün
+değiştirince yeni ürünün adının hemen altında ESKİ ürünün palet/koli/
+paket sayısı görünüyordu, çünkü `.operator-counts`/`today-figures`
+her zaman `palletTotals(pallets)` (TÜM vardiya, ürün ayrımı yok)
+kullanıyordu. Artık iki ayrı gösterim var:
+- **Bu ürün** — aktif `product_run`'a ait palet/koli/paket
+  (`palletTotalsByRun(pallets).get(activeRun.id)`), ürün adının hemen
+  altında (operatörde `.operator-counts-section`, müdürde
+  `.now-run-figures`).
+- **Vardiya toplamı** — TÜM ürünlerin toplamı (`palletTotals(pallets)`),
+  ayrı ve küçük bir satırda (operatörde `.operator-shift-totals`,
+  müdürde zaten ayrı olan "VARDİYA" bölgesi).
+
+Yeni bir ürüne geçilince "Bu ürün" sıfırdan başlar, "Vardiya toplamı"
+değişmeden kalır — ikisi asla aynı kutuda gösterilmemeli.
+
 ## Mola: üçüncü durum, açık kalmaya girmez
 
 Vardiyada 3 planlı mola var. Operatör ekranında BAŞLAT/DURDUR'un yanında
