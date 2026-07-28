@@ -223,6 +223,27 @@ ayrı CSS sınıf adı (`.plan-row-pallets*` / `.history-pallets*`) bilerek:
 bu yüzeylerin ölçeği (duvar ekranı vw / telefon-donmuş özet rem) farklı,
 aynı adı paylaşırlarsa yanlış ölçek sızabilir.
 
+**Vardiya toplam paketi: yaşanmış hesap hatası, `timeline.js#shiftPaket`
+ile düzeltildi.** Üç yüzeyde de (`ManagerDashboard`, `OperatorPanel`,
+`ShiftHistoryDetail`) toplam paket eskiden `koliToPaket(TÜM koli,
+TEK bir ürünün koli_ici_adet'i)` ile hesaplanıyordu — vardiyada birden
+çok ürün varsa (farklı `koli_ici_adet` değerleri) bu yanlış: 30 koli
+kuru üzüm (koli içi 7 = 210 paket) + 0 koli natura (koli içi 12) iken
+toplam "210" değil aktif ürünün 12'siyle çarpılıp "360" çıkıyordu.
+Doğrusu: her ürün KENDİ `koli_ici_adet`'iyle hesaplanıp toplanır
+(`shiftPaket(runs, paletlerByRun)`). Tek bir `koli_ici_adet` ile TÜM
+koliyi çarpan bir kod görürseniz bu hata geri gelmiş demektir.
+
+**Vardiya toplamı "1+2" gibi ürün bazlı katkılara ayrılır**
+(`formatBreakdown`, `src/lib/duration.js`): Palet/Koli/Paket rakamları
+artık düz bir toplam değil, paleti çıkmış her ürünün kendi katkısı
+`+` ile ayrılmış olarak gösteriliyor (ör. "1+2 palet · 30+16 koli ·
+210+192 paket") — yeni ürünün paletleri çıktıkça toplamın hangi
+üründen büyüdüğü tek bakışta belli olsun diye. Katkısı 0 olan ürünler
+(henüz paleti çıkmamış) listeye girmez, tek ürün/tek katkı varsa
+gereksiz "+" eklenmez, düz sayı gösterilir. Üç yüzeyde de aynı desen
+(`contributingRuns`/`paletParts`/`koliParts`/`paketParts`).
+
 ## Müdür panosu: iki oran, birbirine karıştırılmasın
 
 `ManagerDashboard`'daki "Vardiya toplamı" bölgesi iki ayrı, her zaman

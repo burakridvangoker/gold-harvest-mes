@@ -11,6 +11,18 @@ export function formatDelta(dakika) {
   return kalan === 0 ? `${saat} sa` : `${saat} sa ${kalan} dk`
 }
 
+/*
+ * Birden çok ürünün katkısından oluşan bir toplamı "1+5" gibi okunur hale
+ * getirir — vardiya toplamının hangi ürünlerden geldiği tek bakışta belli
+ * olsun diye (yaşanmış karışıklık: tek bir sayı gösterilince yeni ürünün
+ * paletleri çıktıkça toplamın nereden büyüdüğü belirsiz kalıyordu). Tek
+ * parça varsa (vardiyada tek ürün, ya da diğerleri henüz katkı vermemiş)
+ * gereksiz "+" eklenmesin diye düz toplam gösterilir.
+ */
+export function formatBreakdown(parts, total) {
+  return parts.length > 1 ? parts.join('+') : String(total)
+}
+
 export function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000))
   const hours = Math.floor(totalSeconds / 3600)

@@ -15,11 +15,12 @@ import {
   palletTotalsByRun,
   runSpans,
   seviyeDurumu,
+  shiftPaket,
   shiftSegments,
   shiftTotals,
   totalsByRun,
 } from '../lib/timeline'
-import { formatDelta, formatDuration } from '../lib/duration'
+import { formatBreakdown, formatDelta, formatDuration } from '../lib/duration'
 import { formatClock, formatDateLabel, formatShortTime } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import './ManagerDashboard.css'
@@ -133,13 +134,29 @@ function ManagerDashboard() {
   const son = intervals[intervals.length - 1] ?? null
   const urgency = state === 'durdu' && son ? Math.min(1, son.durationMs / TAM_ISRAR_MS) : 0
 
-  const paket = koliToPaket(paletler.koliAdedi, activeRun?.koli_ici_adet)
   const maxReasonMs = topReasons[0]?.ms ?? 0
 
   /* Hedef koli ürün bazlı; tempo da her ürünün kendi başlangıcına göre. */
   const spans = runSpans(events, now)
   const paletlerByRun = palletTotalsByRun(pallets)
   const runTotals = totalsByRun(intervals)
+  /*
+   * Tek bir koli_ici_adet (aktif ürününki) ile çarpmak yanlış — vardiyada
+   * birden çok ürün varsa (farklı koli içi adetleri) her ürün kendi
+   * adediyle hesaplanıp toplanmalı (bkz. timeline.js#shiftPaket).
+   */
+  const paket = shiftPaket(runs, paletlerByRun)
+
+  /*
+   * Vardiya toplamı "1+5" gibi ürün bazlı katkılara ayrılabilsin diye —
+   * sadece paleti çıkmış (katkısı 0'dan büyük) ürünler, vardiya sırasıyla.
+   */
+  const contributingRuns = runs.filter((run) => (paletlerByRun.get(run.id)?.paletAdedi ?? 0) > 0)
+  const paletParts = contributingRuns.map((run) => paletlerByRun.get(run.id)?.paletAdedi ?? 0)
+  const koliParts = contributingRuns.map((run) => paletlerByRun.get(run.id)?.koliAdedi ?? 0)
+  const paketParts = contributingRuns.map(
+    (run) => koliToPaket(paletlerByRun.get(run.id)?.koliAdedi ?? 0, run.koli_ici_adet) ?? 0,
+  )
   const shiftEndMs = shift.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null
 
   const activeRunKoli = activeRun ? (paletlerByRun.get(activeRun.id)?.koliAdedi ?? 0) : 0
@@ -348,15 +365,15 @@ function ManagerDashboard() {
             </div>
             <div className="figure">
               <dt className="figure-label plate">Palet</dt>
-              <dd className="figure-value tnum">{paletler.paletAdedi}</dd>
+              <dd className="figure-value tnum">{formatBreakdown(paletParts, paletler.paletAdedi)}</dd>
             </div>
             <div className="figure">
               <dt className="figure-label plate">Koli</dt>
-              <dd className="figure-value tnum">{paletler.koliAdedi}</dd>
+              <dd className="figure-value tnum">{formatBreakdown(koliParts, paletler.koliAdedi)}</dd>
             </div>
             <div className="figure">
               <dt className="figure-label plate">Paket</dt>
-              <dd className="figure-value tnum">{paket ?? '—'}</dd>
+              <dd className="figure-value tnum">{formatBreakdown(paketParts, paket)}</dd>
             </div>
           </dl>
 

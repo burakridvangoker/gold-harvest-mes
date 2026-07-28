@@ -12,8 +12,9 @@ import {
   palletTotals,
   palletTotalsByRun,
   runSpans,
+  shiftPaket,
 } from '../lib/timeline'
-import { formatDelta, formatDuration } from '../lib/duration'
+import { formatBreakdown, formatDelta, formatDuration } from '../lib/duration'
 import { formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import TimeSheet from '../components/TimeSheet'
@@ -72,7 +73,23 @@ function OperatorPanel() {
   const state = useMemo(() => currentState(events), [events])
   const son = intervals[intervals.length - 1] ?? null
 
-  const paket = koliToPaket(paletlerToplam.koliAdedi, activeRun?.koli_ici_adet)
+  /*
+   * Tek bir koli_ici_adet (aktif ürününki) ile çarpmak yanlış — vardiyada
+   * birden çok ürün varsa (farklı koli içi adetleri) her ürün kendi
+   * adediyle hesaplanıp toplanmalı (bkz. timeline.js#shiftPaket).
+   */
+  const paket = shiftPaket(runs, paletlerByRun)
+
+  /*
+   * Vardiya toplamı "1+5" gibi ürün bazlı katkılara ayrılabilsin diye —
+   * sadece paleti çıkmış (katkısı 0'dan büyük) ürünler, vardiya sırasıyla.
+   */
+  const contributingRuns = runs.filter((run) => (paletlerByRun.get(run.id)?.paletAdedi ?? 0) > 0)
+  const paletParts = contributingRuns.map((run) => paletlerByRun.get(run.id)?.paletAdedi ?? 0)
+  const koliParts = contributingRuns.map((run) => paletlerByRun.get(run.id)?.koliAdedi ?? 0)
+  const paketParts = contributingRuns.map(
+    (run) => koliToPaket(paletlerByRun.get(run.id)?.koliAdedi ?? 0, run.koli_ici_adet) ?? 0,
+  )
 
   const activeRunPaletler = activeRun
     ? paletlerByRun.get(activeRun.id) ?? { paletAdedi: 0, koliAdedi: 0 }
@@ -626,7 +643,9 @@ function OperatorPanel() {
             <div className="operator-shift-totals">
               <span className="operator-shift-totals-label plate">Vardiya toplamı</span>
               <span className="operator-shift-totals-value tnum">
-                {paletlerToplam.paletAdedi} palet · {paletlerToplam.koliAdedi} koli · {paket ?? '—'} paket
+                {formatBreakdown(paletParts, paletlerToplam.paletAdedi)} palet ·{' '}
+                {formatBreakdown(koliParts, paletlerToplam.koliAdedi)} koli ·{' '}
+                {formatBreakdown(paketParts, paket)} paket
               </span>
             </div>
 

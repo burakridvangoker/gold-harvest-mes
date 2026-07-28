@@ -11,8 +11,10 @@ import {
   packagingWaste,
   paceStatus,
   palletTotals,
+  palletTotalsByRun,
   runSpans,
   seviyeDurumu,
+  shiftPaket,
   shiftSegments,
   shiftTotals,
   totalsByRun,
@@ -308,6 +310,20 @@ describe('palet ve koli', () => {
     ]
 
     assert.deepEqual(palletTotals(pallets), { paletAdedi: 3, koliAdedi: 260 })
+  })
+
+  it('shiftPaket her ürünü kendi koli içi adediyle çarpıp toplar', () => {
+    // Yaşanmış hata: tek bir koli_ici_adet (aktif ürününki) tüm koliye
+    // uygulanıyordu — 30 koli kuru üzüm (koli içi 7) + natura henüz 0
+    // koli iken toplam 210 değil aktif ürünün 12'siyle 360 çıkıyordu.
+    const runs = [
+      { id: 'A', koli_ici_adet: 7 },
+      { id: 'B', koli_ici_adet: 12 },
+    ]
+    const pallets = [{ id: '1', product_run_id: 'A', koli_count: 30 }]
+    const paletlerByRun = palletTotalsByRun(pallets)
+
+    assert.equal(shiftPaket(runs, paletlerByRun), 210)
   })
 })
 

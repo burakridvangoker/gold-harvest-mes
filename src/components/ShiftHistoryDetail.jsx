@@ -9,11 +9,12 @@ import {
   palletTotals,
   palletTotalsByRun,
   seviyeDurumu,
+  shiftPaket,
   shiftSegments,
   shiftTotals,
   totalsByRun,
 } from '../lib/timeline'
-import { formatDuration } from '../lib/duration'
+import { formatBreakdown, formatDuration } from '../lib/duration'
 import { formatDateLabel, formatShortTime } from '../lib/time'
 import ProductHistory from './ProductHistory'
 import EventLog from './EventLog'
@@ -67,13 +68,29 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
     runs[runs.length - 1] ||
     null
 
-  const paket = koliToPaket(paletler.koliAdedi, lastRun?.koli_ici_adet)
-
   const runTotals = totalsByRun(intervals)
   const paletlerByRun = palletTotalsByRun(pallets)
   const lastRunTotals = lastRun ? runTotals.get(lastRun.id) ?? { uretimMs: 0, durusMs: 0 } : null
   const lastRunKoli = lastRun ? (paletlerByRun.get(lastRun.id)?.koliAdedi ?? 0) : 0
   const lastRunPaket = koliToPaket(lastRunKoli, lastRun?.koli_ici_adet)
+
+  /*
+   * Tek bir koli_ici_adet (son ürününki) ile çarpmak yanlış — vardiyada
+   * birden çok ürün varsa (farklı koli içi adetleri) her ürün kendi
+   * adediyle hesaplanıp toplanmalı (bkz. timeline.js#shiftPaket).
+   */
+  const paket = shiftPaket(runs, paletlerByRun)
+
+  /*
+   * Vardiya toplamı "1+5" gibi ürün bazlı katkılara ayrılabilsin diye —
+   * sadece paleti çıkmış (katkısı 0'dan büyük) ürünler, vardiya sırasıyla.
+   */
+  const contributingRuns = runs.filter((run) => (paletlerByRun.get(run.id)?.paletAdedi ?? 0) > 0)
+  const paletParts = contributingRuns.map((run) => paletlerByRun.get(run.id)?.paletAdedi ?? 0)
+  const koliParts = contributingRuns.map((run) => paletlerByRun.get(run.id)?.koliAdedi ?? 0)
+  const paketParts = contributingRuns.map(
+    (run) => koliToPaket(paletlerByRun.get(run.id)?.koliAdedi ?? 0, run.koli_ici_adet) ?? 0,
+  )
 
   const zamanKullanimi = Math.round(totals.zamanKullanimi * 100)
   const acikKalmaDurum = seviyeDurumu(totals.zamanKullanimi)
@@ -192,15 +209,15 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
         </div>
         <div className="history-detail-figure">
           <dt>Palet</dt>
-          <dd className="tnum">{paletler.paletAdedi}</dd>
+          <dd className="tnum">{formatBreakdown(paletParts, paletler.paletAdedi)}</dd>
         </div>
         <div className="history-detail-figure">
           <dt>Koli</dt>
-          <dd className="tnum">{paletler.koliAdedi}</dd>
+          <dd className="tnum">{formatBreakdown(koliParts, paletler.koliAdedi)}</dd>
         </div>
         <div className="history-detail-figure">
           <dt>Paket</dt>
-          <dd className="tnum">{paket ?? '—'}</dd>
+          <dd className="tnum">{formatBreakdown(paketParts, paket)}</dd>
         </div>
       </dl>
 

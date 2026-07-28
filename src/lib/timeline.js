@@ -232,6 +232,23 @@ export function koliToPaket(koliAdedi, koliIciAdet) {
   return koliAdedi * koliIciAdet
 }
 
+/*
+ * Vardiya toplam paketi: `koliToPaket(paletTotals(pallets).koliAdedi, X)`
+ * gibi tek bir `koli_ici_adet` ile çarpmak YANLIŞ — vardiyada birden çok
+ * ürün varsa (farklı koli içi adetleri) bu, tüm koliyi TEK ürünün (genelde
+ * aktif ürünün) koli içi adediyle çarpar (yaşanmış hata: 30 koli kuru üzüm,
+ * koli içi 7 = 210 paket, ama aktif ürün natura'nın koli içi 12'siyle
+ * çarpılınca 360 çıkıyordu). Doğrusu her ürünün kendi koli içi adediyle
+ * kendi paketini hesaplayıp toplamak.
+ */
+export function shiftPaket(runs, paletlerByRun) {
+  return runs.reduce((toplam, run) => {
+    const koli = paletlerByRun.get(run.id)?.koliAdedi ?? 0
+    const paket = koliToPaket(koli, run.koli_ici_adet)
+    return paket != null ? toplam + paket : toplam
+  }, 0)
+}
+
 /* ---- Plan takibi ---- */
 
 /**
