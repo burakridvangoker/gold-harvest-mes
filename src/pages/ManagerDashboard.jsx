@@ -151,10 +151,14 @@ function ManagerDashboard() {
    * ilerlemesi ayrı bir satır — üstteki iki oran genel (vardiya/aktif
    * ürün), bunlar ürün bazlı ek bilgi. Aktif olan canlı sayılır
    * (nowMs = şimdi); üretimi bitmiş bir ürün için tempo o ürünün son
-   * anına ("span.endMs") göre dondurulur — üstte asılı kalır, bir daha
-   * değişmez. Sıra `runs` ile aynı (sira artan), yani eski üstte.
+   * anına ("span.endMs") göre dondurulur, "sealed" görünümle altta asılı
+   * kalır. Sıra `runs`'ın TERSİ (sira azalan) — aktif/en yeni ürün en
+   * üstte, bitmiş ürünler altında; sayfanın geri kalanının (Son olaylar,
+   * çeyrekler, palet çıkışları) zaten kullandığı yeni-üstte kuralıyla
+   * tutarlı (yaşanmış şikayet: eski üründe kalıp yeni ürünle karışıyordu).
    */
-  const productRows = runs
+  const productRows = [...runs]
+    .reverse()
     .map((run) => {
       const span = spans.get(run.id) ?? null
       if (!span) return null
@@ -353,12 +357,14 @@ function ManagerDashboard() {
 
           {productRows.length > 0 && (
             <div className="plan-stack">
-              {productRows.map(({ run, acikKalmaOran, perf, pace, isActive }) => (
+              {productRows.map(({ run, acikKalmaOran, perf, pace, isActive }, index) => {
+                const isFirstFrozen = !isActive && (index === 0 || productRows[index - 1].isActive)
+                return (
                 <div
                   key={run.id}
                   className={`plan-row${pace ? ` plan-row--${pace.durum}` : ''}${
                     isActive ? '' : ' plan-row--frozen'
-                  }`}
+                  }${isFirstFrozen ? ' plan-row--frozen-first' : ''}`}
                 >
                   <div className="plan-row-head">
                     <span className="plan-row-label plate">{run.urun_adi}</span>
@@ -397,7 +403,8 @@ function ManagerDashboard() {
                     </div>
                   )}
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </section>

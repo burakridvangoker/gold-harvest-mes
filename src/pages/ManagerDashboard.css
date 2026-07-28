@@ -254,9 +254,11 @@
  * makinenin genel verimliliği (açık kalma / hız verimi), o ise tek bir
  * ürünün kendi hedefine göre ilerlemesi; karıştırılmasın diye ayrı yer.
  *
- * Vardiyada birden çok ürün olabilir: her ürünün kendi satırı var, sırayla
- * (eski üstte). Üretimi biten ürünün satırı o ürünün son anına dondurulur
- * ve soluklaşır ("asılı kalır") — aktif ürününki tek canlı, değişen satır.
+ * Vardiyada birden çok ürün olabilir: her ürünün kendi satırı var, aktif/en
+ * yeni ürün en üstte (sıra `runs`'ın tersi). Üretimi biten ürünün satırı o
+ * ürünün son anına dondurulur ve "mühürlü paket" kutusuna alınır (kenarlık +
+ * zemin) — aktif satırla karışmasın diye aralarında da belirgin bir çizgi
+ * var (`.plan-row--frozen-first`). Aktif ürününki tek canlı, kutusuz satır.
  */
 .plan-stack {
   display: flex;
@@ -313,7 +315,18 @@
 }
 
 .plan-row--frozen {
-  opacity: 0.55;
+  padding: clamp(0.55rem, 1vw, 1rem) clamp(0.7rem, 1.2vw, 1.25rem);
+  border: 1px solid var(--steel-700);
+  background: var(--steel-900);
+  border-radius: 8px;
+  opacity: 0.8;
+}
+
+/* Aktif satırdan sonraki ilk "mühürlü" satır: aralarında belirgin bir ayraç. */
+.plan-row--frozen-first {
+  margin-top: clamp(0.5rem, 1.2vh, 1.1rem);
+  border-top: 2px solid var(--steel-600);
+  padding-top: clamp(0.9rem, 1.6vw, 1.5rem);
 }
 
 .plan-row--onde,

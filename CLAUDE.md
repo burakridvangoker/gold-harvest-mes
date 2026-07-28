@@ -239,14 +239,20 @@ bir kavram: tek bir ürünün kendi hedefine göre önde/geride olması. Bu
 yüzden ayrı bir yerde (`.plan-stack`) altta gösterilir.
 
 **Ürün planı da ürün bazlı satırlara ayrılır:** vardiyada birden çok ürün
-varsa (`runs`, `sira` sırasıyla) her birinin kendi satırı olur, en eski
-üstte. Aktif ürünün satırı canlıdır (`nowMs = now`); üretimi bitmiş bir
+varsa (`runs`) her birinin kendi satırı olur, sıra `runs`'ın TERSİ (`sira`
+azalan) — aktif/en yeni ürün en üstte, bitmiş ürünler altta. Aktif ürünün
+satırı canlıdır (`nowMs = now`), kutusuz/düz görünür; üretimi bitmiş bir
 ürünün satırı kendi son anına (`runSpans(...).endMs`) dondurulur ve
-`.plan-row--frozen` ile soluklaştırılır — "üretimi bitti, bir daha
-değişmez" anlamında üstte asılı kalır. Yeni ürüne geçince onun kendi
-satırı altta, canlı olarak belirir. Her satır kendi ilerleme çubuğunu
-(`.plan-row-track`/`.plan-row-fill`) taşır — sadece sayı değil, görsel bir
-"çubuk" da olsun istendi.
+`.plan-row--frozen` ile "mühürlü paket" kutusuna alınır (kenarlık +
+zemin, sadece soluklaştırma değil) — "üretimi bitti, bir daha değişmez"
+anlamında altta durur. Aktif satırdan sonraki ilk mühürlü satır ayrıca
+`.plan-row--frozen-first` ile belirgin bir üst çizgi alır — aktif ürünle
+karışmasın diye net bir ayraç (yaşanmış şikayet: yeni ürüne geçilince
+bitmiş ürünün rakamları yeni ürünle karman çorman görünüyordu, sadece
+opaklık farkı yetmiyordu). Yeni ürüne geçince onun kendi satırı en üstte,
+canlı olarak belirir; eski aktif satır bir alt satıra düşüp mühürlenir.
+Her satır kendi ilerleme çubuğunu (`.plan-row-track`/`.plan-row-fill`)
+taşır — sadece sayı değil, görsel bir "çubuk" da olsun istendi.
 
 **Her ürünün kendi açık kalma / hız verimi de satırında gösterilir**
 (`.plan-row-metrics`): üsttekiler (`.oran-group`) genel/aktif ürüne göreyken,
