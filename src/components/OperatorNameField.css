@@ -27,8 +27,9 @@
   align-items: center;
   gap: 0.5rem;
   min-height: 2.75rem;
-  padding: 0 0.9rem;
+  padding: 0 1rem;
   border: 1px solid var(--steel-600);
+  border-radius: 999px;
   background: var(--steel-700);
   color: var(--film);
   font-family: var(--data);
@@ -49,7 +50,8 @@
 /* Vardiyanın operatörü: ekibin geri kalanından bir tık daha belirgin. */
 .opname-chip--operator {
   border-color: var(--film-dim);
-  background: var(--steel-600);
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.08);
   font-weight: 600;
 }
 

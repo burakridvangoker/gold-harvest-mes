@@ -40,7 +40,7 @@
 
 .history-detail-badge {
   font-size: 0.8rem;
-  color: var(--signal-idle);
+  color: var(--signal-idle-text);
 }
 
 .history-detail-meta {
@@ -76,9 +76,10 @@
 }
 
 .history-detail-error {
-  background: rgba(255, 59, 47, 0.14);
+  background: rgba(224, 39, 24, 0.08);
   border-left: 3px solid var(--signal-stop);
-  color: #ffd9d5;
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: var(--signal-stop-text);
   padding: 0.6rem 0.9rem;
   font-size: 0.85rem;
 }
@@ -97,15 +98,15 @@
 }
 
 .history-detail-ratio--iyi {
-  --ratio-color: var(--signal-run);
+  --ratio-color: var(--signal-run-text);
 }
 
 .history-detail-ratio--orta {
-  --ratio-color: var(--signal-idle);
+  --ratio-color: var(--signal-idle-text);
 }
 
 .history-detail-ratio--kotu {
-  --ratio-color: var(--signal-stop);
+  --ratio-color: var(--signal-stop-text);
 }
 
 .history-detail-ratio-value {
@@ -200,12 +201,15 @@
 
 .history-detail-reasons-track {
   height: 0.4rem;
-  background: rgba(232, 234, 230, 0.08);
+  background: rgba(18, 24, 21, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
 }
 
 .history-detail-reasons-fill {
   height: 100%;
   background: var(--signal-stop);
+  border-radius: inherit;
 }
 
 .history-detail-events {
@@ -282,8 +286,10 @@
   align-self: flex-start;
   min-height: 3rem;
   padding: 0 1.25rem;
-  border: 1px solid var(--steel-600);
-  background: transparent;
+  border: 1px solid var(--steel-line);
+  border-radius: 0.6rem;
+  background: var(--steel-800);
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.07);
   color: var(--film);
   font-family: var(--plate);
   font-size: 0.95rem;

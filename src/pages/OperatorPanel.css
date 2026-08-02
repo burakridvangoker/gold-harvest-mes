@@ -8,6 +8,8 @@
 
 .operator-shell {
   display: flex;
+  /* Lamba bandı üstte, içerik altta — kabuk artık dikey akar. */
+  flex-direction: column;
   /*
    * Sabit yükseklik: birincil aksiyon (BAŞLAT/DURDUR) hiçbir zaman ekranın
    * altına kaçmamalı. İçerik büyürse okunan kısım kendi içinde kayar,
@@ -21,11 +23,17 @@
   color: var(--film);
   font-family: var(--data);
   box-sizing: border-box;
-  transition: background 0.5s ease;
+  /*
+   * Durum çerçevesi: bandın devamı olarak ekranın üç kenarını sarar —
+   * makinelerin boyalı emniyet kenarı. Üst kenar bandın kendisi.
+   */
+  border: clamp(4px, 1vw, 7px) solid var(--status);
+  border-top: 0;
+  transition: background 0.5s ease, border-color 0.5s ease;
 }
 
-.andon-rail {
-  width: clamp(0.5rem, 2vw, 0.9rem);
+.operator-shell .andon-rail {
+  height: clamp(0.9rem, 2.6vh, 1.5rem);
 }
 
 .operator-panel {
@@ -120,9 +128,10 @@ button.operator-line-code {
 }
 
 .operator-error {
-  background: rgba(255, 59, 47, 0.14);
+  background: rgba(224, 39, 24, 0.08);
   border-left: 4px solid var(--signal-stop);
-  color: #ffd9d5;
+  border-radius: 0 0.6rem 0.6rem 0;
+  color: var(--signal-stop-text);
   padding: 0.9rem 1.1rem;
   font-size: 1rem;
   line-height: 1.45;
@@ -169,9 +178,10 @@ button.operator-line-code {
   font-weight: 600;
   line-height: 0.92;
   letter-spacing: -0.02em;
-  color: var(--status);
-  /* Lamba camı parıltısı: sayı, andon lambasının kendisi gibi hafif ışır. */
-  text-shadow: 0 0 0.4em color-mix(in srgb, var(--status) 30%, transparent);
+  /* Açık zeminde metin derin sinyal tonunu alır (parlak lamba rengi
+   * beyazda okunmaz); parıltı yine lambanın kendi renginden gelir. */
+  color: var(--status-text);
+  text-shadow: 0 0 0.45em color-mix(in srgb, var(--status) 22%, transparent);
   transition: color 0.5s ease;
 }
 
@@ -222,7 +232,7 @@ button.operator-line-code {
 
 .plan-block--onde,
 .plan-block--tamam {
-  --plan-color: var(--signal-run);
+  --plan-color: var(--signal-run-text);
 }
 
 .plan-block--planinda {
@@ -230,7 +240,7 @@ button.operator-line-code {
 }
 
 .plan-block--geride {
-  --plan-color: var(--signal-stop);
+  --plan-color: var(--signal-stop-text);
 }
 
 .plan-head,
@@ -258,12 +268,15 @@ button.operator-line-code {
 
 .plan-track {
   height: clamp(0.7rem, 2.5vw, 1rem);
-  background: rgba(232, 234, 230, 0.08);
+  background: rgba(18, 24, 21, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
 }
 
 .plan-fill {
   height: 100%;
   background: var(--plan-color);
+  border-radius: inherit;
   transition: width 0.5s ease, background 0.5s ease;
 }
 
@@ -357,8 +370,11 @@ button.operator-line-code {
 
 .ghost-button {
   min-height: 2.75rem;
-  border: 1px solid var(--steel-600);
-  background: transparent;
+  border: 1px solid var(--steel-line);
+  border-radius: 0.6rem;
+  /* Açık temada "dolgulu = basılabilir": beyaz kart + hafif gölge. */
+  background: var(--steel-800);
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.07);
   color: var(--film-dim);
   font-family: var(--plate);
   font-size: clamp(0.8rem, 2.7vw, 0.95rem);
@@ -372,7 +388,7 @@ button.operator-line-code {
 }
 
 .ghost-button:active {
-  background: var(--steel-800);
+  background: var(--steel-700);
   color: var(--film);
 }
 
@@ -392,7 +408,8 @@ button.operator-line-code {
   width: 100%;
   min-height: 3.75rem;
   border: 1px solid var(--steel-600);
-  background: var(--steel-900);
+  border-radius: 0.6rem;
+  background: #ffffff;
   color: var(--film);
   padding: 0 1rem;
   font-size: 1.35rem;
@@ -424,8 +441,10 @@ button.operator-line-code {
   gap: 0.6rem;
   width: 100%;
   min-height: 3.5rem;
-  border: 1px solid var(--steel-600);
+  border: 1px solid var(--steel-line);
+  border-radius: 0.75rem;
   background: var(--steel-800);
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.07);
   color: var(--film);
   font-family: var(--plate);
   font-size: clamp(0.95rem, 3vw, 1.15rem);
@@ -481,8 +500,9 @@ button.operator-line-code {
   font-size: clamp(2rem, 8vw, 3rem);
   letter-spacing: 0.1em;
   /* Sinyal renkli yüzeyde her zaman koyu mürekkep: güvenlik levhası dili. */
-  color: var(--steel-900);
+  color: var(--ink);
   background: var(--btn-face);
+  border-radius: 1rem;
   /*
    * Fiziksel bası butonu: koyu alt kenar butonun gövdesi, üstteki ince ışık
    * kubbesi. Basınca buton gerçekten alçalır (aşağıda :active) — makinedeki
@@ -490,7 +510,7 @@ button.operator-line-code {
    */
   box-shadow:
     0 0.375rem 0 0 var(--btn-edge),
-    inset 0 2px 0 rgba(255, 255, 255, 0.28);
+    inset 0 2px 0 rgba(255, 255, 255, 0.32);
 }
 
 .action-primary--start {
@@ -519,8 +539,10 @@ button.operator-line-code {
 
 .action-secondary {
   min-height: 5.5rem;
-  background: transparent;
+  background: var(--steel-800);
   border: 2px solid var(--steel-600);
+  border-radius: 1rem;
+  box-shadow: 0 2px 4px rgba(18, 24, 21, 0.08);
   color: var(--film);
   font-size: clamp(1.25rem, 5vw, 1.6rem);
   letter-spacing: 0.12em;

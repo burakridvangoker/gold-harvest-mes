@@ -39,8 +39,10 @@
 .wizard-close {
   width: 2.75rem;
   height: 2.75rem;
-  border: 1px solid var(--steel-600);
-  background: transparent;
+  border: 1px solid var(--steel-line);
+  border-radius: 0.6rem;
+  background: var(--steel-800);
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.07);
   color: var(--film);
   font-size: 1.1rem;
   line-height: 1;
@@ -69,6 +71,7 @@
 .wizard-progress {
   height: 0.25rem;
   background: var(--steel-700);
+  border-radius: 999px;
   overflow: hidden;
   margin-bottom: 1.5rem;
   flex-shrink: 0;
@@ -77,6 +80,7 @@
 .wizard-progress-fill {
   height: 100%;
   background: var(--film);
+  border-radius: inherit;
   transition: width 0.3s ease;
 }
 
@@ -132,7 +136,8 @@
 .wizard-input {
   min-height: 3.75rem;
   border: 1px solid var(--steel-600);
-  background: var(--steel-800);
+  border-radius: 0.6rem;
+  background: #ffffff;
   color: var(--film);
   padding: 0 1rem;
   font-size: 1.15rem;
@@ -172,7 +177,9 @@
   flex: 1;
   min-height: 3.75rem;
   border: 1px solid var(--steel-600);
+  border-radius: 0.6rem;
   background: var(--steel-800);
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.07);
   color: var(--film);
   font-family: var(--plate);
   font-size: 1.05rem;
@@ -189,6 +196,7 @@
   transform: scale(0.98);
 }
 
+/* Aktif dilim: mürekkep dolgu — porselen üstünde en net "seçili" işareti. */
 .wizard-segment--active {
   background: var(--film);
   border-color: var(--film);
@@ -238,6 +246,7 @@
 .wizard-button {
   min-height: 4rem;
   border: none;
+  border-radius: 0.75rem;
   font-family: var(--plate);
   font-size: 1.2rem;
   font-weight: 700;
@@ -268,7 +277,7 @@
 
 .wizard-button--start {
   background: var(--signal-run);
-  color: var(--steel-900);
+  color: var(--ink);
 }
 
 .wizard-button:disabled {

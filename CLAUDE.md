@@ -468,23 +468,47 @@ gerektirir ki bu tüm ürünlerin `paceStatus` hesaplarını geriye dönük
 bozar; yanlış vardiya seçildiyse çözüm o vardiyayı bitirip doğrusunu
 yeniden açmak (vardiyalar ucuz, yeniden oluşturmak sorun değil).
 
-## Andon tasarım sistemi
+## Andon tasarım sistemi — v2 "Porselen Andon" (bu dalda)
 
-`src/styles/andon.css` — ortak tasarım dili. İmza öğesi: **ekranın
-kendisi andon lambasıdır**, durum köşedeki bir rozete değil sol
-kenardaki tam boy `andon-rail`'e ve sayfa geneli durum yıkamasına yazılır.
-Duruş uzadıkça ray nabzı ısrarlanır (`--urgency`, 30 dk'da tam yoğunluk),
-`prefers-reduced-motion` altında sabit kontrasta düşer.
+`src/styles/andon.css` — ortak tasarım dili. **Bu dal
+(`feature/tasarim-v2`) koyu çelik temayı açık porselene çevirdi** —
+beğenilmezse dal atılır, `feature/personel-entegrasyon`'daki koyu tema
+aynen durur. Hikâye: ilk sürümün iki malzemesi (çelik + baskısız film)
+TERSİNE döndü — film beyazı artık zemin, çeliğin yeşilimsi karası artık
+mürekkep. Sıcak "krem" değil; gıda sahasının hijyen beyazı, hafif
+yeşilimsi porselen.
 
-**Yazı tipi rolleri ölçüme dayalı, keyfi değil:**
+İmza öğesi korunup tersine döndü: **ekranın kendisi andon lambasıdır.**
+Koyu temada sol kenardaki dikey raydı; şimdi ekranın EN ÜSTÜNDE tam
+genişlikte dilimli bir **lamba bandı** (aynı `.andon-rail`, kabuklar
+`flex-direction: column` olduğu için yatay) + ekranın üç kenarını saran
+**durum çerçevesi** (kabuk `border`'ı, üst kenarı bandın kendisi) var —
+makinelerin boyalı emniyet kenarı gibi tek bir durum halkası. Sayfa
+geneli durum yıkaması devam ediyor. Duruş uzadıkça bandın nabzı
+ısrarlanır (`--urgency`, 30 dk'da tam yoğunluk), `prefers-reduced-motion`
+altında sabit kontrasta düşer.
+
+**Yazı tipi rolleri ölçüme dayalı, keyfi değil (v2'de DEĞİŞMEDİ):**
 - `.tnum` (IBM Plex Sans) → **tüm sayılar**. Rakamları sabit 600 birim
   genişlikte, saniyelik sayaçlar zıplamaz.
 - `.plate` (Saira Condensed) → **sadece büyük harf etiketler**. Bu
   fontun rakamları orantılı (299-489 birim arası) — sayaçta KULLANMAYIN.
 
-Palet: çelik (`--steel-900/800/700/600`) + sinyal (`--signal-run`
-yeşil, `--signal-idle` amber, `--signal-stop` kırmızı). Tailwind
-slate/mavi varsayılanına dönmeyin, bilinçli bir karardı.
+**Palet — değişken ADLARI eski, ANLAMLARI çevrildi** (~3.000 satır
+bileşen CSS'i bu adlara yazılmıştı; adları değil değerleri çevirmek tüm
+sistemi tek noktadan döndürdü): `--steel-900..600` artık porselen
+tonları (zemin → kenarlık), `--film` artık mürekkep (metin). Üç yeni
+kavram:
+- `--ink` — sinyal renkli yüzeydeki metin HER ZAMAN koyu mürekkep
+  (güvenlik levhası dili), tema ne olursa olsun sabit.
+- `--signal-*-text` / `--status-text` — parlak lamba renkleri açık
+  zeminde METİN olarak okunmaz; yazıya dönüşen her sinyal bu derin
+  varyantları kullanır (`color: var(--status)` görürseniz v2'de hata —
+  metinse `--status-text` olmalı).
+- Dolgulu = basılabilir grameri açık temada "beyaz kart + saç teli
+  kenar + yumuşak gölge + radius" ile konuşur (`--shadow-soft`).
+Tailwind slate/mavi varsayılanına ya da sıcak krem/serif kombinasyonuna
+dönmeyin, ikisi de bilinçli olarak reddedildi.
 
 Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
 - `<input type="time">` KULLANMAYIN — AM/PM gösterimi sayfa diline
