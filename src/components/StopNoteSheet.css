@@ -87,6 +87,19 @@
   background: var(--steel-600);
 }
 
+/* Birden fazla çip aynı anda seçilebilir — hepsi metne " + " ile birleşip
+ * yazılır. Seçili çip vurgulanır ki hangi sebeplerin not'a eklendiği tek
+ * bakışta görülsün. */
+.stopnote-chip--active {
+  background: var(--film);
+  border-color: var(--film);
+  color: var(--steel-900);
+}
+
+.stopnote-chip--active .stopnote-chip-count {
+  color: var(--steel-700);
+}
+
 .stopnote-chip-count {
   font-size: 0.85rem;
   color: var(--film-dim);

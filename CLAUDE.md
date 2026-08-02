@@ -81,6 +81,24 @@ tekrarlayan notları sıklığa göre sıralayıp tek dokunuşluk çip olarak
 sunuyor — kodlar zamanla buradan, elle katalog yönetimi gerekmeden
 terfi edecek. Bu tasarım kasıtlı; erken kod zorunluluğu eklemeyin.
 
+**Tek duruşta birden fazla, ÇAKIŞAN sebep olabiliyor:** sahada yaşanan
+durum — bir duruş boyunca (ör. 55 dakika) üç ayrı sebep (bobin değişimi,
+ambalaj ayarı, elektrik arızası gibi) birbirini ARDIŞIK değil ÇAKIŞIK
+şekilde takip ediyor (net sıraları yok, operatör hangi sebebin tam ne
+zaman başlayıp bittiğini hatırlamıyor/veremiyor). Bunu 3 ayrı `durus`
+olayına (3 ayrı zaman damgasıyla) bölmek YANLIŞ olurdu — var olmayan bir
+kesinliği uydurmuş oluruz. Doğrusu: aralık TEK bir `durus` olarak kalır,
+notu üç sebebi BİRLİKTE taşır.
+
+`StopNoteSheet`'in çipleri bu yüzden tek dokunuşta ANINDA KAYDETMEZ —
+çoğul seçilebilir (`toggleChip`, aktif çip vurgulu). Seçilen çipler
+`" + "` ile birleşip textarea'ya yazılır, operatör bunun üstüne
+serbestçe elle ekleme yapabilir (çip listesinde olmayan bir sebep için),
+kayıt hâlâ tek bir "Kaydet" dokunuşuyla olur. `downtimeByNote` bu
+birleşik notu TEK bir satır olarak toplar — sebepler çakıştığı için
+süreyi sebep başına ayrıştırmak zaten mümkün değil, bu dürüst bir
+gösterim.
+
 ## Çalışma hızı: hedef değil, anlık değer
 
 `product_runs.calisma_hizi_pkt_dk` kurulumda bir kere sorulup kilitlenen
