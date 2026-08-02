@@ -45,11 +45,17 @@ comment on column public.stop_reason_segments.event_id is 'Ebeveyn durus olayı 
 create index if not exists idx_stop_reason_segments_event on public.stop_reason_segments (event_id);
 create index if not exists idx_stop_reason_segments_shift on public.stop_reason_segments (shift_id);
 
+drop trigger if exists trg_stop_reason_segments_updated_at on public.stop_reason_segments;
 create trigger trg_stop_reason_segments_updated_at
 before update on public.stop_reason_segments
 for each row execute function public.set_updated_at();
 
 alter table public.stop_reason_segments enable row level security;
+
+drop policy if exists "stop_reason_segments_select_all" on public.stop_reason_segments;
+drop policy if exists "stop_reason_segments_insert_all" on public.stop_reason_segments;
+drop policy if exists "stop_reason_segments_update_all" on public.stop_reason_segments;
+drop policy if exists "stop_reason_segments_delete_all" on public.stop_reason_segments;
 
 create policy "stop_reason_segments_select_all" on public.stop_reason_segments for select using (true);
 create policy "stop_reason_segments_insert_all" on public.stop_reason_segments for insert with check (true);
