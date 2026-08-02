@@ -10,7 +10,15 @@ import './StopNoteSheet.css'
  * önceden katalog hazırlaması gerekmiyor.
  *
  * "Sonra gir" hep açık: eksik kayıt, yanlış kayıttan iyidir.
+ *
+ * Tek bir duruşta birden fazla, ÇAKIŞAN sebep olabiliyor (ör. bobin
+ * değişimi + ambalaj ayarı + elektrik arızası aynı anda, ayrı zaman
+ * damgalarına bölünecek net bir sıraları yok). Çipler bu yüzden tek
+ * dokunuşta ANINDA KAYDETMEZ — çoğul seçilebilir: seçilenler " + " ile
+ * birleşip metne yazılır, kayıt hâlâ tek bir "Kaydet" dokunuşuyla olur.
  */
+
+const CHIP_SEPARATOR = /\s*\+\s*/
 
 function StopNoteSheet({ open, initialNote = '', suggestions = [], onSave, onSkip }) {
   const [note, setNote] = useState(initialNote)
@@ -23,10 +31,18 @@ function StopNoteSheet({ open, initialNote = '', suggestions = [], onSave, onSki
   if (!open) return null
 
   const trimmed = note.trim()
+  const parts = note.split(CHIP_SEPARATOR).map((part) => part.trim()).filter(Boolean)
 
-  const pick = (value) => {
-    setNote(value)
-    onSave(value)
+  const toggleChip = (value) => {
+    setNote((prev) => {
+      const currentParts = prev.split(CHIP_SEPARATOR).map((part) => part.trim()).filter(Boolean)
+      const index = currentParts.indexOf(value)
+
+      if (index === -1) currentParts.push(value)
+      else currentParts.splice(index, 1)
+
+      return currentParts.join(' + ')
+    })
   }
 
   return (
@@ -49,8 +65,9 @@ function StopNoteSheet({ open, initialNote = '', suggestions = [], onSave, onSki
                 <button
                   key={item.note}
                   type="button"
-                  className="stopnote-chip"
-                  onClick={() => pick(item.note)}
+                  className={`stopnote-chip${parts.includes(item.note) ? ' stopnote-chip--active' : ''}`}
+                  aria-pressed={parts.includes(item.note)}
+                  onClick={() => toggleChip(item.note)}
                 >
                   {item.note}
                   <span className="stopnote-chip-count tnum">{item.adet}</span>

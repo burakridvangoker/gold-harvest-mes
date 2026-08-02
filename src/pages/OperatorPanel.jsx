@@ -6,6 +6,7 @@ import { useLineCode } from '../hooks/useLineCode'
 import {
   buildIntervals,
   currentState,
+  groupSegmentsByEvent,
   koliToPaket,
   newEventWindow,
   paceStatus,
@@ -19,6 +20,7 @@ import { formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/ti
 import StatusBadge from '../components/StatusBadge'
 import TimeSheet from '../components/TimeSheet'
 import StopNoteSheet from '../components/StopNoteSheet'
+import ReasonSegments from '../components/ReasonSegments'
 import SpeedSheet from '../components/SpeedSheet'
 import RunEndSheet from '../components/RunEndSheet'
 import ProductHistory from '../components/ProductHistory'
@@ -34,7 +36,7 @@ const TAM_ISRAR_MS = 30 * 60 * 1000
 
 function OperatorPanel() {
   const { lineCode, selectLine, clearLine } = useLineCode()
-  const { shift, runs, events, pallets, loading, error, setError, refresh } = useShift(lineCode)
+  const { shift, runs, events, pallets, segments, loading, error, setError, refresh } = useShift(lineCode)
   const suggestions = useFrequentNotes(lineCode)
 
   const [now, setNow] = useState(() => Date.now())
@@ -72,6 +74,8 @@ function OperatorPanel() {
   const paletlerToplam = useMemo(() => palletTotals(pallets), [pallets])
   const state = useMemo(() => currentState(events), [events])
   const son = intervals[intervals.length - 1] ?? null
+  const segmentsByEventId = useMemo(() => groupSegmentsByEvent(segments), [segments])
+  const sonSegments = son ? segmentsByEventId.get(son.eventId) ?? [] : []
 
   /*
    * Tek bir koli_ici_adet (aktif ürününki) ile çarpmak yanlış — vardiyada
@@ -261,6 +265,51 @@ function OperatorPanel() {
       return failure ? null : data.id
     },
     [busy, shift, lineCode, activeRun, setError, refresh],
+  )
+
+  const addSegment = useCallback(
+    async ({ note, startMs, endMs }) => {
+      if (!shift || !son) return
+
+      await guard(
+        () =>
+          supabase.from('stop_reason_segments').insert({
+            line_code: lineCode,
+            shift_id: shift.id,
+            event_id: son.eventId,
+            note,
+            start_at: new Date(startMs).toISOString(),
+            end_at: new Date(endMs).toISOString(),
+          }),
+        'Sebep eklenemedi',
+      )
+    },
+    [shift, son, lineCode, guard],
+  )
+
+  const updateSegment = useCallback(
+    async (id, { note, startMs, endMs }) => {
+      await guard(
+        () =>
+          supabase
+            .from('stop_reason_segments')
+            .update({
+              note,
+              start_at: new Date(startMs).toISOString(),
+              end_at: new Date(endMs).toISOString(),
+            })
+            .eq('id', id),
+        'Sebep güncellenemedi',
+      )
+    },
+    [guard],
+  )
+
+  const deleteSegment = useCallback(
+    async (id) => {
+      await guard(() => supabase.from('stop_reason_segments').delete().eq('id', id), 'Sebep silinemedi')
+    },
+    [guard],
   )
 
   /* ---- TimeSheet onayı: hangi aksiyon bekliyorsa o çalışır ---- */
@@ -599,6 +648,23 @@ function OperatorPanel() {
                 {formatDuration(son ? son.durationMs : 0)}
               </span>
             </div>
+
+            {/*
+             * Tek bir duruş boyunca birbirini ARDIŞIK değil ÇAKIŞIK takip
+             * eden birden fazla sebep olabiliyor (net sıraları yok) —
+             * ReasonSegments bunları ayrı zaman damgalarına bölünmüş
+             * olaylar yerine, TEK duruşun içinde kendi başlangıç/bitişi
+             * olan segmentler olarak tutar. Ana ekranda: "Olay geçmişi"ne
+             * girmeden, olay tam yaşanırken/hemen sonra eklenip düzenlenir.
+             */}
+            <ReasonSegments
+              interval={son}
+              segments={sonSegments}
+              suggestions={suggestions}
+              onAdd={addSegment}
+              onUpdate={updateSegment}
+              onDelete={deleteSegment}
+            />
 
             {activeRun && (
               <button type="button" className="speed-row" onClick={() => setSpeedOpen(true)}>

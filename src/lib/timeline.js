@@ -392,22 +392,90 @@ export function seviyeDurumu(oran, { iyi = 0.85, kotu = 0.6 } = {}) {
  * Duruş sebeplerinin süreye göre dökümü — müdür panosu için. Varsayılan
  * limitsiz: sayfa kaydırılabilir olduğu için hiçbir sebep gizlenmesin,
  * hepsi görünsün (en çok süreye sahip en üstte).
+ *
+ * `segmentsByEventId` verilirse (bkz. groupSegmentsByEvent) ve bir duruşun
+ * kendi segmentleri varsa, süre HER SEGMENTİN kendi süresiyle o segmentin
+ * notuna atanır — segmentler çakışabildiği için toplam, gerçek duruş
+ * süresinden fazla çıkabilir (aynı anda birden fazla şey oluyordu demektir,
+ * bu doğru bir gösterim). Segmenti olmayan aralıklar eski davranışla
+ * (tüm süre, interval.note) devam eder.
  */
-export function downtimeByNote(intervals, limit = Infinity) {
+export function downtimeByNote(intervals, { segmentsByEventId = new Map(), limit = Infinity } = {}) {
   const totals = new Map()
+
+  const add = (note, ms) => {
+    const key = note || '__yok__'
+    const current = totals.get(key) ?? { note: note || null, ms: 0, adet: 0 }
+    current.ms += ms
+    current.adet += 1
+    totals.set(key, current)
+  }
 
   for (const interval of intervals) {
     if (interval.kind !== 'durus') continue
 
-    const note = (interval.note ?? '').trim()
-    const key = note || '__yok__'
-    const current = totals.get(key) ?? { note: note || null, ms: 0, adet: 0 }
-    current.ms += interval.durationMs
-    current.adet += 1
-    totals.set(key, current)
+    const segments = segmentsByEventId.get(interval.eventId)
+
+    if (segments && segments.length > 0) {
+      for (const segment of segments) {
+        add(segment.note.trim(), Math.max(0, segment.endMs - segment.startMs))
+      }
+      continue
+    }
+
+    add((interval.note ?? '').trim(), interval.durationMs)
   }
 
   return Array.from(totals.values())
     .sort((a, b) => b.ms - a.ms)
     .slice(0, limit)
+}
+
+/**
+ * DB'den gelen ham stop_reason_segments satırlarını (snake_case, timestamp
+ * string) event_id'ye göre gruplayıp ms cinsine çevirir — buildIntervals'ın
+ * timeline_events için yaptığının aynısı.
+ */
+export function groupSegmentsByEvent(segments) {
+  const map = new Map()
+
+  for (const segment of segments) {
+    const key = segment.event_id
+    const list = map.get(key) ?? []
+    list.push({
+      id: segment.id,
+      note: segment.note,
+      startMs: toMs(segment.start_at),
+      endMs: toMs(segment.end_at),
+    })
+    map.set(key, list)
+  }
+
+  for (const list of map.values()) list.sort((a, b) => a.startMs - b.startMs)
+
+  return map
+}
+
+/**
+ * Çakışan segmentleri ayrı "lane"lere (satırlara) dağıtır — aynı satırda
+ * iki segment görsel olarak çakışmasın diye. Klasik interval-graph boyama:
+ * segmentler başlangıca göre sıralanır, her biri ilk müsait (bitmiş)
+ * lane'e ya da yeni bir lane'e atanır.
+ */
+export function assignLanes(segments) {
+  const sorted = [...segments].sort((a, b) => a.startMs - b.startMs)
+  const laneEnds = []
+
+  return sorted.map((segment) => {
+    let lane = laneEnds.findIndex((end) => end <= segment.startMs)
+
+    if (lane === -1) {
+      lane = laneEnds.length
+      laneEnds.push(segment.endMs)
+    } else {
+      laneEnds[lane] = segment.endMs
+    }
+
+    return { ...segment, lane }
+  })
 }
