@@ -386,6 +386,27 @@ Bu iş `feature/personel-entegrasyon` dalında — demo öncesi production
 dalı (`claude/detailed-spec-questions-b7n4w4`, Vercel Production Branch)
 bilerek hiç ellenmedi.
 
+**Otomatik ekip ataması (`vardiya_no`, `add_personnel_vardiya.sql`):**
+kaynak çizelgede her kişinin vardiyası (1/2/3) da vardı; bu da kopyalandı.
+Sahada vardiya atamaları SABİT (rotasyon yok — kullanıcı doğruladı).
+Davranış üç kural:
+- `ShiftWizard` vardiya adımında seçili hat+vardiyanın ekibi
+  "Bu vardiyanın ekibi" etiketiyle çip olarak listelenir (Paketleme
+  Operatörü önce ve `.opname-chip--operator` ile vurgulu); ekip listesi
+  alan doluyken de görünür kalır (yalnızca yazarak ararken süzgece döner)
+  ve ekipte 6'lık kesme uygulanmaz.
+- **Ön-doldurma:** hat+vardiyada TAM BİR Paketleme Operatörü varsa
+  (PFM-11 böyle) alan onunla kendiliğinden dolar; İKİ operatör varsa
+  (PFM-4/10 böyle) alan boş bırakılır, iki operatör çipi üstte — sistem
+  iki kişi arasında tahmin yürütmez, tek dokunuş operatöre kalır.
+- **Elle yazılan ad ASLA ezilmez:** ön-doldurma yalnızca alan boşken ya
+  da hâlâ önceki otomatik değeri taşırken yazar (`autoOperatorRef`,
+  `ShiftWizard.jsx`). Vardiya değişince eski vardiyanın otomatik adı
+  temizlenir/güncellenir, operatörün kendi yazdığı isim olduğu gibi kalır.
+`OperatorNameField`'ın `vardiyaNo` prop'u opsiyoneldir: operatör
+sheet'leri `shift.vardiya` geçirir (ekip-önce sıralama), prop verilmezse
+davranış eski düz alfabetik halidir.
+
 **Liste hatta göre filtrelenir.** GH VARDİYA'nın kaynak tablosu kişileri
 zaten hatlara göre gruplamıştı (4-PFM Dublex / 10-PFM Dublex /
 11-PFM Dublex); ilk sürümde bu bilgi atlanmış, tüm hatlarda aynı 56

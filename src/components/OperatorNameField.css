@@ -6,6 +6,16 @@
   gap: 0.6rem;
 }
 
+.opname-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.opname-team-label {
+  font-size: 0.8rem;
+}
+
 .opname-chips {
   display: flex;
   flex-wrap: wrap;
@@ -34,6 +44,13 @@
 .opname-chip:active {
   transform: scale(0.97);
   background: var(--steel-600);
+}
+
+/* Vardiyanın operatörü: ekibin geri kalanından bir tık daha belirgin. */
+.opname-chip--operator {
+  border-color: var(--film-dim);
+  background: var(--steel-600);
+  font-weight: 600;
 }
 
 .opname-chip-dept {

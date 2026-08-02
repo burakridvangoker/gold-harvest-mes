@@ -830,6 +830,7 @@ function OperatorPanel() {
                   value={operatorName}
                   onChange={setOperatorName}
                   personnel={personnel}
+                  vardiyaNo={shift.vardiya}
                   inputClassName="sheet-input"
                 />
               </label>

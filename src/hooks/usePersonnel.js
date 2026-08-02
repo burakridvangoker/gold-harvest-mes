@@ -33,7 +33,7 @@ export function usePersonnel(lineCode, enabled = true) {
     async function fetchPersonnel() {
       const { data, error } = await supabase
         .from('personnel')
-        .select('id, ad_soyad, departman, sicil_no, line_code')
+        .select('id, ad_soyad, departman, sicil_no, line_code, vardiya_no')
         .eq('aktif', true)
         .or(`line_code.eq.${lineCode},line_code.is.null`)
         .order('ad_soyad')
