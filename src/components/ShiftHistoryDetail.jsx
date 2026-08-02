@@ -208,6 +208,10 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
           <dd className="tnum">{formatDuration(totals.molaMs)}</dd>
         </div>
         <div className="history-detail-figure">
+          <dt>Hazırlık</dt>
+          <dd className="tnum">{formatDuration(totals.hazirlikMs)}</dd>
+        </div>
+        <div className="history-detail-figure">
           <dt>Palet</dt>
           <dd className="tnum">{formatBreakdown(paletParts, paletler.paletAdedi)}</dd>
         </div>
@@ -289,7 +293,9 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
                             ? interval.note || NO_REASON_LABEL
                             : interval.kind === 'mola'
                               ? 'Mola'
-                              : runsById.get(interval.productRunId)?.urun_adi || 'Üretim'}
+                              : interval.kind === 'hazirlik'
+                                ? 'Hazırlık'
+                                : runsById.get(interval.productRunId)?.urun_adi || 'Üretim'}
                         </span>
                         <span className="tnum">{formatDuration(interval.durationMs)}</span>
                       </li>

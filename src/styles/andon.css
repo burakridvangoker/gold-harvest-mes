@@ -24,15 +24,20 @@
   --film: #e8eae6;
   --film-dim: #8a928f;
 
-  /* Sinyal — andon lambasının üç durumu */
+  /* Sinyal — andon lambasının durumları */
   --signal-run: #00b84d;
   --signal-idle: #ffb000;
   --signal-stop: #ff3b2f;
+  /* Hazırlık: mavi-gri, nötr — ne üretim yeşili ne duruş kırmızısı ne mola
+   * amberi. Ürünsüz makine ayarı gerçek bir duruş değil, ama mola'yla da
+   * karışmasın diye kendi rengi var. */
+  --signal-hazirlik: #4aa8ff;
 
   /* Sinyal zeminleri (ortam yıkaması) */
   --wash-run: rgba(0, 184, 77, 0.09);
   --wash-idle: rgba(255, 176, 0, 0.09);
   --wash-stop: rgba(255, 59, 47, 0.11);
+  --wash-hazirlik: rgba(74, 168, 255, 0.09);
 
   /* Duruş sebebi aileleri */
   --plansiz: #ff8a3d;
@@ -67,6 +72,13 @@
 .is-molada {
   --status: var(--signal-idle);
   --status-wash: var(--wash-idle);
+}
+
+/* Hazırlık: ürünsüz makine ayarı, gerçek duruş değil — kendi rengi (mavi-gri)
+ * var, mola'nın amberiyle de karışmasın diye. */
+.is-hazirlikta {
+  --status: var(--signal-hazirlik);
+  --status-wash: var(--wash-hazirlik);
 }
 
 /* Makine plakası etiketi: büyük harf, sıkışık, geniş harf aralığı */

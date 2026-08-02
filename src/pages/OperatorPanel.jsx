@@ -127,6 +127,7 @@ function OperatorPanel() {
 
   const isRunning = state === 'uretimde'
   const isMola = state === 'molada'
+  const isHazirlik = state === 'hazirlikta'
 
   /* ---- Yazma işlemleri ---- */
 
@@ -299,6 +300,19 @@ function OperatorPanel() {
          * dolduruluyor, operatöre ayrıca "neden durdu" sorulmaz.
          */
         await addEvent('durus', atMs, 'Moladan dönüş')
+        return
+      }
+
+      if (action.type === 'hazirlik-start') {
+        await addEvent('hazirlik', atMs)
+        return
+      }
+
+      if (action.type === 'hazirlik-end') {
+        /* Mola'nın "Moladan dönüş" davranışıyla birebir aynı: hazırlık
+         * bitince direkt üretime değil duruşa geçilir, üretim yine ancak
+         * BAŞLAT'a basılınca başlar. */
+        await addEvent('durus', atMs, 'Hazırlık bitti')
         return
       }
 
@@ -500,7 +514,13 @@ function OperatorPanel() {
     )
   }
 
-  const durationLabel = isRunning ? 'Çalışma süresi' : isMola ? 'Mola süresi' : 'Duruş süresi'
+  const durationLabel = isRunning
+    ? 'Çalışma süresi'
+    : isMola
+      ? 'Mola süresi'
+      : isHazirlik
+        ? 'Hazırlık süresi'
+        : 'Duruş süresi'
   const urgency = state === 'durdu' && son ? Math.min(1, son.durationMs / TAM_ISRAR_MS) : 0
 
   return (
@@ -662,9 +682,13 @@ function OperatorPanel() {
             <button
               type="button"
               className={`action-primary action-primary--${
-                isMola ? 'mola' : !activeRun ? 'start' : isRunning ? 'stop' : 'start'
+                isHazirlik ? 'hazirlik' : isMola ? 'mola' : !activeRun ? 'start' : isRunning ? 'stop' : 'start'
               }`}
               onClick={() => {
+                if (isHazirlik) {
+                  setPending({ type: 'hazirlik-end' })
+                  return
+                }
                 if (isMola) {
                   setPending({ type: 'mola-end' })
                   return
@@ -677,10 +701,18 @@ function OperatorPanel() {
               }}
               disabled={busy}
             >
-              {isMola ? 'MOLA BİTTİ' : !activeRun ? 'ÜRÜN BAŞLAT' : isRunning ? 'DURDUR' : 'BAŞLAT'}
+              {isHazirlik
+                ? 'HAZIRLIK BİTTİ'
+                : isMola
+                  ? 'MOLA BİTTİ'
+                  : !activeRun
+                    ? 'ÜRÜN BAŞLAT'
+                    : isRunning
+                      ? 'DURDUR'
+                      : 'BAŞLAT'}
             </button>
             <div className="operator-actions-row">
-              {!isMola && (
+              {!isMola && !isHazirlik && (
                 <button
                   type="button"
                   className="action-secondary"
@@ -690,6 +722,16 @@ function OperatorPanel() {
                   MOLA
                 </button>
               )}
+              {!isHazirlik && !isMola && (
+                <button
+                  type="button"
+                  className="action-secondary"
+                  onClick={() => setPending({ type: 'hazirlik-start' })}
+                  disabled={busy}
+                >
+                  HAZIRLIK
+                </button>
+              )}
               <button
                 type="button"
                 className="action-secondary"
@@ -697,7 +739,7 @@ function OperatorPanel() {
                   setPalletKoli(String(activeRun?.koli_per_palet ?? ''))
                   setPending({ type: 'pallet' })
                 }}
-                disabled={busy || !activeRun || isMola}
+                disabled={busy || !activeRun || isMola || isHazirlik}
               >
                 +1 PALET
               </button>
@@ -743,6 +785,28 @@ function OperatorPanel() {
           title="Mola ne zaman bitti?"
           confirmLabel="Molayı bitir"
           tone="mola"
+          initialMs={now}
+          range={eventRange}
+          onConfirm={handleTimeConfirm}
+          onCancel={() => setPending(null)}
+        />
+
+        <TimeSheet
+          open={pending?.type === 'hazirlik-start'}
+          title="Hazırlık ne zaman başladı?"
+          confirmLabel="Hazırlık başlat"
+          tone="hazirlik"
+          initialMs={now}
+          range={eventRange}
+          onConfirm={handleTimeConfirm}
+          onCancel={() => setPending(null)}
+        />
+
+        <TimeSheet
+          open={pending?.type === 'hazirlik-end'}
+          title="Hazırlık ne zaman bitti?"
+          confirmLabel="Hazırlığı bitir"
+          tone="hazirlik"
           initialMs={now}
           range={eventRange}
           onConfirm={handleTimeConfirm}
