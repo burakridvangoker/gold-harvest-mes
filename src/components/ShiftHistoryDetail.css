@@ -239,6 +239,10 @@
   border-left-color: var(--signal-idle);
 }
 
+.history-detail-events-row--hazirlik {
+  border-left-color: var(--signal-hazirlik);
+}
+
 .history-detail-events-label {
   min-width: 0;
   overflow: hidden;

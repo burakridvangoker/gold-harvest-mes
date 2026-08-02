@@ -19,6 +19,7 @@ const KIND_LABELS = {
   uretim: 'Üretim',
   durus: 'Duruş',
   mola: 'Mola',
+  hazirlik: 'Hazırlık',
   palet: 'Palet',
 }
 
@@ -150,7 +151,9 @@ function EventLog({
                       ? 'Sebep girilmemiş'
                       : entry.kind === 'mola'
                         ? 'Mola'
-                        : run?.urun_adi) ||
+                        : entry.kind === 'hazirlik'
+                          ? 'Hazırlık'
+                          : run?.urun_adi) ||
                     '—'
 
               return (
