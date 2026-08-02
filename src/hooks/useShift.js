@@ -10,13 +10,14 @@ import { supabase } from '../lib/supabaseClient'
  * birkaç yüz satır; yeniden çekmek ucuz.
  */
 
-const TABLES = ['shifts', 'product_runs', 'timeline_events', 'pallet_records']
+const TABLES = ['shifts', 'product_runs', 'timeline_events', 'pallet_records', 'stop_reason_segments']
 
 export function useShift(lineCode) {
   const [shift, setShift] = useState(null)
   const [runs, setRuns] = useState([])
   const [events, setEvents] = useState([])
   const [pallets, setPallets] = useState([])
+  const [segments, setSegments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -26,6 +27,7 @@ export function useShift(lineCode) {
       setRuns([])
       setEvents([])
       setPallets([])
+      setSegments([])
       setError(null)
       setLoading(false)
       return
@@ -51,12 +53,13 @@ export function useShift(lineCode) {
       setRuns([])
       setEvents([])
       setPallets([])
+      setSegments([])
       setError(null)
       setLoading(false)
       return
     }
 
-    const [runsResult, eventsResult, palletsResult] = await Promise.all([
+    const [runsResult, eventsResult, palletsResult, segmentsResult] = await Promise.all([
       supabase.from('product_runs').select('*').eq('shift_id', openShift.id).order('sira'),
       supabase.from('timeline_events').select('*').eq('shift_id', openShift.id).order('at'),
       supabase
@@ -64,9 +67,15 @@ export function useShift(lineCode) {
         .select('*')
         .eq('shift_id', openShift.id)
         .order('completed_at'),
+      supabase
+        .from('stop_reason_segments')
+        .select('*')
+        .eq('shift_id', openShift.id)
+        .order('start_at'),
     ])
 
-    const failure = runsResult.error || eventsResult.error || palletsResult.error
+    const failure =
+      runsResult.error || eventsResult.error || palletsResult.error || segmentsResult.error
 
     if (failure) {
       setError('Vardiya verisi okunamadı: ' + failure.message)
@@ -78,6 +87,7 @@ export function useShift(lineCode) {
     setRuns(runsResult.data ?? [])
     setEvents(eventsResult.data ?? [])
     setPallets(palletsResult.data ?? [])
+    setSegments(segmentsResult.data ?? [])
     setLoading(false)
   }, [lineCode])
 
@@ -138,5 +148,5 @@ export function useShift(lineCode) {
     }
   }, [lineCode, refresh])
 
-  return { shift, runs, events, pallets, loading, error, setError, refresh }
+  return { shift, runs, events, pallets, segments, loading, error, setError, refresh }
 }

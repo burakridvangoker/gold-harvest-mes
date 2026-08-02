@@ -44,6 +44,8 @@ SPA rewrite kuralı taşır, olmadan `/operator`/`/mudur` doğrudan girişte 404
    `calisma_hizi_pkt_dk` yeniden adlandırma, `bos_paket_agirlik_g` /
    `ortalama_gramaj_g` kolonları
 7. `add_mola.sql` — `timeline_events.kind`'a üçüncü değer: `'mola'`
+8. `add_stop_reason_segments.sql` — `stop_reason_segments`, bir duruş
+   olayının İÇİNDE çakışabilen sebep segmentleri
 
 RLS tüm tablolarda açık, tüm politikalar `using (true)` — henüz
 kimlik doğrulama yok, sahada hızlı iterasyon için bilinçli bir tercih.
@@ -98,6 +100,41 @@ kayıt hâlâ tek bir "Kaydet" dokunuşuyla olur. `downtimeByNote` bu
 birleşik notu TEK bir satır olarak toplar — sebepler çakıştığı için
 süreyi sebep başına ayrıştırmak zaten mümkün değil, bu dürüst bir
 gösterim.
+
+**`ReasonSegments`: aynı sorun için ikinci, daha derin bir katman —
+her sebebin KENDİ zaman kutusu.** Çip-birleştirme (yukarısı) sebepleri
+tek bir metinde birleştirir ama HANGİ sebebin ne kadar sürdüğünü
+ayıramaz. `ReasonSegments` (`src/components/ReasonSegments.jsx`) bunu
+çözer: bir `stop_reason_segments` tablosu (`add_stop_reason_segments.sql`)
+— her satır bir `durus` olayının (`event_id`) İÇİNE, KENDİ `start_at`/
+`end_at`'i olan bir sebep kaydı. Segmentler birbirleriyle ÇAKIŞABİLİR
+(bobin değişimi 07:00-07:30, ambalaj ayarı 07:15-07:45 gibi) — bu, dış
+`timeline_events` modelinin ÇAKIŞMASIZ tek sıralı yapısını hiç bozmaz,
+sadece TEK bir `durus` olayının içine ikinci, bağımsız bir katman ekler
+(dış durum/süre hesapları tamamen etkilenmeden kalır).
+
+- `src/lib/timeline.js#assignLanes` — çakışan segmentleri ayrı görsel
+  satırlara (lane) dağıtır, klasik interval-graph boyama.
+- `src/lib/timeline.js#groupSegmentsByEvent` — ham DB satırlarını
+  `event_id`'ye göre gruplar, ms'e çevirir (`buildIntervals`'ın
+  `timeline_events` için yaptığının aynısı).
+- `downtimeByNote(intervals, { segmentsByEventId })` — bir duruşun
+  segmentleri varsa süreyi HER SEGMENTİN kendi notuna atar (toplam,
+  segmentler çakıştığı için gerçek duruş süresinden FAZLA çıkabilir —
+  bu doğru bir gösterim, aynı anda birden fazla şey oluyordu demektir).
+  Segmenti olmayan duruşlarda eski davranış (tüm süre, interval.note)
+  aynen çalışmaya devam eder — geriye dönük uyumlu.
+- Saat girişi burada da `TimeSheet`'in kaydırmalı çarkıyla olur, serbest
+  sürükleme DEĞİL — telefonda/eldivenle bir segmentin ucunu sürükleyip
+  bırakmak kırılgan bir UX olurdu (yanlış dokunuş/kayma riski); çark bu
+  riski ortadan kaldırıyor. Bu bilinçli bir seçim: ekranda "sürüklenebilir
+  çubuk" gibi görünse de, saat DEĞİŞTİRME işlemi hep dokunup çarkla
+  onaylama üzerinden gider.
+- Ana ekranda gösterilir (OperatorPanel, aktif/son aralık `durus` ise) —
+  "Olay geçmişi"ne girmeden, olay tam yaşanırken ya da hemen sonra sebep
+  eklenip düzenlenebilir. `useShift.js`'e `segments` eklendi (aynı
+  realtime + yeniden-çekme deseni, `stop_reason_segments` da `TABLES`
+  listesinde).
 
 ## Çalışma hızı: hedef değil, anlık değer
 
@@ -451,6 +488,10 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
 - `src/lib/timeline.js` — tüm süre/verim/plan hesabı, saf fonksiyonlar,
   `timeline.test.js` ile test edilir. Yeni türetilmiş bir metrik
   gerekiyorsa buraya eklenir, bileşene değil.
+- `src/components/ReasonSegments.jsx` — bir duruş aralığının İÇİNDE,
+  çakışabilen sebep segmentleri (bkz. "Duruş sebepleri" bölümü).
+  `stop_reason_segments` tablosu, `groupSegmentsByEvent`/`assignLanes`
+  (`timeline.js`) ile beslenir.
 - `src/hooks/useShift.js` — açık vardiya + ürünler + olaylar + paletler.
   Realtime'da **artımlı yama değil yeniden çekme** yapılır: kayıtlar
   düzenlenebilir/silinebilir olduğu için artımlı birleştirme kolayca

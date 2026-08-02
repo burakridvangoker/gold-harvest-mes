@@ -3,10 +3,12 @@ import { describe, it } from 'node:test'
 
 import {
   buildIntervals,
+  assignLanes,
   clampToWindow,
   currentState,
   downtimeByNote,
   frequentNotes,
+  groupSegmentsByEvent,
   hizVerimi,
   packagingWaste,
   paceStatus,
@@ -431,6 +433,96 @@ describe('duruş notları', () => {
     assert.equal(dokum[0].note, 'Bobin')
     assert.equal(dokum[0].ms, 40 * DK)
     assert.equal(dokum[0].adet, 2)
+  })
+
+  it('segmentleri olan bir duruşta süreyi HER SEGMENTİN kendi notuna atar', () => {
+    // 07:00 duruş (55dk, note='Bobin + Ambalaj + Elektrik') → 07:55 üretim.
+    // Segmentler çakışıyor: A 07:00-07:30, B 07:15-07:45, C 07:20-07:55.
+    const olaylar = [
+      { id: '1', at: T(7, 0), kind: 'durus', note: 'Bobin + Ambalaj + Elektrik' },
+      { id: '2', at: T(7, 55), kind: 'uretim', note: null },
+    ]
+    const intervals = buildIntervals(olaylar, ms(T(8, 0)))
+
+    const segmentsByEventId = new Map([
+      [
+        '1',
+        [
+          { id: 's1', note: 'Bobin', startMs: ms(T(7, 0)), endMs: ms(T(7, 30)) },
+          { id: 's2', note: 'Ambalaj', startMs: ms(T(7, 15)), endMs: ms(T(7, 45)) },
+          { id: 's3', note: 'Elektrik', startMs: ms(T(7, 20)), endMs: ms(T(7, 55)) },
+        ],
+      ],
+    ])
+
+    const dokum = downtimeByNote(intervals, { segmentsByEventId })
+    const byNote = Object.fromEntries(dokum.map((d) => [d.note, d.ms]))
+
+    assert.equal(byNote.Bobin, 30 * DK)
+    assert.equal(byNote.Ambalaj, 30 * DK)
+    assert.equal(byNote.Elektrik, 35 * DK)
+    // Toplam (95dk) gerçek duruş süresinden (55dk) FAZLA — segmentler
+    // çakıştığı için bu doğru, aynı anda birden fazla şey oluyordu.
+    assert.equal(dokum.reduce((sum, d) => sum + d.ms, 0), 95 * DK)
+  })
+
+  it('segmenti olmayan duruşlarda eski davranış (tüm süre, interval.note) devam eder', () => {
+    const intervals = buildIntervals(
+      [
+        { id: '1', at: T(8, 0), kind: 'durus', note: 'Temizlik' },
+        { id: '2', at: T(8, 20), kind: 'uretim', note: null },
+      ],
+      ms(T(8, 30)),
+    )
+
+    const dokum = downtimeByNote(intervals, { segmentsByEventId: new Map() })
+    assert.equal(dokum[0].note, 'Temizlik')
+    assert.equal(dokum[0].ms, 20 * DK)
+  })
+})
+
+describe('groupSegmentsByEvent', () => {
+  it('ham DB satırlarını event_id\'ye göre gruplayıp ms\'e çevirir, başlangıca göre sıralar', () => {
+    const rows = [
+      { id: 's2', event_id: 'e1', note: 'B', start_at: T(7, 15), end_at: T(7, 45) },
+      { id: 's1', event_id: 'e1', note: 'A', start_at: T(7, 0), end_at: T(7, 30) },
+      { id: 's3', event_id: 'e2', note: 'C', start_at: T(8, 0), end_at: T(8, 10) },
+    ]
+
+    const map = groupSegmentsByEvent(rows)
+
+    assert.equal(map.size, 2)
+    const e1 = map.get('e1')
+    assert.equal(e1.length, 2)
+    assert.equal(e1[0].note, 'A')
+    assert.equal(e1[0].startMs, ms(T(7, 0)))
+    assert.equal(e1[1].note, 'B')
+  })
+})
+
+describe('assignLanes', () => {
+  it('çakışmayan segmentleri aynı lane\'e koyar', () => {
+    const segments = [
+      { id: 'a', startMs: ms(T(7, 0)), endMs: ms(T(7, 20)) },
+      { id: 'b', startMs: ms(T(7, 20)), endMs: ms(T(7, 40)) },
+    ]
+
+    const result = assignLanes(segments)
+    assert.equal(result.find((s) => s.id === 'a').lane, 0)
+    assert.equal(result.find((s) => s.id === 'b').lane, 0)
+  })
+
+  it('çakışan segmentleri ayrı lane\'lere dağıtır', () => {
+    // A 07:00-07:30, B 07:15-07:45, C 07:20-07:55 — üçü de birbiriyle çakışıyor
+    const segments = [
+      { id: 'a', startMs: ms(T(7, 0)), endMs: ms(T(7, 30)) },
+      { id: 'b', startMs: ms(T(7, 15)), endMs: ms(T(7, 45)) },
+      { id: 'c', startMs: ms(T(7, 20)), endMs: ms(T(7, 55)) },
+    ]
+
+    const result = assignLanes(segments)
+    const lanes = new Set(result.map((s) => s.lane))
+    assert.equal(lanes.size, 3)
   })
 })
 
