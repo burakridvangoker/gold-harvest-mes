@@ -510,6 +510,36 @@ kavram:
 Tailwind slate/mavi varsayılanına ya da sıcak krem/serif kombinasyonuna
 dönmeyin, ikisi de bilinçli olarak reddedildi.
 
+**Veri görselleştirme (bu dalın ikinci turu — "sadece renk değişmiş"
+geri bildirimi üzerine eklendi):** Kullanıcı ilk turdan sonra "açık
+temaya çevirmekten başka manyak bir şey görmedim" dedi — haklıydı, ilk
+tur sadece palet dönüşümüydü. Bu turda gerçek veri görselleştirmeleri
+eklendi, `dataviz` skill'i (`node .../scripts/validate_palette.js`)
+kullanılarak:
+- `src/components/RadialGauge.jsx` — tek değerli dairesel gösterge
+  (SVG halka + `.tnum` merkez etiket). Müdür panosunda açık kalma/hız
+  verimi, operatör panelinde ürün planı ilerlemesi. Renk andon durum
+  paletinden (`--signal-*-text`, iyi/orta/kötü) — kategorik değil,
+  durum. Tek değer olduğu için lejant gerekmiyor (dataviz kuralı).
+- `src/components/ShiftTimelineBar.jsx` — vardiyanın TAMAMINI tek
+  bakışta gösteren yatay şerit (`buildIntervals`'tan gelen aralıklar,
+  süreyle orantılı genişlik). Segmentler arası 2px zemin boşluğu (mark
+  spec), üç durum için KALICI bir lejant satırı (renk-körü/gri
+  ekranda bile ayrım metinden okunsun) + hover'da saat/sebep/süre
+  ipucu. Palet doğrulaması: ham sinyal renkleri (`#009440/#ffb000/
+  #e02718`) açık zeminde FILL olarak kullanılınca kontrast/açıklık
+  eşiğini geçemiyor (validator FAIL) — bu yüzden segment dolgusu ham
+  sinyal rengiyle, METİN/etiketler `--signal-*-text` ile kalıyor;
+  ayrıca 3 sabit durum + her zaman görünen lejant + metin etiketi
+  olduğu için CVD ayrımı "secondary encoding" şartıyla kabul edilebilir
+  (validator'ın izin verdiği istisna).
+- `src/components/ProductionBars.jsx` + `timeline.js#hourlyPaket` —
+  saatlik paket üretimi, TEK seri/tek ton (sequential, gökkuşağı yok,
+  lejant gerekmiyor). `hourlyPaket` de `shiftPaket` gibi her paleti
+  KENDİ ürününün koli içi adediyle hesaplar (aynı yaşanmış hata sınıfı,
+  tek bir değerle çarpma tuzağına tekrar düşülmedi). Palet, tamamlandığı
+  saatin kovasına düşer; test edilir (`timeline.test.js`).
+
 Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
 - `<input type="time">` KULLANMAYIN — AM/PM gösterimi sayfa diline
   değil tarayıcı/OS yerel ayarına bağlı, `lang` attribute'u etkilemiyor.

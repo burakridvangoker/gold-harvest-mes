@@ -18,6 +18,7 @@ import {
 import { formatBreakdown, formatDelta, formatDuration } from '../lib/duration'
 import { formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
+import RadialGauge from '../components/RadialGauge'
 import TimeSheet from '../components/TimeSheet'
 import StopNoteSheet from '../components/StopNoteSheet'
 import SpeedSheet from '../components/SpeedSheet'
@@ -596,10 +597,19 @@ function OperatorPanel() {
             {pace && (
               <div className={`plan-block plan-block--${pace.durum}`}>
                 <div className="plan-head">
-                  <span className="plan-label plate">Ürün planı</span>
-                  <span className="plan-figure tnum">
-                    {pace.uretilenKoli} / {pace.hedefKoli} <small>koli</small>
-                  </span>
+                  <RadialGauge
+                    value={pace.ilerleme}
+                    seviye={pace.durum === 'geride' ? 'kotu' : pace.durum === 'onde' || pace.durum === 'tamam' ? 'iyi' : 'orta'}
+                    size={56}
+                    thickness={6}
+                    valueLabel={`%${Math.round(pace.ilerleme * 100)}`}
+                  />
+                  <div className="plan-head-text">
+                    <span className="plan-label plate">Ürün planı</span>
+                    <span className="plan-figure tnum">
+                      {pace.uretilenKoli} / {pace.hedefKoli} <small>koli</small>
+                    </span>
+                  </div>
                 </div>
                 <div className="plan-track">
                   <div className="plan-fill" style={{ width: `${pace.ilerleme * 100}%` }} />

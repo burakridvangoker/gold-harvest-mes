@@ -223,9 +223,20 @@
 
 .oran-group {
   display: flex;
-  align-items: baseline;
-  gap: clamp(1.5rem, 3vw, 3.5rem);
+  align-items: center;
+  gap: clamp(1rem, 2vw, 2rem);
   flex-wrap: wrap;
+}
+
+.hourly-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-top: clamp(0.4rem, 1vh, 0.75rem);
+}
+
+.hourly-label {
+  font-size: clamp(0.85rem, 0.95vw, 1.3rem);
 }
 
 .usage-figure {

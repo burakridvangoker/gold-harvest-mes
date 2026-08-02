@@ -1,0 +1,83 @@
+.shift-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.4rem, 0.8vh, 0.7rem);
+}
+
+.shift-timeline-track {
+  display: flex;
+  height: clamp(1.5rem, 2.4vw, 3rem);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--steel-700);
+  /* Segmentler arası 2px zemin boşluğu: bitişik renkler birbirine karışmasın. */
+  gap: 2px;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.shift-timeline-seg {
+  height: 100%;
+  min-width: 2px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.shift-timeline-seg:hover,
+.shift-timeline-seg:focus-visible {
+  filter: brightness(0.88);
+}
+
+.shift-timeline-seg--uretim {
+  background: var(--signal-run);
+}
+
+.shift-timeline-seg--durus {
+  background: var(--signal-stop);
+}
+
+.shift-timeline-seg--mola {
+  background: var(--signal-idle);
+}
+
+.shift-timeline-legend {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: clamp(0.75rem, 1.4vw, 1.5rem);
+  font-size: clamp(0.8rem, 0.9vw, 1.2rem);
+  color: var(--film-dim);
+}
+
+.shift-timeline-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.shift-timeline-swatch {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.shift-timeline-swatch--uretim {
+  background: var(--signal-run);
+}
+
+.shift-timeline-swatch--durus {
+  background: var(--signal-stop);
+}
+
+.shift-timeline-swatch--mola {
+  background: var(--signal-idle);
+}
+
+.shift-timeline-hover {
+  margin-left: auto;
+  color: var(--film);
+  font-weight: 600;
+}

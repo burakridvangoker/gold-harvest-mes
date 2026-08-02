@@ -8,6 +8,7 @@ import {
   downtimeByNote,
   frequentNotes,
   hizVerimi,
+  hourlyPaket,
   packagingWaste,
   paceStatus,
   palletTotals,
@@ -462,5 +463,35 @@ describe('seviyeDurumu', () => {
 
   it('null oran için null döner', () => {
     assert.equal(seviyeDurumu(null), null)
+  })
+})
+
+describe('hourlyPaket', () => {
+  it('her paleti kendi ürününün koli içi adediyle çarpıp tamamlandığı saate düşürür', () => {
+    const runsById = new Map([
+      ['A', { koli_ici_adet: 7 }],
+      ['B', { koli_ici_adet: 12 }],
+    ])
+    const shiftStart = ms(T(7, 0))
+    const pallets = [
+      { product_run_id: 'A', koli_count: 10, completed_at: T(7, 30) }, // saat 0 → 70 paket
+      { product_run_id: 'A', koli_count: 5, completed_at: T(7, 45) }, // saat 0 → +35 paket
+      { product_run_id: 'B', koli_count: 4, completed_at: T(8, 10) }, // saat 1 → 48 paket
+    ]
+    const result = hourlyPaket(pallets, runsById, shiftStart, ms(T(9, 0)))
+    assert.deepEqual(
+      result.map((b) => b.paket),
+      [105, 48],
+    )
+  })
+
+  it('vardiya yoksa boş dizi döner', () => {
+    assert.deepEqual(hourlyPaket([], new Map(), null), [])
+  })
+
+  it('vardiya yeni başlamışsa bile en az bir kova döner', () => {
+    const shiftStart = ms(T(7, 0))
+    const result = hourlyPaket([], new Map(), shiftStart, ms(T(7, 5)))
+    assert.deepEqual(result, [{ index: 0, paket: 0 }])
   })
 })

@@ -9,6 +9,7 @@ import {
   currentState,
   downtimeByNote,
   hizVerimi,
+  hourlyPaket,
   koliToPaket,
   paceStatus,
   palletTotals,
@@ -23,6 +24,9 @@ import {
 import { formatBreakdown, formatDelta, formatDuration } from '../lib/duration'
 import { formatClock, formatDateLabel, formatShortTime } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
+import RadialGauge from '../components/RadialGauge'
+import ShiftTimelineBar from '../components/ShiftTimelineBar'
+import ProductionBars from '../components/ProductionBars'
 import './ManagerDashboard.css'
 
 const NO_REASON_LABEL = 'Sebep girilmemiş'
@@ -240,6 +244,10 @@ function ManagerDashboard() {
   const performansDurum = performans ? seviyeDurumu(performans.oran) : null
   const performansYuzde = performans ? Math.round(performans.oran * 100) : null
 
+  /* useMemo değil: bu noktada zaten early return'lerin ardındayız, hook
+   * sırası bozulmasın diye diğer türetilmiş değerler gibi düz const. */
+  const hourlyBuckets = hourlyPaket(pallets, runsById, shiftStartMs, now)
+
   return (
     <div className={`manager-shell is-${state}`}>
       <div
@@ -277,6 +285,9 @@ function ManagerDashboard() {
         />
 
         {error && <div className="manager-error">{error}</div>}
+
+        {/* Vardiyanın tamamı tek bakışta — üretim/duruş/mola şeridi. */}
+        <ShiftTimelineBar intervals={intervals} />
 
         {/* ŞİMDİ */}
         <section className="zone zone--now">
@@ -331,14 +342,20 @@ function ManagerDashboard() {
              */}
             <h2 className="zone-title plate">Vardiya toplamı</h2>
             <div className="oran-group">
-              <span className={`usage-figure${acikKalmaDurum ? ` usage-figure--${acikKalmaDurum}` : ''} tnum`}>
-                %{zamanKullanimi}
-                <span className="usage-figure-note plate">açık kalma</span>
-              </span>
-              <span className={`usage-figure${performansDurum ? ` usage-figure--${performansDurum}` : ''} tnum`}>
-                {performansYuzde != null ? `%${performansYuzde}` : '—'}
-                <span className="usage-figure-note plate">hız verimi</span>
-              </span>
+              <RadialGauge
+                value={totals.zamanKullanimi}
+                seviye={acikKalmaDurum}
+                size={104}
+                valueLabel={`%${zamanKullanimi}`}
+                label="açık kalma"
+              />
+              <RadialGauge
+                value={performans ? performans.oran : null}
+                seviye={performansDurum}
+                size={104}
+                valueLabel={performansYuzde != null ? `%${performansYuzde}` : '—'}
+                label="hız verimi"
+              />
             </div>
           </div>
 
@@ -376,6 +393,12 @@ function ManagerDashboard() {
               <dd className="figure-value tnum">{formatBreakdown(paketParts, paket)}</dd>
             </div>
           </dl>
+
+          {/* Saatlik üretim — tek seri, tek ton; büyüklüğü/eğilimi tek bakışta gösterir. */}
+          <div className="hourly-block">
+            <span className="hourly-label plate">Saatlik üretim (paket)</span>
+            <ProductionBars buckets={hourlyBuckets} />
+          </div>
 
           {productRows.length > 0 && (
             <div className="plan-stack">
