@@ -354,9 +354,12 @@ Operatör adı serbest metin yüzünden aynı kişi farklı yazımlarla
 (ayrı proje, vardiya/personel planlama uygulaması) veritabanındaki
 personel listesinin MES'in kendi Supabase'ine TEK YÖNLÜ kopyası —
 `personnel` tablosu (`setup_personnel.sql`), veri `seed_personnel.sql`
-ile yüklenir (GH VARDİYA'dan CSV export → insert'ler üretilir; listeyi
-güncellemek = yeni CSV ile seed'i yeniden üretip çalıştırmak). İki
-veritabanı arasında canlı bağlantı BİLİNÇLİ olarak yok — kapsam dışı.
+ile yüklenir (GH VARDİYA'dan CSV export ya da ekran görüntüsü →
+insert'ler üretilir; ilk seed PFM-4/10/11 Dublex vardiya çizelgesinin
+ekran görüntüsünden çıkarıldı, GH kodu → `sicil_no`, rol → `departman`.
+Listeyi güncellemek = yeni bir döküm ile seed'i yeniden üretip
+çalıştırmak). İki veritabanı arasında canlı bağlantı BİLİNÇLİ olarak
+yok — kapsam dışı.
 
 **`shifts.operator` TEXT olarak kaldı, FK eklenmedi.** Seçim alanı bu
 metni listeden sadece DOLDURUR: listeden seçilse de elle yazılsa da aynı
