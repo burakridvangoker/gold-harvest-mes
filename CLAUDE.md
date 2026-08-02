@@ -386,6 +386,20 @@ Bu iş `feature/personel-entegrasyon` dalında — demo öncesi production
 dalı (`claude/detailed-spec-questions-b7n4w4`, Vercel Production Branch)
 bilerek hiç ellenmedi.
 
+**Liste hatta göre filtrelenir.** GH VARDİYA'nın kaynak tablosu kişileri
+zaten hatlara göre gruplamıştı (4-PFM Dublex / 10-PFM Dublex /
+11-PFM Dublex); ilk sürümde bu bilgi atlanmış, tüm hatlarda aynı 56
+kişilik ortak havuz gösteriliyordu (yaşanmış karışıklık: PFM-4 ekranında
+PFM-10'a kayıtlı biri de çıkıyordu). `personnel.line_code` kolonu
+(`add_personnel_hat.sql` — `setup_personnel.sql` zaten çalıştırılmıştı,
+o yüzden ayrı bir ALTER dosyası, projenin `add_*.sql` deseniyle tutarlı)
+ve `usePersonnel(lineCode, enabled)` artık `line_code = lineCode` VEYA
+`line_code is null` filtresiyle çalışıyor. `is null` bilinçli bir kaçış
+kapısı: hangi hatta çalıştığı belirsiz/hatlar arası ortak bir kişi
+girilirse (satırında `line_code` boş bırakılırsa) o kişi HER hatta
+görünmeye devam eder — CLAUDE.md'nin "eksik alan sonradan doldurulur,
+uydurma kayıttan iyidir" ilkesiyle tutarlı.
+
 ## Müdür panosunda liste kesmeleri kaldırıldı
 
 Eskiden "Son olaylar" `RECENT_EVENTS_LIMIT = 8` ile, "Duruş sebepleri"

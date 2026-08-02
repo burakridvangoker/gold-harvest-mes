@@ -40,7 +40,7 @@ const NO_REASON_LABEL = 'Sebep girilmemiş'
 function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
   const { shift, runs, events, pallets, loading, error, setError, refresh } = useShiftById(shiftId)
   /* Salt-okunur (müdür) görünümde operatör düzenlenemez, liste hiç çekilmez. */
-  const personnel = usePersonnel(!readOnly)
+  const personnel = usePersonnel(shift?.line_code, !readOnly)
   const [logOpen, setLogOpen] = useState(false)
   const [operatorOpen, setOperatorOpen] = useState(false)
   const [operatorName, setOperatorName] = useState('')

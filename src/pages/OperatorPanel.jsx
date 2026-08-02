@@ -38,7 +38,7 @@ function OperatorPanel() {
   const { lineCode, selectLine, clearLine } = useLineCode()
   const { shift, runs, events, pallets, loading, error, setError, refresh } = useShift(lineCode)
   const suggestions = useFrequentNotes(lineCode)
-  const personnel = usePersonnel()
+  const personnel = usePersonnel(lineCode)
 
   const [now, setNow] = useState(() => Date.now())
   const [busy, setBusy] = useState(false)
