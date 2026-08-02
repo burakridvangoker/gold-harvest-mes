@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { aktifVardiyaNo } from '../lib/time'
+import OperatorNameField from './OperatorNameField'
 import './ShiftWizard.css'
 
 /*
@@ -69,7 +70,7 @@ const toNum = (value) => {
   return value !== '' && Number.isFinite(parsed) ? parsed : null
 }
 
-function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
+function ShiftWizard({ open, mode = 'shift', personnel = [], onClose, onSubmit }) {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState(INITIAL_FORM)
 
@@ -172,12 +173,11 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
         </div>
         <label className="wizard-field">
           <span className="wizard-label">Operatör</span>
-          <input
-            className="wizard-input"
-            type="text"
+          <OperatorNameField
             value={form.operator}
-            onChange={update('operator')}
-            placeholder="Ad Soyad"
+            onChange={(value) => setForm((prev) => ({ ...prev, operator: value }))}
+            personnel={personnel}
+            inputClassName="wizard-input"
           />
         </label>
       </div>

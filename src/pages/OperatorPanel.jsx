@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useShift } from '../hooks/useShift'
 import { useFrequentNotes } from '../hooks/useFrequentNotes'
+import { usePersonnel } from '../hooks/usePersonnel'
 import { useLineCode } from '../hooks/useLineCode'
 import {
   buildIntervals,
@@ -24,6 +25,7 @@ import RunEndSheet from '../components/RunEndSheet'
 import ProductHistory from '../components/ProductHistory'
 import EventLog from '../components/EventLog'
 import ShiftWizard from '../components/ShiftWizard'
+import OperatorNameField from '../components/OperatorNameField'
 import LineSelect from '../components/LineSelect'
 import ShiftHistoryPicker from '../components/ShiftHistoryPicker'
 import ShiftHistoryDetail from '../components/ShiftHistoryDetail'
@@ -36,6 +38,7 @@ function OperatorPanel() {
   const { lineCode, selectLine, clearLine } = useLineCode()
   const { shift, runs, events, pallets, loading, error, setError, refresh } = useShift(lineCode)
   const suggestions = useFrequentNotes(lineCode)
+  const personnel = usePersonnel()
 
   const [now, setNow] = useState(() => Date.now())
   const [busy, setBusy] = useState(false)
@@ -480,6 +483,7 @@ function OperatorPanel() {
         <ShiftWizard
           open={wizardOpen}
           mode="shift"
+          personnel={personnel}
           onClose={() => setWizardOpen(false)}
           onSubmit={(payload) => {
             setWizardOpen(false)
@@ -822,13 +826,11 @@ function OperatorPanel() {
               <h2 className="sheet-title plate">Operatör</h2>
               <label className="sheet-field">
                 <span className="sheet-field-label">Ad Soyad</span>
-                <input
-                  className="sheet-input"
-                  type="text"
+                <OperatorNameField
                   value={operatorName}
-                  onChange={(event) => setOperatorName(event.target.value)}
-                  placeholder="Ad Soyad"
-                  autoFocus
+                  onChange={setOperatorName}
+                  personnel={personnel}
+                  inputClassName="sheet-input"
                 />
               </label>
               <div className="sheet-actions">

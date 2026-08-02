@@ -347,6 +347,42 @@ ama pratikte ulaşılamıyordu.
   varken üstte "Geçmiş vardiyalar" girişi var — vardiya bitmeden de geçmişe
   bakılabilsin diye.
 
+## Personel listesi: GH VARDİYA'dan tek yönlü kopya, FK yok
+
+Operatör adı serbest metin yüzünden aynı kişi farklı yazımlarla
+("Kadir Gülerer" / "kadir gulerer") çoğalıyordu. Çözüm: GH VARDİYA
+(ayrı proje, vardiya/personel planlama uygulaması) veritabanındaki
+personel listesinin MES'in kendi Supabase'ine TEK YÖNLÜ kopyası —
+`personnel` tablosu (`setup_personnel.sql`), veri `seed_personnel.sql`
+ile yüklenir (GH VARDİYA'dan CSV export → insert'ler üretilir; listeyi
+güncellemek = yeni CSV ile seed'i yeniden üretip çalıştırmak). İki
+veritabanı arasında canlı bağlantı BİLİNÇLİ olarak yok — kapsam dışı.
+
+**`shifts.operator` TEXT olarak kaldı, FK eklenmedi.** Seçim alanı bu
+metni listeden sadece DOLDURUR: listeden seçilse de elle yazılsa da aynı
+kolona aynı türde yazılır. Bu sayede (a) mevcut tablolara dokunulmadı,
+(b) eski kayıtlardaki serbest adlar aynen geçerli, (c) fallback bedava.
+Sıkı ilişki ("bu paleti kim girdi") ileride auth ile birlikte gelir.
+
+**UI deseni dropdown DEĞİL, StopNoteSheet'in çip deseni:**
+`OperatorNameField` (`src/components/OperatorNameField.jsx`) — normal
+yazılabilir input + altında yazdıkça süzülen personel çipleri (Türkçe
+duyarsız `toLocaleLowerCase('tr')` substring). Liste boşsa/yüklenemezse
+çip bölgesi hiç render edilmez, alan bugünkü düz haliyle çalışır —
+**operatör hiçbir durumda seçime zorlanmaz ya da kilitlenmez.** Veri
+`usePersonnel` hook'undan (`src/hooks/usePersonnel.js`): hata bilinçli
+yutulur (boş liste = fallback), realtime yok (statik kopya). Alan,
+gömüldüğü yüzeyin input stilini `inputClassName` ile alır
+(`wizard-input`/`sheet-input`). Üç kullanım yeri: `ShiftWizard` vardiya
+adımı, `OperatorPanel` operatör sheet'i, `ShiftHistoryDetail` operatör
+sheet'i (`readOnly` iken liste hiç çekilmez). Operatör sheet'lerindeki
+eski `autoFocus` bilinçli kaldırıldı: mobilde klavye açılınca çipler
+görünmüyordu, önce çipten seçme şansı kalsın diye.
+
+Bu iş `feature/personel-entegrasyon` dalında — demo öncesi production
+dalı (`claude/detailed-spec-questions-b7n4w4`, Vercel Production Branch)
+bilerek hiç ellenmedi.
+
 ## Müdür panosunda liste kesmeleri kaldırıldı
 
 Eskiden "Son olaylar" `RECENT_EVENTS_LIMIT = 8` ile, "Duruş sebepleri"
@@ -463,6 +499,9 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
 - `src/components/LineSelect.jsx` + `src/hooks/useLineCode.js` — hat
   seçimi, cihaz başına `localStorage`'da.
 - `src/lib/lines.js` — sahadaki hatların tek kaynağı (`LINE_CODES`).
+- `src/components/OperatorNameField.jsx` + `src/hooks/usePersonnel.js` —
+  operatör adı alanı: serbest metin + personel çipleri (bkz. "Personel
+  listesi" bölümü).
 - `src/hooks/useShiftList.js` + `src/hooks/useShiftById.js` — geçmiş
   vardiyalar veri katmanı (bkz. "Geçmiş vardiyalar" bölümü).
 - `src/components/ShiftHistoryPicker.jsx` + `ShiftHistoryDetail.jsx` —
