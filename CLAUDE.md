@@ -51,6 +51,13 @@ RLS tüm tablolarda açık, tüm politikalar `using (true)` — henüz
 kimlik doğrulama yok, sahada hızlı iterasyon için bilinçli bir tercih.
 Yeni bir kullanıcı/rol sistemi eklenirse bu politikalar sıkılaştırılmalı.
 
+**Yeni bir SQL migration dosyası oluşturulduğunda (ya da var olan bir
+tabloya elle bir değişiklik gerektiğinde), dosya adını söylemek
+yetmez — tam SQL içeriği sohbette gösterilir**, kullanıcı doğrudan
+kopyalayıp Supabase SQL Editor'e yapıştırabilsin diye. Bu oturumun
+Supabase projesine yazma erişimi yok; migration'lar hep kullanıcı
+tarafından elle çalıştırılıyor.
+
 ## Mimari karar: neden olay kaydı, neden birikmiş sayaç değil
 
 **Bağlam:** Operatörün asli görevi makine, telefona olaydan dakikalar
