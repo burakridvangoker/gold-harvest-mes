@@ -5,18 +5,21 @@
 
 .line-select-shell {
   display: flex;
+  flex-direction: column;
   height: 100dvh;
   overflow: hidden;
   background: var(--steel-900);
   color: var(--film);
   font-family: var(--data);
   box-sizing: border-box;
+  border: clamp(4px, 1vw, 7px) solid var(--signal-idle);
+  border-top: 0;
 }
 
 .line-select-shell .andon-rail {
-  width: clamp(0.5rem, 2vw, 0.9rem);
+  height: clamp(0.9rem, 2.6vh, 1.5rem);
   background-color: var(--signal-idle);
-  box-shadow: 0 0 2.5rem -0.25rem var(--signal-idle);
+  box-shadow: 0 0 2rem -0.5rem var(--signal-idle);
 }
 
 .line-select-panel {
@@ -45,7 +48,9 @@
 .line-select-button {
   min-height: clamp(4.5rem, 12vh, 6rem);
   border: 2px solid var(--steel-600);
+  border-radius: 1rem;
   background: var(--steel-800);
+  box-shadow: 0 2px 4px rgba(18, 24, 21, 0.08);
   color: var(--film);
   font-family: var(--plate);
   font-size: clamp(1.75rem, 7vw, 2.5rem);

@@ -8,8 +8,9 @@
 .sheet-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(8, 10, 11, 0.8);
-  backdrop-filter: blur(2px);
+  /* Mürekkep tülü: açık temada tam karartma yerine yarı saydam perde. */
+  background: rgba(19, 25, 22, 0.45);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -24,6 +25,8 @@
   overflow-y: auto;
   background: var(--steel-800);
   border-top: 3px solid var(--film-dim);
+  border-radius: 1.25rem 1.25rem 0 0;
+  box-shadow: var(--shadow-soft);
   display: flex;
   flex-direction: column;
   padding: 0.75rem clamp(1.1rem, 4vw, 2rem) calc(1.25rem + env(safe-area-inset-bottom));
@@ -37,6 +40,7 @@
   width: 2.75rem;
   height: 0.25rem;
   background: var(--steel-600);
+  border-radius: 999px;
   margin: 0.25rem auto 1rem;
 }
 
@@ -63,6 +67,7 @@
   margin-bottom: 1.25rem;
   background: var(--steel-700);
   border-left: 3px solid var(--steel-600);
+  border-radius: 0 0.6rem 0.6rem 0;
 }
 
 .sheet-stat-row {
@@ -104,7 +109,8 @@
   width: 100%;
   min-height: 3.75rem;
   border: 1px solid var(--steel-600);
-  background: var(--steel-900);
+  border-radius: 0.6rem;
+  background: #ffffff;
   color: var(--film);
   padding: 0 1rem;
   font-size: 1.35rem;
@@ -127,6 +133,7 @@
 .sheet-button {
   min-height: 4rem;
   border: none;
+  border-radius: 0.75rem;
   font-family: var(--plate);
   font-size: 1.1rem;
   font-weight: 700;

@@ -11,6 +11,8 @@
 
 .manager-shell {
   display: flex;
+  /* Lamba bandı üstte, pano altta — kabuk dikey akar. */
+  flex-direction: column;
   /*
    * Duvara asılı sabit ekranda tamamı sığar ama masaüstü/tarayıcı
    * penceresi kısa olduğunda (ör. ürün satırları çoğaldığında) alttaki
@@ -25,11 +27,14 @@
   color: var(--film);
   font-family: var(--data);
   box-sizing: border-box;
-  transition: background 0.6s ease;
+  /* Durum çerçevesi — banda bağlanan emniyet kenarı (bkz. andon.css). */
+  border: clamp(5px, 0.55vw, 10px) solid var(--status);
+  border-top: 0;
+  transition: background 0.6s ease, border-color 0.6s ease;
 }
 
 .manager-shell .andon-rail {
-  width: clamp(0.75rem, 1.1vw, 1.75rem);
+  height: clamp(1.1rem, 2.4vh, 2.1rem);
 }
 
 .manager-dashboard {
@@ -50,9 +55,10 @@
 }
 
 .manager-error {
-  background: rgba(255, 59, 47, 0.14);
+  background: rgba(224, 39, 24, 0.08);
   border-left: 5px solid var(--signal-stop);
-  color: #ffd9d5;
+  border-radius: 0 0.75rem 0.75rem 0;
+  color: var(--signal-stop-text);
   padding: clamp(0.75rem, 1.2vw, 1.4rem) clamp(1rem, 1.6vw, 2rem);
   font-size: clamp(1.05rem, 1.15vw, 1.7rem);
 }
@@ -83,8 +89,10 @@
 }
 
 .manager-history-button {
-  border: 1px solid var(--steel-600);
-  background: transparent;
+  border: 1px solid var(--steel-line);
+  border-radius: 0.6rem;
+  background: var(--steel-800);
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.07);
   color: var(--film-dim);
   font-family: var(--plate);
   font-size: clamp(0.85rem, 1vw, 1.3rem);
@@ -156,9 +164,9 @@
   font-weight: 600;
   line-height: 0.9;
   letter-spacing: -0.025em;
-  color: var(--status);
-  /* Lamba camı parıltısı — operatör panelindeki süreyle aynı dil. */
-  text-shadow: 0 0 0.4em color-mix(in srgb, var(--status) 30%, transparent);
+  /* Açık zeminde derin sinyal tonu; parıltı lambanın kendi renginden. */
+  color: var(--status-text);
+  text-shadow: 0 0 0.45em color-mix(in srgb, var(--status) 22%, transparent);
   transition: color 0.6s ease;
 }
 
@@ -181,7 +189,7 @@
 
 .now-run-empty {
   font-size: clamp(1.35rem, 1.8vw, 2.75rem);
-  color: var(--signal-idle);
+  color: var(--signal-idle-text);
 }
 
 /*
@@ -215,9 +223,20 @@
 
 .oran-group {
   display: flex;
-  align-items: baseline;
-  gap: clamp(1.5rem, 3vw, 3.5rem);
+  align-items: center;
+  gap: clamp(1rem, 2vw, 2rem);
   flex-wrap: wrap;
+}
+
+.hourly-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-top: clamp(0.4rem, 1vh, 0.75rem);
+}
+
+.hourly-label {
+  font-size: clamp(0.85rem, 0.95vw, 1.3rem);
 }
 
 .usage-figure {
@@ -233,15 +252,15 @@
 }
 
 .usage-figure--iyi {
-  --usage-color: var(--signal-run);
+  --usage-color: var(--signal-run-text);
 }
 
 .usage-figure--orta {
-  --usage-color: var(--signal-idle);
+  --usage-color: var(--signal-idle-text);
 }
 
 .usage-figure--kotu {
-  --usage-color: var(--signal-stop);
+  --usage-color: var(--signal-stop-text);
 }
 
 .usage-figure-note {
@@ -313,22 +332,26 @@
 
 .plan-row-track {
   height: clamp(0.4rem, 0.6vw, 0.9rem);
-  background: rgba(232, 234, 230, 0.08);
+  background: rgba(18, 24, 21, 0.08);
+  border-radius: 999px;
   overflow: hidden;
 }
 
 .plan-row-fill {
   height: 100%;
   background: var(--plan-color);
+  border-radius: inherit;
   transition: width 0.6s ease;
 }
 
+/* Mühürlü paket: bitmiş ürün, damgalanmış beyaz kart içinde. */
 .plan-row--frozen {
   padding: clamp(0.55rem, 1vw, 1rem) clamp(0.7rem, 1.2vw, 1.25rem);
-  border: 1px solid var(--steel-700);
-  background: var(--steel-900);
-  border-radius: 8px;
-  opacity: 0.8;
+  border: 1px solid var(--steel-600);
+  background: var(--steel-800);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.06);
+  opacity: 0.88;
 }
 
 /* Aktif satırdan sonraki ilk "mühürlü" satır: aralarında belirgin bir ayraç. */
@@ -340,11 +363,11 @@
 
 .plan-row--onde,
 .plan-row--tamam {
-  --plan-color: var(--signal-run);
+  --plan-color: var(--signal-run-text);
 }
 
 .plan-row--geride {
-  --plan-color: var(--signal-stop);
+  --plan-color: var(--signal-stop-text);
 }
 
 .plan-row-label {
@@ -368,9 +391,10 @@
 .split-bar {
   height: clamp(1.5rem, 2.4vw, 3.25rem);
   background: var(--signal-stop);
+  border-radius: 999px;
   overflow: hidden;
   /* Hafif iç gölge: çubuk zemine gömülü bir gösterge camı gibi okunur. */
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .split-bar-run {
@@ -453,6 +477,7 @@
   gap: 0.5rem;
   padding: clamp(0.25rem, 0.5vw, 0.5rem) clamp(0.5rem, 0.85vw, 0.85rem);
   background: var(--steel-700);
+  border-radius: 999px;
   font-size: clamp(0.8rem, 0.9vw, 1.2rem);
 }
 
@@ -513,12 +538,15 @@
 
 .reasons-row-bar-track {
   height: clamp(0.5rem, 0.7vw, 1rem);
-  background: rgba(232, 234, 230, 0.07);
+  background: rgba(18, 24, 21, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
 }
 
 .reasons-row-bar-fill {
   height: 100%;
   background: var(--reason-color);
+  border-radius: inherit;
   transition: width 0.6s ease;
 }
 
@@ -615,7 +643,7 @@
 
 .quarter-row--ongoing .quarter-row-label::after {
   content: ' · sürüyor';
-  color: var(--status);
+  color: var(--status-text);
   font-family: var(--plate);
   text-transform: uppercase;
   letter-spacing: 0.1em;

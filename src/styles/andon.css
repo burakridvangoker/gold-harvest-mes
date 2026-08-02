@@ -1,70 +1,100 @@
 /*
- * Andon — Gold Harvest MES ortak tasarım sistemi
+ * Porselen Andon — Gold Harvest MES ortak tasarım sistemi (v2, açık tema)
  *
- * Fabrika sahasındaki her makinenin tepesinde duran andon lambasından
- * türetildi: ekranın kendisi lambadır. Durum, köşedeki bir rozete değil
- * sayfanın tamamına yazılır.
+ * İlk sürüm koyu çelikti; bu sürüm aynı iki malzemeyi TERSİNE çevirir:
+ * baskısız ambalaj filminin beyazı artık zemin, çeliğin yeşilimsi karası
+ * artık mürekkep. Gıda sahasının hijyen beyazı — sıcak "krem" değil,
+ * porselen fayans gibi hafif yeşilimsi, serin bir beyaz.
  *
- * Yazı tipi rolleri ölçüme dayanır:
- *   - IBM Plex Sans rakamları sabit 600 birim genişlikte, bu yüzden saniyede
- *     bir güncellenen sayaçlar zıplamaz. Tüm sayılar ve gövde metni onda.
+ * İmza öğesi korunur ve tersine döner: EKRAN HÂLÂ LAMBADIR. Koyu temada
+ * sol kenardaki ray + sayfa yıkamasıydı; şimdi ekranın üstünde tam
+ * genişlikte dilimli bir LAMBA BANDI (aynı ray, yatay) ve ekranın üç
+ * kenarını saran durum ÇERÇEVESİ var — makinelerin boyalı emniyet
+ * kenarı gibi. Uzaktan bakan yine tek renkte durumu okur.
+ *
+ * Yazı tipi rolleri DEĞİŞMEDİ (ölçüme dayalı, keyfi değil):
+ *   - IBM Plex Sans rakamları sabit 600 birim genişlikte, saniyede bir
+ *     güncellenen sayaçlar zıplamaz. Tüm sayılar ve gövde metni onda.
  *   - Saira Condensed'in rakamları orantılı (299-489 birim), sayaçta
  *     kullanılamaz. Sadece makine plakası dilindeki büyük harf etiketlerde.
+ *
+ * Değişken adları bilinçli olarak eski adlar (--steel-*, --film): ~3.000
+ * satır bileşen CSS'i bu adlara yazılmış durumda; adları değil ANLAMLARI
+ * çevirmek tüm sistemi tek noktadan döndürüyor. --steel-900 artık "en
+ * derin zemin" (porselen), --film artık "metin" (mürekkep) demek.
  */
 
 :root {
-  /* Çelik — mavi slate değil, yeşilimsi gri kırık siyah */
-  --steel-900: #0e1113;
-  --steel-800: #14181b;
-  --steel-700: #1c2124;
-  --steel-600: #2a3034;
-  --steel-line: rgba(232, 234, 230, 0.1);
+  /* Porselen — sayfa zemininden kenarlığa dört ton */
+  --steel-900: #eef1ee;
+  --steel-800: #f8faf7;
+  --steel-700: #e3e8e3;
+  --steel-600: #c2ccc4;
+  --steel-line: rgba(18, 24, 21, 0.14);
 
-  /* Film — baskısız ambalaj filmi beyazı */
-  --film: #e8eae6;
-  --film-dim: #8a928f;
+  /* Mürekkep — eski çeliğin karası artık metin */
+  --film: #131916;
+  --film-dim: #566059;
 
-  /* Sinyal — andon lambasının durumları */
-  --signal-run: #00b84d;
+  /* Sinyal yüzeyindeki metin her zaman koyu mürekkep (güvenlik levhası
+   * dili) — remap'ten bağımsız sabit. */
+  --ink: #131916;
+
+  /* Sinyal — andon lambasının durumları (yüzey renkleri) */
+  --signal-run: #009440;
   --signal-idle: #ffb000;
-  --signal-stop: #ff3b2f;
-  /* Hazırlık: mavi-gri, nötr — ne üretim yeşili ne duruş kırmızısı ne mola
+  --signal-stop: #e02718;
+  /* Hazırlık: mavi, nötr — ne üretim yeşili ne duruş kırmızısı ne mola
    * amberi. Ürünsüz makine ayarı gerçek bir duruş değil, ama mola'yla da
    * karışmasın diye kendi rengi var. */
-  --signal-hazirlik: #4aa8ff;
+  --signal-hazirlik: #1f6fd6;
+
+  /* Açık zeminde METİN olarak sinyal: derin varyantlar. Parlak lamba
+   * renkleri beyaz üstünde okunmaz; yazıya dönüşünce koyulaşırlar. */
+  --signal-run-text: #00722f;
+  --signal-idle-text: #8a5f00;
+  --signal-stop-text: #c31f10;
+  --signal-hazirlik-text: #14559e;
 
   /* Sinyal zeminleri (ortam yıkaması) */
-  --wash-run: rgba(0, 184, 77, 0.09);
-  --wash-idle: rgba(255, 176, 0, 0.09);
-  --wash-stop: rgba(255, 59, 47, 0.11);
-  --wash-hazirlik: rgba(74, 168, 255, 0.09);
+  --wash-run: rgba(0, 148, 64, 0.07);
+  --wash-idle: rgba(255, 176, 0, 0.1);
+  --wash-stop: rgba(224, 39, 24, 0.07);
+  --wash-hazirlik: rgba(31, 111, 214, 0.08);
 
-  /* Duruş sebebi aileleri */
-  --plansiz: #ff8a3d;
-  --planli: #4fd6c4;
+  /* Duruş sebebi aileleri (açık zemine göre koyulaştırıldı) */
+  --plansiz: #b95d19;
+  --planli: #0f7d6f;
 
   --data: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --plate: 'Saira Condensed', 'IBM Plex Sans Condensed', 'Arial Narrow', system-ui, sans-serif;
 
+  /* Katmanlı yumuşak gölge — porselen üstünde kart/buton derinliği */
+  --shadow-soft: 0 1px 2px rgba(18, 24, 21, 0.05), 0 12px 28px -18px rgba(18, 24, 21, 0.3);
+
   /* Varsayılan durum = beklemede */
   --status: var(--signal-idle);
   --status-wash: var(--wash-idle);
+  --status-text: var(--signal-idle-text);
 }
 
-/* Durum, sayfa kökünden aşağı akar. Tek kaynak, tek değişken. */
+/* Durum, sayfa kökünden aşağı akar. Tek kaynak, üç değişken. */
 .is-uretimde {
   --status: var(--signal-run);
   --status-wash: var(--wash-run);
+  --status-text: var(--signal-run-text);
 }
 
 .is-durdu {
   --status: var(--signal-stop);
   --status-wash: var(--wash-stop);
+  --status-text: var(--signal-stop-text);
 }
 
 .is-beklemede {
   --status: var(--signal-idle);
   --status-wash: var(--wash-idle);
+  --status-text: var(--signal-idle-text);
 }
 
 /* Mola, beklemede ile aynı ton (amber): planlı, acil değil — kırmızı duruş
@@ -72,6 +102,7 @@
 .is-molada {
   --status: var(--signal-idle);
   --status-wash: var(--wash-idle);
+  --status-text: var(--signal-idle-text);
 }
 
 /* Hazırlık: ürünsüz makine ayarı, gerçek duruş değil — kendi rengi (mavi-gri)
@@ -79,6 +110,7 @@
 .is-hazirlikta {
   --status: var(--signal-hazirlik);
   --status-wash: var(--wash-hazirlik);
+  --status-text: var(--signal-hazirlik-text);
 }
 
 /* Makine plakası etiketi: büyük harf, sıkışık, geniş harf aralığı */
@@ -98,36 +130,40 @@
 }
 
 /*
- * Andon rayı — lamba kulesinin kendisi. Her iki ekranın da sol kenarında
- * tam boy durur ve durum rengini taşır. İnce koyu bölmeler gerçek lamba
- * kulesindeki istiflenmiş cam dilimlerini çağrıştırır; ray düz bir renk
- * şeridi değil, ekipmanın kendisidir.
+ * Lamba bandı — eski andon rayının yatay hali. Her iki ekranın da EN
+ * ÜSTÜNDE tam genişlikte durur (kabuk flex-column, ray ilk çocuk). İnce
+ * koyu bölmeler gerçek lamba kulesindeki yan yana cam dilimleridir; bant
+ * düz bir renk şeridi değil, ekipmanın kendisidir. Kenar çerçevesiyle
+ * (aşağıda, sayfa CSS'lerinde border olarak) tek bir durum halkası
+ * oluşturur — bant halkanın kalın üst kenarıdır.
  */
 .andon-rail {
   flex: 0 0 auto;
   align-self: stretch;
   background-color: var(--status);
   background-image: repeating-linear-gradient(
-    to bottom,
+    to right,
     transparent 0,
     transparent 54px,
-    rgba(0, 0, 0, 0.28) 54px,
-    rgba(0, 0, 0, 0.28) 57px
+    rgba(0, 0, 0, 0.22) 54px,
+    rgba(0, 0, 0, 0.22) 57px
   );
-  box-shadow: 0 0 2.5rem -0.25rem var(--status);
+  box-shadow: 0 0 2rem -0.5rem var(--status);
+  transition: background-color 0.5s ease;
 }
 
 /*
- * Hat plakası — makinenin üstüne perçinli gerçek isim plakası gibi.
- * Her iki ekranda da aynı kimlik.
+ * Hat plakası — porselen üstüne vidalanmış gerçek isim etiketi gibi:
+ * beyaz emaye, saç teli kenar, altında hafif pres gölgesi.
  */
 .operator-line-code,
 .manager-line-code {
   display: inline-block;
-  padding: 0.08em 0.45em 0.14em;
-  border: 1px solid rgba(232, 234, 230, 0.2);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(0, 0, 0, 0.14));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  padding: 0.08em 0.5em 0.14em;
+  border: 1px solid var(--steel-line);
+  border-radius: 0.35rem;
+  background: linear-gradient(180deg, #ffffff, var(--steel-800));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(18, 24, 21, 0.1);
 }
 
 /*
@@ -153,7 +189,7 @@
 :where(button, a, input, textarea, select, [tabindex]):focus-visible {
   outline: 3px solid var(--film);
   outline-offset: 3px;
-  border-radius: 2px;
+  border-radius: 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {

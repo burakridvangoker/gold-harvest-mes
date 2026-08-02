@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { aktifVardiyaNo } from '../lib/time'
+import OperatorNameField from './OperatorNameField'
 import './ShiftWizard.css'
 
 /*
@@ -69,15 +70,18 @@ const toNum = (value) => {
   return value !== '' && Number.isFinite(parsed) ? parsed : null
 }
 
-function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
+function ShiftWizard({ open, mode = 'shift', personnel = [], onClose, onSubmit }) {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState(INITIAL_FORM)
+  /* Ön-doldurmanın yazdığı son ad — elle yazılanla karışmasın diye. */
+  const autoOperatorRef = useRef('')
 
   const steps = useMemo(() => (mode === 'shift' ? SHIFT_STEPS : PRODUCT_STEPS), [mode])
 
   useEffect(() => {
     if (open) {
       setStep(0)
+      autoOperatorRef.current = ''
       /*
        * Vardiya adımı şu an içinde bulunulan vardiyayla önceden doldurulur —
        * operatör yanlış vardiyayı seçip saatini (dolayısıyla o vardiyanın
@@ -87,6 +91,35 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
       setForm(mode === 'shift' ? { ...INITIAL_FORM, vardiya: String(aktifVardiyaNo()) } : INITIAL_FORM)
     }
   }, [open, mode])
+
+  /*
+   * Otomatik operatör ataması: seçili hat+vardiyada TAM BİR Paketleme
+   * Operatörü varsa (PFM-11'de öyle) alan onunla kendiliğinden dolar; iki
+   * operatör varsa (PFM-4/10) doldurulmaz, ikisi de ekip çiplerinde en
+   * üsttedir — tek dokunuş. Elle yazılmış bir ad ASLA ezilmez: yalnızca
+   * alan boşken ya da hâlâ bir önceki otomatik değeri taşırken dokunulur
+   * (vardiya değişince eski vardiyanın otomatik adı da temizlenir).
+   */
+  useEffect(() => {
+    if (!open || mode !== 'shift' || form.vardiya === '') return
+    const vno = Number(form.vardiya)
+    const operators = personnel.filter(
+      (person) => person.vardiya_no === vno && person.departman === 'Paketleme Operatörü',
+    )
+    setForm((prev) => {
+      const untouched = prev.operator === '' || prev.operator === autoOperatorRef.current
+      if (!untouched) return prev
+      if (operators.length === 1) {
+        autoOperatorRef.current = operators[0].ad_soyad
+        return prev.operator === operators[0].ad_soyad ? prev : { ...prev, operator: operators[0].ad_soyad }
+      }
+      if (prev.operator !== '' && prev.operator === autoOperatorRef.current) {
+        autoOperatorRef.current = ''
+        return { ...prev, operator: '' }
+      }
+      return prev
+    })
+  }, [open, mode, form.vardiya, personnel])
 
   if (!open) return null
 
@@ -172,12 +205,12 @@ function ShiftWizard({ open, mode = 'shift', onClose, onSubmit }) {
         </div>
         <label className="wizard-field">
           <span className="wizard-label">Operatör</span>
-          <input
-            className="wizard-input"
-            type="text"
+          <OperatorNameField
             value={form.operator}
-            onChange={update('operator')}
-            placeholder="Ad Soyad"
+            onChange={(value) => setForm((prev) => ({ ...prev, operator: value }))}
+            personnel={personnel}
+            vardiyaNo={form.vardiya}
+            inputClassName="wizard-input"
           />
         </label>
       </div>

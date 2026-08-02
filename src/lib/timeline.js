@@ -352,6 +352,35 @@ export function packagingWaste({
   return { doluFark, bosFark, doluFire, ambalajFireAdet, ambalajFireGram }
 }
 
+/**
+ * Vardiya boyunca saat başına düşen paket üretimi — müdür panosundaki
+ * saatlik üretim grafiği için. Her palet KENDİ ürününün koli içi adediyle
+ * hesaplanır (shiftPaket'teki aynı prensip: tek bir değerle çarpmak yanlış
+ * sonuç verir). Palet, tamamlandığı saatin kovasına düşer; vardiya
+ * başlangıcından şu ana kadar en az 1 saatlik kova döner (vardiya yeni
+ * başlamışsa bile boş bir ilk kova görünsün diye).
+ */
+export function hourlyPaket(pallets, runsById, shiftStartMs, nowMs = Date.now()) {
+  if (shiftStartMs == null) return []
+
+  const hours = Math.max(1, Math.ceil((nowMs - shiftStartMs) / SAAT_MS))
+  const buckets = Array.from({ length: hours }, (_, index) => ({ index, paket: 0 }))
+
+  for (const pallet of pallets) {
+    const completedMs = toMs(pallet.completed_at)
+    if (completedMs == null) continue
+
+    const bucketIndex = Math.floor((completedMs - shiftStartMs) / SAAT_MS)
+    if (bucketIndex < 0 || bucketIndex >= hours) continue
+
+    const run = runsById.get(pallet.product_run_id)
+    const paket = koliToPaket(pallet.koli_count ?? 0, run?.koli_ici_adet)
+    if (paket != null) buckets[bucketIndex].paket += paket
+  }
+
+  return buckets
+}
+
 /* ---- Duruş notları ---- */
 
 /**

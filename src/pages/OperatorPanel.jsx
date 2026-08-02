@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useShift } from '../hooks/useShift'
 import { useFrequentNotes } from '../hooks/useFrequentNotes'
+import { usePersonnel } from '../hooks/usePersonnel'
 import { useLineCode } from '../hooks/useLineCode'
 import {
   buildIntervals,
@@ -18,6 +19,7 @@ import {
 import { formatBreakdown, formatDelta, formatDuration } from '../lib/duration'
 import { formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
+import RadialGauge from '../components/RadialGauge'
 import TimeSheet from '../components/TimeSheet'
 import StopNoteSheet from '../components/StopNoteSheet'
 import ReasonSegments from '../components/ReasonSegments'
@@ -26,6 +28,7 @@ import RunEndSheet from '../components/RunEndSheet'
 import ProductHistory from '../components/ProductHistory'
 import EventLog from '../components/EventLog'
 import ShiftWizard from '../components/ShiftWizard'
+import OperatorNameField from '../components/OperatorNameField'
 import LineSelect from '../components/LineSelect'
 import ShiftHistoryPicker from '../components/ShiftHistoryPicker'
 import ShiftHistoryDetail from '../components/ShiftHistoryDetail'
@@ -38,6 +41,7 @@ function OperatorPanel() {
   const { lineCode, selectLine, clearLine } = useLineCode()
   const { shift, runs, events, pallets, segments, loading, error, setError, refresh } = useShift(lineCode)
   const suggestions = useFrequentNotes(lineCode)
+  const personnel = usePersonnel(lineCode)
 
   const [now, setNow] = useState(() => Date.now())
   const [busy, setBusy] = useState(false)
@@ -543,6 +547,7 @@ function OperatorPanel() {
         <ShiftWizard
           open={wizardOpen}
           mode="shift"
+          personnel={personnel}
           onClose={() => setWizardOpen(false)}
           onSubmit={(payload) => {
             setWizardOpen(false)
@@ -678,10 +683,19 @@ function OperatorPanel() {
             {pace && (
               <div className={`plan-block plan-block--${pace.durum}`}>
                 <div className="plan-head">
-                  <span className="plan-label plate">Ürün planı</span>
-                  <span className="plan-figure tnum">
-                    {pace.uretilenKoli} / {pace.hedefKoli} <small>koli</small>
-                  </span>
+                  <RadialGauge
+                    value={pace.ilerleme}
+                    seviye={pace.durum === 'geride' ? 'kotu' : pace.durum === 'onde' || pace.durum === 'tamam' ? 'iyi' : 'orta'}
+                    size={56}
+                    thickness={6}
+                    valueLabel={`%${Math.round(pace.ilerleme * 100)}`}
+                  />
+                  <div className="plan-head-text">
+                    <span className="plan-label plate">Ürün planı</span>
+                    <span className="plan-figure tnum">
+                      {pace.uretilenKoli} / {pace.hedefKoli} <small>koli</small>
+                    </span>
+                  </div>
                 </div>
                 <div className="plan-track">
                   <div className="plan-fill" style={{ width: `${pace.ilerleme * 100}%` }} />
@@ -952,13 +966,12 @@ function OperatorPanel() {
               <h2 className="sheet-title plate">Operatör</h2>
               <label className="sheet-field">
                 <span className="sheet-field-label">Ad Soyad</span>
-                <input
-                  className="sheet-input"
-                  type="text"
+                <OperatorNameField
                   value={operatorName}
-                  onChange={(event) => setOperatorName(event.target.value)}
-                  placeholder="Ad Soyad"
-                  autoFocus
+                  onChange={setOperatorName}
+                  personnel={personnel}
+                  vardiyaNo={shift.vardiya}
+                  inputClassName="sheet-input"
                 />
               </label>
               <div className="sheet-actions">

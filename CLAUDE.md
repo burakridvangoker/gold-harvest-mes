@@ -47,6 +47,13 @@ SPA rewrite kuralı taşır, olmadan `/operator`/`/mudur` doğrudan girişte 404
 8. `add_hazirlik.sql` — `timeline_events.kind`'a dördüncü değer: `'hazirlik'`
 9. `add_stop_reason_segments.sql` — `stop_reason_segments`, bir duruş
    olayının İÇİNDE çakışabilen sebep segmentleri
+10. `setup_personnel.sql` — `personnel` tablosu (GH VARDİYA'dan tek
+    yönlü kopya)
+11. `seed_personnel.sql` — PFM-4/10/11 vardiya çizelgesinden 56 kişi
+12. `add_personnel_hat.sql` — `personnel.line_code`, listeyi hatta göre
+    filtreler
+13. `add_personnel_vardiya.sql` — `personnel.vardiya_no`, otomatik ekip
+    ataması/ön-doldurma için
 
 RLS tüm tablolarda açık, tüm politikalar `using (true)` — henüz
 kimlik doğrulama yok, sahada hızlı iterasyon için bilinçli bir tercih.
@@ -445,6 +452,81 @@ ama pratikte ulaşılamıyordu.
   varken üstte "Geçmiş vardiyalar" girişi var — vardiya bitmeden de geçmişe
   bakılabilsin diye.
 
+## Personel listesi: GH VARDİYA'dan tek yönlü kopya, FK yok
+
+Operatör adı serbest metin yüzünden aynı kişi farklı yazımlarla
+("Kadir Gülerer" / "kadir gulerer") çoğalıyordu. Çözüm: GH VARDİYA
+(ayrı proje, vardiya/personel planlama uygulaması) veritabanındaki
+personel listesinin MES'in kendi Supabase'ine TEK YÖNLÜ kopyası —
+`personnel` tablosu (`setup_personnel.sql`), veri `seed_personnel.sql`
+ile yüklenir (GH VARDİYA'dan CSV export ya da ekran görüntüsü →
+insert'ler üretilir; ilk seed PFM-4/10/11 Dublex vardiya çizelgesinin
+ekran görüntüsünden çıkarıldı, GH kodu → `sicil_no`, rol → `departman`.
+Listeyi güncellemek = yeni bir döküm ile seed'i yeniden üretip
+çalıştırmak). İki veritabanı arasında canlı bağlantı BİLİNÇLİ olarak
+yok — kapsam dışı.
+
+**`shifts.operator` TEXT olarak kaldı, FK eklenmedi.** Seçim alanı bu
+metni listeden sadece DOLDURUR: listeden seçilse de elle yazılsa da aynı
+kolona aynı türde yazılır. Bu sayede (a) mevcut tablolara dokunulmadı,
+(b) eski kayıtlardaki serbest adlar aynen geçerli, (c) fallback bedava.
+Sıkı ilişki ("bu paleti kim girdi") ileride auth ile birlikte gelir.
+
+**UI deseni dropdown DEĞİL, StopNoteSheet'in çip deseni:**
+`OperatorNameField` (`src/components/OperatorNameField.jsx`) — normal
+yazılabilir input + altında yazdıkça süzülen personel çipleri (Türkçe
+duyarsız `toLocaleLowerCase('tr')` substring). Liste boşsa/yüklenemezse
+çip bölgesi hiç render edilmez, alan bugünkü düz haliyle çalışır —
+**operatör hiçbir durumda seçime zorlanmaz ya da kilitlenmez.** Veri
+`usePersonnel` hook'undan (`src/hooks/usePersonnel.js`): hata bilinçli
+yutulur (boş liste = fallback), realtime yok (statik kopya). Alan,
+gömüldüğü yüzeyin input stilini `inputClassName` ile alır
+(`wizard-input`/`sheet-input`). Üç kullanım yeri: `ShiftWizard` vardiya
+adımı, `OperatorPanel` operatör sheet'i, `ShiftHistoryDetail` operatör
+sheet'i (`readOnly` iken liste hiç çekilmez). Operatör sheet'lerindeki
+eski `autoFocus` bilinçli kaldırıldı: mobilde klavye açılınca çipler
+görünmüyordu, önce çipten seçme şansı kalsın diye.
+
+Bu iş `feature/personel-entegrasyon` dalında geliştirildi, sonra
+`feature/tasarim-v2` üstüne kuruldu; ikisi de artık production dalına
+(`claude/detailed-spec-questions-b7n4w4`, Vercel Production Branch)
+merge edildi.
+
+**Otomatik ekip ataması (`vardiya_no`, `add_personnel_vardiya.sql`):**
+kaynak çizelgede her kişinin vardiyası (1/2/3) da vardı; bu da kopyalandı.
+Sahada vardiya atamaları SABİT (rotasyon yok — kullanıcı doğruladı).
+Davranış üç kural:
+- `ShiftWizard` vardiya adımında seçili hat+vardiyanın ekibi
+  "Bu vardiyanın ekibi" etiketiyle çip olarak listelenir (Paketleme
+  Operatörü önce ve `.opname-chip--operator` ile vurgulu); ekip listesi
+  alan doluyken de görünür kalır (yalnızca yazarak ararken süzgece döner)
+  ve ekipte 6'lık kesme uygulanmaz.
+- **Ön-doldurma:** hat+vardiyada TAM BİR Paketleme Operatörü varsa
+  (PFM-11 böyle) alan onunla kendiliğinden dolar; İKİ operatör varsa
+  (PFM-4/10 böyle) alan boş bırakılır, iki operatör çipi üstte — sistem
+  iki kişi arasında tahmin yürütmez, tek dokunuş operatöre kalır.
+- **Elle yazılan ad ASLA ezilmez:** ön-doldurma yalnızca alan boşken ya
+  da hâlâ önceki otomatik değeri taşırken yazar (`autoOperatorRef`,
+  `ShiftWizard.jsx`). Vardiya değişince eski vardiyanın otomatik adı
+  temizlenir/güncellenir, operatörün kendi yazdığı isim olduğu gibi kalır.
+`OperatorNameField`'ın `vardiyaNo` prop'u opsiyoneldir: operatör
+sheet'leri `shift.vardiya` geçirir (ekip-önce sıralama), prop verilmezse
+davranış eski düz alfabetik halidir.
+
+**Liste hatta göre filtrelenir.** GH VARDİYA'nın kaynak tablosu kişileri
+zaten hatlara göre gruplamıştı (4-PFM Dublex / 10-PFM Dublex /
+11-PFM Dublex); ilk sürümde bu bilgi atlanmış, tüm hatlarda aynı 56
+kişilik ortak havuz gösteriliyordu (yaşanmış karışıklık: PFM-4 ekranında
+PFM-10'a kayıtlı biri de çıkıyordu). `personnel.line_code` kolonu
+(`add_personnel_hat.sql` — `setup_personnel.sql` zaten çalıştırılmıştı,
+o yüzden ayrı bir ALTER dosyası, projenin `add_*.sql` deseniyle tutarlı)
+ve `usePersonnel(lineCode, enabled)` artık `line_code = lineCode` VEYA
+`line_code is null` filtresiyle çalışıyor. `is null` bilinçli bir kaçış
+kapısı: hangi hatta çalıştığı belirsiz/hatlar arası ortak bir kişi
+girilirse (satırında `line_code` boş bırakılırsa) o kişi HER hatta
+görünmeye devam eder — CLAUDE.md'nin "eksik alan sonradan doldurulur,
+uydurma kayıttan iyidir" ilkesiyle tutarlı.
+
 ## Müdür panosunda liste kesmeleri kaldırıldı
 
 Eskiden "Son olaylar" `RECENT_EVENTS_LIMIT = 8` ile, "Duruş sebepleri"
@@ -492,23 +574,77 @@ gerektirir ki bu tüm ürünlerin `paceStatus` hesaplarını geriye dönük
 bozar; yanlış vardiya seçildiyse çözüm o vardiyayı bitirip doğrusunu
 yeniden açmak (vardiyalar ucuz, yeniden oluşturmak sorun değil).
 
-## Andon tasarım sistemi
+## Andon tasarım sistemi — v2 "Porselen Andon"
 
-`src/styles/andon.css` — ortak tasarım dili. İmza öğesi: **ekranın
-kendisi andon lambasıdır**, durum köşedeki bir rozete değil sol
-kenardaki tam boy `andon-rail`'e ve sayfa geneli durum yıkamasına yazılır.
-Duruş uzadıkça ray nabzı ısrarlanır (`--urgency`, 30 dk'da tam yoğunluk),
-`prefers-reduced-motion` altında sabit kontrasta düşer.
+`src/styles/andon.css` — ortak tasarım dili. `feature/tasarim-v2`'de
+koyu çelik tema açık porselene çevrildi, sonra production dalına
+(`claude/detailed-spec-questions-b7n4w4`) merge edildi — artık canlı
+tema bu. Hikâye: ilk sürümün iki malzemesi (çelik + baskısız film)
+TERSİNE döndü — film beyazı artık zemin, çeliğin yeşilimsi karası artık
+mürekkep. Sıcak "krem" değil; gıda sahasının hijyen beyazı, hafif
+yeşilimsi porselen.
 
-**Yazı tipi rolleri ölçüme dayalı, keyfi değil:**
+İmza öğesi korunup tersine döndü: **ekranın kendisi andon lambasıdır.**
+Koyu temada sol kenardaki dikey raydı; şimdi ekranın EN ÜSTÜNDE tam
+genişlikte dilimli bir **lamba bandı** (aynı `.andon-rail`, kabuklar
+`flex-direction: column` olduğu için yatay) + ekranın üç kenarını saran
+**durum çerçevesi** (kabuk `border`'ı, üst kenarı bandın kendisi) var —
+makinelerin boyalı emniyet kenarı gibi tek bir durum halkası. Sayfa
+geneli durum yıkaması devam ediyor. Duruş uzadıkça bandın nabzı
+ısrarlanır (`--urgency`, 30 dk'da tam yoğunluk), `prefers-reduced-motion`
+altında sabit kontrasta düşer.
+
+**Yazı tipi rolleri ölçüme dayalı, keyfi değil (v2'de DEĞİŞMEDİ):**
 - `.tnum` (IBM Plex Sans) → **tüm sayılar**. Rakamları sabit 600 birim
   genişlikte, saniyelik sayaçlar zıplamaz.
 - `.plate` (Saira Condensed) → **sadece büyük harf etiketler**. Bu
   fontun rakamları orantılı (299-489 birim arası) — sayaçta KULLANMAYIN.
 
-Palet: çelik (`--steel-900/800/700/600`) + sinyal (`--signal-run`
-yeşil, `--signal-idle` amber, `--signal-stop` kırmızı). Tailwind
-slate/mavi varsayılanına dönmeyin, bilinçli bir karardı.
+**Palet — değişken ADLARI eski, ANLAMLARI çevrildi** (~3.000 satır
+bileşen CSS'i bu adlara yazılmıştı; adları değil değerleri çevirmek tüm
+sistemi tek noktadan döndürdü): `--steel-900..600` artık porselen
+tonları (zemin → kenarlık), `--film` artık mürekkep (metin). Üç yeni
+kavram:
+- `--ink` — sinyal renkli yüzeydeki metin HER ZAMAN koyu mürekkep
+  (güvenlik levhası dili), tema ne olursa olsun sabit.
+- `--signal-*-text` / `--status-text` — parlak lamba renkleri açık
+  zeminde METİN olarak okunmaz; yazıya dönüşen her sinyal bu derin
+  varyantları kullanır (`color: var(--status)` görürseniz v2'de hata —
+  metinse `--status-text` olmalı).
+- Dolgulu = basılabilir grameri açık temada "beyaz kart + saç teli
+  kenar + yumuşak gölge + radius" ile konuşur (`--shadow-soft`).
+Tailwind slate/mavi varsayılanına ya da sıcak krem/serif kombinasyonuna
+dönmeyin, ikisi de bilinçli olarak reddedildi.
+
+**Veri görselleştirme (bu dalın ikinci turu — "sadece renk değişmiş"
+geri bildirimi üzerine eklendi):** Kullanıcı ilk turdan sonra "açık
+temaya çevirmekten başka manyak bir şey görmedim" dedi — haklıydı, ilk
+tur sadece palet dönüşümüydü. Bu turda gerçek veri görselleştirmeleri
+eklendi, `dataviz` skill'i (`node .../scripts/validate_palette.js`)
+kullanılarak:
+- `src/components/RadialGauge.jsx` — tek değerli dairesel gösterge
+  (SVG halka + `.tnum` merkez etiket). Müdür panosunda açık kalma/hız
+  verimi, operatör panelinde ürün planı ilerlemesi. Renk andon durum
+  paletinden (`--signal-*-text`, iyi/orta/kötü) — kategorik değil,
+  durum. Tek değer olduğu için lejant gerekmiyor (dataviz kuralı).
+- `src/components/ShiftTimelineBar.jsx` — vardiyanın TAMAMINI tek
+  bakışta gösteren yatay şerit (`buildIntervals`'tan gelen aralıklar,
+  süreyle orantılı genişlik). Segmentler arası 2px zemin boşluğu (mark
+  spec), üç durum için KALICI bir lejant satırı (renk-körü/gri
+  ekranda bile ayrım metinden okunsun) + hover'da saat/sebep/süre
+  ipucu. Palet doğrulaması: ham sinyal renkleri (`#009440/#ffb000/
+  #e02718`) açık zeminde FILL olarak kullanılınca kontrast/açıklık
+  eşiğini geçemiyor (validator FAIL) — bu yüzden segment dolgusu ham
+  sinyal rengiyle, METİN/etiketler `--signal-*-text` ile kalıyor;
+  ayrıca 3 sabit durum + her zaman görünen lejant + metin etiketi
+  olduğu için CVD ayrımı "secondary encoding" şartıyla kabul edilebilir
+  (validator'ın izin verdiği istisna).
+- `src/components/ProductionBars.jsx` + `timeline.js#hourlyPaket` —
+  saatlik paket üretimi, TEK seri/tek ton (sequential, gökkuşağı yok,
+  lejant gerekmiyor). `hourlyPaket` de `shiftPaket` gibi her paleti
+  KENDİ ürününün koli içi adediyle hesaplar (aynı yaşanmış hata sınıfı,
+  tek bir değerle çarpma tuzağına tekrar düşülmedi). Palet, tamamlandığı
+  saatin kovasına düşer; test edilir (`timeline.test.js`).
 
 Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
 - `<input type="time">` KULLANMAYIN — AM/PM gösterimi sayfa diline
@@ -565,6 +701,9 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
 - `src/components/LineSelect.jsx` + `src/hooks/useLineCode.js` — hat
   seçimi, cihaz başına `localStorage`'da.
 - `src/lib/lines.js` — sahadaki hatların tek kaynağı (`LINE_CODES`).
+- `src/components/OperatorNameField.jsx` + `src/hooks/usePersonnel.js` —
+  operatör adı alanı: serbest metin + personel çipleri (bkz. "Personel
+  listesi" bölümü).
 - `src/hooks/useShiftList.js` + `src/hooks/useShiftById.js` — geçmiş
   vardiyalar veri katmanı (bkz. "Geçmiş vardiyalar" bölümü).
 - `src/components/ShiftHistoryPicker.jsx` + `ShiftHistoryDetail.jsx` —
@@ -584,7 +723,12 @@ ambalaj firesi hesabı, müdür panosunda ürün bazlı + genel verim ayrımı
 kendi satırında), geçmiş vardiyalar (donmuş özet + operatörde düzeltme,
 müdürde salt-okunur), mola (üçüncü durum, açık kalmaya girmez), hazırlık
 (dördüncü durum, mola'nın ikizi), vardiya bölümleri/çeyrekler (mola
-başlangıçlarına göre yan yana), palet çıkış saatleri listesi.
+başlangıçlarına göre yan yana), palet çıkış saatleri listesi, çoklu
+sebep desteği (StopNoteSheet çip birleştirme + ReasonSegments zaman
+çubuğu), personel listesi entegrasyonu (hatta göre filtre, otomatik
+ekip ataması/ön-doldurma), Porselen Andon v2 (açık tema) ve gerçek veri
+görselleştirmeleri (dairesel göstergeler, vardiya zaman şeridi, saatlik
+üretim grafiği).
 
 **Yapılmadı:** eski ürüne geri dönüp üretime devam etme UI'ı (şema/`
 runSpans` bunu zaten destekliyor, sadece "bu ürüne dön" butonu yok), not→kod

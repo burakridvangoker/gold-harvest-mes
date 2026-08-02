@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useShiftById } from '../hooks/useShiftById'
+import { usePersonnel } from '../hooks/usePersonnel'
 import {
   buildIntervals,
   downtimeByNote,
@@ -18,6 +19,7 @@ import { formatBreakdown, formatDuration } from '../lib/duration'
 import { formatDateLabel, formatShortTime } from '../lib/time'
 import ProductHistory from './ProductHistory'
 import EventLog from './EventLog'
+import OperatorNameField from './OperatorNameField'
 import './Sheet.css'
 import './ShiftHistoryDetail.css'
 
@@ -37,6 +39,8 @@ const NO_REASON_LABEL = 'Sebep girilmemiş'
  */
 function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
   const { shift, runs, events, pallets, loading, error, setError, refresh } = useShiftById(shiftId)
+  /* Salt-okunur (müdür) görünümde operatör düzenlenemez, liste hiç çekilmez. */
+  const personnel = usePersonnel(shift?.line_code, !readOnly)
   const [logOpen, setLogOpen] = useState(false)
   const [operatorOpen, setOperatorOpen] = useState(false)
   const [operatorName, setOperatorName] = useState('')
@@ -346,12 +350,12 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
                 <h2 className="sheet-title plate">Operatör</h2>
                 <label className="sheet-field">
                   <span className="sheet-field-label">Ad Soyad</span>
-                  <input
-                    className="sheet-input"
-                    type="text"
+                  <OperatorNameField
                     value={operatorName}
-                    onChange={(event) => setOperatorName(event.target.value)}
-                    autoFocus
+                    onChange={setOperatorName}
+                    personnel={personnel}
+                    vardiyaNo={shift.vardiya}
+                    inputClassName="sheet-input"
                   />
                 </label>
                 <div className="sheet-actions">
