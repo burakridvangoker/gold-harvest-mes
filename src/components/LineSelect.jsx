@@ -1,8 +1,11 @@
 import { LINE_CODES } from '../lib/lines'
+import { useActiveLines } from '../hooks/useActiveLines'
 import './LineSelect.css'
 
 /* İşe her başladığında ya da hat değiştirdiğinde önce buradan geçilir. */
 function LineSelect({ onSelect }) {
+  const activeLines = useActiveLines()
+
   return (
     <div className="line-select-shell">
       <div className="andon-rail" />
@@ -17,6 +20,9 @@ function LineSelect({ onSelect }) {
               onClick={() => onSelect(code)}
             >
               {code}
+              {activeLines.has(code) && (
+                <span className="line-select-active-dot" aria-label="Aktif vardiya" />
+              )}
             </button>
           ))}
         </div>
