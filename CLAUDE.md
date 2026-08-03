@@ -707,6 +707,20 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
   bir pencerede (ör. masaüstü tarayıcı) taşıyor, "Duruş sebepleri"/"Son
   olaylar" hiç görünmüyordu. `min-height: 100dvh`'ye çevrildi — sayfa artık
   gerektiğinde kaydırılabilir, sığdığında zaten fark etmez.
+- `OperatorPanel` da benzer bir "sabit kabuk + içeride kayan bölge"
+  tasarımı taşıyor (`.operator-shell` sabit `100dvh`, sadece
+  `.operator-readout` kendi içinde kayar — BAŞLAT/DURDUR hiç ekran
+  dışına kaçmasın diye, bkz. dosyanın kendi yorumu) ama BAŞKA bir hata
+  yaşandı: gerçek telefonda (mobil site modu) `.operator-readout` hiç
+  dokunma-kaydırması yapmıyordu, "masaüstü sitesi" moduna geçilince
+  sorun kayboluyordu. Kök sebep `100dvh`'nin adres çubuğu her gizlenip
+  göründüğünde yeniden hesaplanması — bu canlı yeniden hesaplama bazı
+  mobil tarayıcılarda tam bir dokunma-kaydırma hareketinin ortasında
+  devreye girip hareketi iptal ediyordu. `.operator-shell` `100svh`'ye
+  çevrildi (adres çubuğu tam açıkken sabit kalan en küçük görünür alan —
+  `index.css`'teki `#root` de zaten bunu kullanıyor), `.operator-readout`'a
+  da `overscroll-behavior: contain` + `-webkit-overflow-scrolling: touch`
+  eklendi.
 
 ## Kod konumu haritası
 

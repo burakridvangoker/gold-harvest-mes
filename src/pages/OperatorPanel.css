@@ -14,8 +14,18 @@
    * Sabit yükseklik: birincil aksiyon (BAŞLAT/DURDUR) hiçbir zaman ekranın
    * altına kaçmamalı. İçerik büyürse okunan kısım kendi içinde kayar,
    * butonlar yerinde kalır.
+   *
+   * `100dvh` DEĞİL `100svh` — dvh, tarayıcı adres çubuğu her gizlenip
+   * göründüğünde yeniden hesaplanır; bu canlı yeniden hesaplama bazı
+   * mobil tarayıcılarda (masaüstü site modunda sorun yoktu, "gerçek"
+   * mobil modda vardı — yaşanmış hata) tam da bir dokunma-kaydırma
+   * hareketinin ORTASINDA devreye girip iç kaydırma alanının (aşağıdaki
+   * `.operator-readout`) hiç kaymamasına yol açıyordu. `svh` (adres
+   * çubuğu tam açıkken, en küçük görünür alan) sabit kalır, bu titremeyi
+   * ortadan kaldırır — bedeli, çubuk gizlendiğinde altta birkaç piksellik
+   * kullanılmayan boşluk kalması, kaydırmanın hiç çalışmamasından iyidir.
    */
-  height: 100dvh;
+  height: 100svh;
   overflow: hidden;
   background:
     linear-gradient(var(--status-wash), var(--status-wash)),
@@ -156,6 +166,11 @@ button.operator-line-code {
    */
   justify-content: flex-start;
   overflow-y: auto;
+  /* Mobil dokunma-kaydırmasını sağlamlaştırır: taşma ana sayfaya
+   * "zincirlenip" dış overflow:hidden kabuğu tarafından yutulmasın diye
+   * (`overscroll-behavior`), eski WebView'lerde momentum kaydırma için. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   gap: clamp(0.6rem, 2vh, 1.5rem);
 }
 
