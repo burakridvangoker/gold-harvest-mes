@@ -699,6 +699,15 @@ kullanılarak:
   kaynağı), balon `top: calc(var(--tip-offset) - 0.5rem)` +
   `transform: translate(-50%, -100%)` ile konumlanıyor — "şimdi" çizgisi
   de aynı değişkeni kullanır, ikisi otomatik senkron kalır.
+  **Önceki/sonraki oku (`.clockbar-nav-row`/`.clockbar-nav-button`):**
+  çok kısa segmentler (birkaç dakikalık duruş/mola) duvar ekranında/
+  telefonda parmakla tam isabet ettirmesi zor — kullanıcı isteği üzerine
+  çubuğun İKİ YANINA nötr (andon sinyal rengi taşımayan) ok butonu
+  eklendi, `intervals` dizisindeki (zaten kronolojik) sırayı `activeId`
+  üstünden adım adım gezdiriyor. Hiçbir segment seçili değilken
+  "sonraki" ilk segmentten, "önceki" son segmentten başlar; her iki uçta
+  kendi yönündeki buton devre dışı kalır (`prevDisabled`/`nextDisabled`).
+  Segmente doğrudan dokunma davranışı DEĞİŞMEDİ, oklar ek bir yol.
 - `src/components/ProductionBars.jsx` + `timeline.js#hourlyPaket` —
   saatlik paket üretimi, TEK seri/tek ton (sequential, gökkuşağı yok,
   lejant gerekmiyor). `hourlyPaket` de `shiftPaket` gibi her paleti

@@ -44,6 +44,30 @@ function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs, o
   if (shiftStartMs == null) return null
 
   /*
+   * Çok kısa segmentler (ör. 3 dk) duvar ekranında/telefonda parmakla tam
+   * isabet ettirmesi zor oluyor — çubuğun yanına önceki/sonraki oku eklendi,
+   * segment listesindeki (zaten kronolojik) sırayı adım adım gezdiriyor.
+   * Hiçbir şey seçili değilken "sonraki" ilkten, "önceki" sondan başlar —
+   * bu, kullanıcının hangi uçtan gezmeye başladığına göre en sezgisel yön.
+   */
+  const activeIndex = intervals.findIndex((interval) => interval.eventId === activeId)
+
+  const goToPrev = () => {
+    if (intervals.length === 0) return
+    const target = activeIndex === -1 ? intervals.length - 1 : Math.max(activeIndex - 1, 0)
+    setActiveId(intervals[target].eventId)
+  }
+
+  const goToNext = () => {
+    if (intervals.length === 0) return
+    const target = activeIndex === -1 ? 0 : Math.min(activeIndex + 1, intervals.length - 1)
+    setActiveId(intervals[target].eventId)
+  }
+
+  const prevDisabled = intervals.length === 0 || activeIndex === 0
+  const nextDisabled = intervals.length === 0 || activeIndex === intervals.length - 1
+
+  /*
    * Vardiya süresini aşıp aşmadığımıza göre eksenin sonu değişir: normalde
    * planlanan bitiş (gelecek kısım taralı görünür); vardiya uzadıysa
    * (nowMs planlanan bitişi geçtiyse) eksen "şimdi"ye kadar uzar — gelecek
@@ -63,78 +87,102 @@ function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs, o
 
   return (
     <div className="clockbar">
-      <div className="clockbar-timeline">
-        {intervals.map((interval) => {
-          if (interval.eventId !== activeId) return null
+      <div className="clockbar-nav-row">
+        <button
+          type="button"
+          className="clockbar-nav-button"
+          onClick={goToPrev}
+          disabled={prevDisabled}
+          aria-label="Önceki olay"
+        >
+          ‹
+        </button>
 
-          const leftPct = ((interval.startMs - shiftStartMs) / totalSpan) * 100
-          const widthPct = Math.max((interval.durationMs / totalSpan) * 100, 0.6)
-          const durationLabel = formatDelta(Math.round(interval.durationMs / 60000))
-          const range = interval.ongoing
-            ? `${formatShortTime(new Date(interval.startMs))} – şimdi`
-            : `${formatShortTime(new Date(interval.startMs))} – ${formatShortTime(new Date(interval.endMs))}`
-          /* Balon segmentin ortasına oturur ama kenara çok yakınsa (ilk/son
-           * segment) taşıp kart dışına çıkmasın diye %6-%94 arasına
-           * kelepçelenir. */
-          const tipLeftPct = Math.min(94, Math.max(6, leftPct + widthPct / 2))
-
-          return (
-            <div key={interval.eventId} className="clockbar-tip" style={{ left: `${tipLeftPct}%` }}>
-              <span className="clockbar-tip-reason">{reasonLabel(interval, runsById)}</span>
-              <span className="clockbar-tip-meta">
-                {range} · {durationLabel}
-              </span>
-              {onEdit && (
-                <button type="button" className="clockbar-tip-edit" onClick={() => onEdit(interval)}>
-                  Düzenle
-                </button>
-              )}
-            </div>
-          )
-        })}
-
-        {hasFuture && (
-          <div className="clockbar-now-label" style={{ left: `${nowPct}%` }}>
-            <small>Şimdi</small>
-            {formatShortTime(new Date(nowMs))}
-          </div>
-        )}
-
-        <div className="clockbar-track">
-          <div className="clockbar-hourgrid" style={{ '--hours': hourTicks.length - 1 }}>
-            {hourTicks.slice(0, -1).map((tick) => (
-              <div key={tick} />
-            ))}
-          </div>
-
+        <div className="clockbar-timeline">
           {intervals.map((interval) => {
+            if (interval.eventId !== activeId) return null
+
             const leftPct = ((interval.startMs - shiftStartMs) / totalSpan) * 100
             const widthPct = Math.max((interval.durationMs / totalSpan) * 100, 0.6)
+            const durationLabel = formatDelta(Math.round(interval.durationMs / 60000))
+            const range = interval.ongoing
+              ? `${formatShortTime(new Date(interval.startMs))} – şimdi`
+              : `${formatShortTime(new Date(interval.startMs))} – ${formatShortTime(new Date(interval.endMs))}`
+            /* Balon segmentin ortasına oturur ama kenara çok yakınsa (ilk/son
+             * segment) taşıp kart dışına çıkmasın diye %6-%94 arasına
+             * kelepçelenir. */
+            const tipLeftPct = Math.min(94, Math.max(6, leftPct + widthPct / 2))
 
             return (
-              <button
-                key={interval.eventId}
-                type="button"
-                className={`clockbar-seg clockbar-seg--${segmentKind(interval)}${
-                  interval.eventId === activeId ? ' clockbar-seg--active' : ''
-                }`}
-                style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                aria-label={`${reasonLabel(interval, runsById)}, ${formatShortTime(new Date(interval.startMs))}`}
-                onClick={() => setActiveId((current) => (current === interval.eventId ? null : interval.eventId))}
-              />
+              <div key={interval.eventId} className="clockbar-tip" style={{ left: `${tipLeftPct}%` }}>
+                <span className="clockbar-tip-reason">{reasonLabel(interval, runsById)}</span>
+                <span className="clockbar-tip-meta">
+                  {range} · {durationLabel}
+                </span>
+                {onEdit && (
+                  <button type="button" className="clockbar-tip-edit" onClick={() => onEdit(interval)}>
+                    Düzenle
+                  </button>
+                )}
+              </div>
             )
           })}
 
-          {hasFuture && <div className="clockbar-future" style={{ left: `${nowPct}%`, right: 0 }} />}
+          {hasFuture && (
+            <div className="clockbar-now-label" style={{ left: `${nowPct}%` }}>
+              <small>Şimdi</small>
+              {formatShortTime(new Date(nowMs))}
+            </div>
+          )}
+
+          <div className="clockbar-track">
+            <div className="clockbar-hourgrid" style={{ '--hours': hourTicks.length - 1 }}>
+              {hourTicks.slice(0, -1).map((tick) => (
+                <div key={tick} />
+              ))}
+            </div>
+
+            {intervals.map((interval) => {
+              const leftPct = ((interval.startMs - shiftStartMs) / totalSpan) * 100
+              const widthPct = Math.max((interval.durationMs / totalSpan) * 100, 0.6)
+
+              return (
+                <button
+                  key={interval.eventId}
+                  type="button"
+                  className={`clockbar-seg clockbar-seg--${segmentKind(interval)}${
+                    interval.eventId === activeId ? ' clockbar-seg--active' : ''
+                  }`}
+                  style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                  aria-label={`${reasonLabel(interval, runsById)}, ${formatShortTime(new Date(interval.startMs))}`}
+                  onClick={() =>
+                    setActiveId((current) => (current === interval.eventId ? null : interval.eventId))
+                  }
+                />
+              )
+            })}
+
+            {hasFuture && <div className="clockbar-future" style={{ left: `${nowPct}%`, right: 0 }} />}
+          </div>
+
+          <div className="clockbar-axis">
+            {hourTicks.map((tick) => (
+              <span key={tick} style={{ left: `${((tick - shiftStartMs) / totalSpan) * 100}%` }}>
+                {formatShortTime(new Date(tick))}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <div className="clockbar-axis">
-          {hourTicks.map((tick) => (
-            <span key={tick} style={{ left: `${((tick - shiftStartMs) / totalSpan) * 100}%` }}>
-              {formatShortTime(new Date(tick))}
-            </span>
-          ))}
-        </div>
+        <button
+          type="button"
+          className="clockbar-nav-button"
+          onClick={goToNext}
+          disabled={nextDisabled}
+          aria-label="Sonraki olay"
+        >
+          ›
+        </button>
       </div>
 
       <div className="clockbar-legend">

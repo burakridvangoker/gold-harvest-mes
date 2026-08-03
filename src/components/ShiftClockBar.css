@@ -9,7 +9,45 @@
   gap: clamp(0.4rem, 0.8vh, 0.7rem);
 }
 
+.clockbar-nav-row {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(0.4rem, 0.8vw, 0.75rem);
+}
+
+/*
+ * Çok kısa segmentler (birkaç dakikalık duruş/mola) parmakla tam isabet
+ * ettirmesi zor — bu ok çiftler `.clockbar-seg`'in ihtiyaç duyduğu piksel
+ * hassasiyeti olmadan segment listesinde adım adım gezinmeyi sağlıyor.
+ * Kendi rengi yok (andon sinyal paletine ait değil), nötr bir kontrol.
+ */
+.clockbar-nav-button {
+  flex: 0 0 auto;
+  width: clamp(2.25rem, 3vw, 3rem);
+  border: 1px solid var(--steel-line);
+  border-radius: clamp(0.6rem, 0.9vw, 1rem);
+  background: var(--steel-800);
+  box-shadow: var(--shadow-soft);
+  color: var(--film);
+  font-size: clamp(1.1rem, 1.4vw, 1.6rem);
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.clockbar-nav-button:active:not(:disabled) {
+  background: var(--steel-700);
+}
+
+.clockbar-nav-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 .clockbar-timeline {
+  flex: 1;
+  min-width: 0;
   position: relative;
   /* Balonun (aşağıda .clockbar-tip) üstte oturacağı boşluk. NOT:
    * bottom:100% bir absolute elemanın konumlanma bloğunun ÜST kenarına
