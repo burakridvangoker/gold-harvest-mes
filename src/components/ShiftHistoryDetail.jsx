@@ -9,6 +9,7 @@ import {
   koliToPaket,
   palletTotals,
   palletTotalsByRun,
+  segmentKind,
   seviyeDurumu,
   shiftPaket,
   shiftSegments,
@@ -285,7 +286,7 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
                     {segIntervals.map((interval) => (
                       <li
                         key={interval.eventId}
-                        className={`history-detail-events-row history-detail-events-row--${interval.kind}`}
+                        className={`history-detail-events-row history-detail-events-row--${segmentKind(interval)}`}
                       >
                         <span className="tnum">{formatShortTime(new Date(interval.startMs))}</span>
                         <span className="history-detail-events-label">

@@ -264,8 +264,23 @@ artık `molaMs`'i `uretimMs`/`durusMs`'ten ayrı tutuyor (`emptyTotals()`),
 ve `toplamMs` (açık kalma paydası) SADECE `uretimMs + durusMs`'ten
 oluşuyor. Bilinçli karar: 3 planlı mola yüzünden açık kalma oranı hep
 düşük görünmesin — mola gerçek "makine arızası/duruşu" değil, planlı bir
-ara. `downtimeByNote` de mola'yı zaten hariç tutuyor (`kind !== 'durus'`
-filtresi), "Duruş sebepleri" listesine hiç girmiyor.
+ara. `downtimeByNote` de mola'yı zaten hariç tutuyor (`segmentKind(interval)
+!== 'durus'` filtresi), "Duruş sebepleri" listesine hiç girmiyor.
+
+**`timeline.js#segmentKind`: tek doğru "bu aralık duruş mu" kontrolü.**
+Kaldırılmış bir özellikten (ör. eski hazırlık) DB'de kalan bir satırın
+`kind`'ı `'uretim'`/`'durus'`/`'mola'` DIŞINDA bir değer taşıyabilir —
+event kaydı asla silinmiyor (bkz. dosya başı), sahada gerçekten yaşandı.
+`addToTotals`/`currentState`/`downtimeByNote` bunu hep "uretim/mola
+DIŞINDAKİ HER ŞEY duruş" mantığıyla (catch-all `else`) doğru ele alıyordu,
+ama CSS sınıfı doğrudan `` `*-row--${interval.kind}` `` gibi ham `kind`'a
+basan yerler (ör. `ShiftClockBar`, "Son olaylar" satırları, `EventLog`,
+`ShiftHistoryDetail`) sınıfsız/renksiz (dolayısıyla track zemin rengiyle
+GRİ) kalıyordu — yaşanmış hata, kullanıcı ekran görüntüsüyle bildirdi.
+`segmentKind(interval)` bu deseni tek yerde toplar (`'uretim'`/`'mola'`/
+`'durus'` döner); ham `interval.kind`'ı className interpolasyonuna ya da
+`kind === 'durus'` exact-match kontrolüne (ör. `ReasonSegments`'in aktif
+duruş şartı) sokan her yeni kod bunu KULLANMALI.
 
 **Vardiya bölümleri (çeyrekler):** `timeline.js#shiftSegments` vardiyayı
 mola BAŞLANGIÇLARINA göre böler — N mola → N+1 bölüm (3 mola → 4 bölüm).

@@ -15,6 +15,7 @@ import {
   palletTotals,
   palletTotalsByRun,
   runSpans,
+  segmentKind,
   seviyeDurumu,
   shiftPaket,
   shiftSegments,
@@ -538,7 +539,7 @@ function ManagerDashboard() {
                       {segIntervals.map((interval) => (
                         <li
                           key={interval.eventId}
-                          className={`quarter-row${interval.ongoing ? ' quarter-row--ongoing' : ''} quarter-row--${interval.kind}`}
+                          className={`quarter-row${interval.ongoing ? ' quarter-row--ongoing' : ''} quarter-row--${segmentKind(interval)}`}
                         >
                           <span className="quarter-row-time tnum">
                             {formatShortTime(new Date(interval.startMs))}

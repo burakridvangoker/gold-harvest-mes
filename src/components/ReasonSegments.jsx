@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { assignLanes, clampToWindow } from '../lib/timeline'
+import { assignLanes, clampToWindow, segmentKind } from '../lib/timeline'
 import { formatDuration } from '../lib/duration'
 import { formatShortTime } from '../lib/time'
 import TimeSheet from './TimeSheet'
@@ -31,7 +31,7 @@ function ReasonSegments({ interval, segments, suggestions = [], onAdd, onUpdate,
   const [draft, setDraft] = useState(null) // null | { id: 'new' | string, note, startMs, endMs }
   const [timeField, setTimeField] = useState(null) // null | 'start' | 'end'
 
-  if (!interval || interval.kind !== 'durus' || interval.durationMs <= 0) return null
+  if (!interval || segmentKind(interval) !== 'durus' || interval.durationMs <= 0) return null
 
   const laned = assignLanes(segments)
   const laneCount = Math.max(1, ...laned.map((segment) => segment.lane + 1))

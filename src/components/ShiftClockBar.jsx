@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { formatDelta } from '../lib/duration'
 import { formatShortTime } from '../lib/time'
+import { segmentKind } from '../lib/timeline'
 import './ShiftClockBar.css'
 
 const SAAT_MS = 60 * 60 * 1000
@@ -101,7 +102,7 @@ function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs })
               <button
                 key={interval.eventId}
                 type="button"
-                className={`clockbar-seg clockbar-seg--${interval.kind}${
+                className={`clockbar-seg clockbar-seg--${segmentKind(interval)}${
                   interval.eventId === activeId ? ' clockbar-seg--active' : ''
                 }`}
                 style={{ left: `${leftPct}%`, width: `${widthPct}%` }}

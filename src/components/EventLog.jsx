@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { buildIntervals, validEditWindow } from '../lib/timeline'
+import { buildIntervals, segmentKind, validEditWindow } from '../lib/timeline'
 import { formatDuration } from '../lib/duration'
 import { formatShortTime } from '../lib/time'
 import TimeSheet from './TimeSheet'
@@ -146,14 +146,16 @@ function EventLog({
                * 'uretim' ve 'mola' dışındaki HER kind burada duruş gibi ele
                * alınır — addToTotals'taki final else ile aynı desen.
                * Kaldırılmış özelliklerden kalan satırlar bu sayede yanlış
-               * bir etikete düşmez.
+               * bir etikete ya da renksiz bir satıra düşmez. Palet satırları
+               * zaten kendi sabit 'palet' kind'ıyla bu ayrımın dışında.
                */
+              const displayKind = entry.type === 'pallet' ? 'palet' : segmentKind(entry)
               const label =
                 entry.type === 'pallet'
                   ? `${entry.koliCount} koli`
-                  : entry.kind === 'uretim'
+                  : displayKind === 'uretim'
                     ? entry.note || run?.urun_adi || '—'
-                    : entry.kind === 'mola'
+                    : displayKind === 'mola'
                       ? entry.note || 'Mola'
                       : entry.note || 'Sebep girilmemiş'
 
@@ -161,14 +163,14 @@ function EventLog({
                 <li key={`${entry.type}-${entry.id}`}>
                   <button
                     type="button"
-                    className={`eventlog-row eventlog-row--${entry.kind}`}
+                    className={`eventlog-row eventlog-row--${displayKind}`}
                     onClick={() => startEdit(entry)}
                   >
                     <span className="eventlog-row-time tnum">
                       {formatShortTime(new Date(entry.atMs))}
                     </span>
                     <span className="eventlog-row-body">
-                      <span className="eventlog-row-kind plate">{KIND_LABELS[entry.kind]}</span>
+                      <span className="eventlog-row-kind plate">{KIND_LABELS[displayKind]}</span>
                       <span className="eventlog-row-label">{label}</span>
                     </span>
                     <span className="eventlog-row-meta tnum">

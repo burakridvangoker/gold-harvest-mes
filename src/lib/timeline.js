@@ -54,13 +54,29 @@ function emptyTotals() {
 }
 
 /**
+ * 'uretim'/'mola' dışındaki HER kind burada duruş sayılır — tek satırlık
+ * `kind === 'durus'` kontrolü DEĞİL. Kaldırılmış bir özellikten (ör. eski
+ * 'hazirlik') DB'de kalan bir satır bu sayede sessizce "eşleşmeyen kind"
+ * durumuna düşüp yanlış etiket/renksiz görünüm almaz — yaşanmış hata.
+ * className interpolasyonu (`*-row--${kind}`) ya da `kind === 'durus'`
+ * exact-match kontrolü gören her yeni kod bunu KULLANMALI, kendi ternary'sini
+ * yazmamalı.
+ */
+export function segmentKind(interval) {
+  if (interval.kind === 'uretim') return 'uretim'
+  if (interval.kind === 'mola') return 'mola'
+  return 'durus'
+}
+
+/**
  * Bir aralığın süresini doğru kovaya ekler. Mola, duruş SAYILMAZ — planlı bir
  * mola makinenin "açık kalma" performansını düşürüyormuş gibi görünmesin diye
  * ayrı tutuluyor (bkz. shiftTotals'taki toplamMs).
  */
 function addToTotals(totals, interval) {
-  if (interval.kind === 'uretim') totals.uretimMs += interval.durationMs
-  else if (interval.kind === 'mola') totals.molaMs += interval.durationMs
+  const kind = segmentKind(interval)
+  if (kind === 'uretim') totals.uretimMs += interval.durationMs
+  else if (kind === 'mola') totals.molaMs += interval.durationMs
   else totals.durusMs += interval.durationMs
   return totals
 }
@@ -102,8 +118,9 @@ export function currentState(events) {
   const last = sorted[sorted.length - 1]
 
   if (!last) return 'beklemede'
-  if (last.kind === 'uretim') return 'uretimde'
-  if (last.kind === 'mola') return 'molada'
+  const kind = segmentKind(last)
+  if (kind === 'uretim') return 'uretimde'
+  if (kind === 'mola') return 'molada'
   return 'durdu'
 }
 
@@ -437,7 +454,7 @@ export function downtimeByNote(intervals, { segmentsByEventId = new Map(), limit
   }
 
   for (const interval of intervals) {
-    if (interval.kind !== 'durus') continue
+    if (segmentKind(interval) !== 'durus') continue
 
     const segments = segmentsByEventId.get(interval.eventId)
 
