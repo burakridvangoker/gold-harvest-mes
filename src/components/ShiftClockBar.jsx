@@ -83,6 +83,21 @@ function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs, o
   for (let t = shiftStartMs; t <= displayEndMs; t += SAAT_MS) hourTicks.push(t)
   if (hourTicks[hourTicks.length - 1] !== displayEndMs) hourTicks.push(displayEndMs)
 
+  /*
+   * Vardiya tam saatte bitmiyorsa (ör. 15:05) son tam saat işareti
+   * (15:00) ile gerçek bitiş birbirine çok yakın düşüyor — ikisinin
+   * metni ekseninde üst üste binip okunaksız oluyordu (yaşanmış hata,
+   * ekran görüntüsüyle bildirildi: "1510005" gibi çakışan metin).
+   * Aradaki tam saat ETİKETİ gizlenir (ızgara çizgisi zaten yok, o zaten
+   * `hourTicks.slice(0, -1)` ile ayrı çiziliyor), sadece gerçek bitiş
+   * saati gösterilir.
+   */
+  const minLabelGapMs = totalSpan * 0.035
+  const hideTickIndex =
+    hourTicks.length > 1 && hourTicks[hourTicks.length - 1] - hourTicks[hourTicks.length - 2] < minLabelGapMs
+      ? hourTicks.length - 2
+      : -1
+
   const nowPct = ((nowMs - shiftStartMs) / totalSpan) * 100
 
   return (
@@ -166,11 +181,14 @@ function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs, o
           </div>
 
           <div className="clockbar-axis">
-            {hourTicks.map((tick) => (
-              <span key={tick} style={{ left: `${((tick - shiftStartMs) / totalSpan) * 100}%` }}>
-                {formatShortTime(new Date(tick))}
-              </span>
-            ))}
+            {hourTicks.map((tick, index) => {
+              if (index === hideTickIndex) return null
+              return (
+                <span key={tick} style={{ left: `${((tick - shiftStartMs) / totalSpan) * 100}%` }}>
+                  {formatShortTime(new Date(tick))}
+                </span>
+              )
+            })}
           </div>
         </div>
 

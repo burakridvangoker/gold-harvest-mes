@@ -459,6 +459,16 @@ ama pratikte ulaşılamıyordu.
   (`wall` hiç geçirilmiyor) bundan hiç etkilenmiyor. Kullanıcı bilinçli
   olarak "sadece müdür panosunda büyüsün" seçeneğini seçti (telefon/duvar
   tek ölçek alternatifine karşı).
+  **Yaşanmış hata — rakam etiketin üstüne bindi:** `.history-detail-ratio`
+  (ve `-figure`)'ın temel `gap: 0.15rem`'i küçük (1.5rem) rakamlar için
+  yeterliydi ama wall varyantının 5.5rem'e kadar çıkan rakamıyla
+  birlikte `index.css`'teki global `line-height: 145%` yüzünden rakamın
+  görünmez satır kutusu alttaki etiketin ÜSTÜNE biniyordu ("%0" ile
+  "AÇIK KALMA" üst üste bindi, ekran görüntüsüyle bildirildi).
+  `ManagerDashboard`'ın kendi devasa rakamları (`.now-elapsed` vb.) aynı
+  sebeple `line-height`'ı hep AÇIKÇA sıkıştırır — `history-detail--wall`
+  altında `.history-detail-ratio-value`/`-figure dd` için de aynı
+  prensip uygulandı (`line-height: 1` / `1.15`), `gap` de büyütüldü.
 
 ## Personel listesi: GH VARDİYA'dan tek yönlü kopya, FK yok
 
@@ -721,6 +731,14 @@ kullanılarak:
   "sonraki" ilk segmentten, "önceki" son segmentten başlar; her iki uçta
   kendi yönündeki buton devre dışı kalır (`prevDisabled`/`nextDisabled`).
   Segmente doğrudan dokunma davranışı DEĞİŞMEDİ, oklar ek bir yol.
+  **Eksen etiketi çakışması (yaşanmış hata):** vardiya tam saatte
+  bitmiyorsa (ör. planlanan 15:00 ama gerçek bitiş 15:05) `hourTicks`'e
+  hem tam saat işareti hem gerçek bitiş ekleniyordu — ikisi birbirine çok
+  yakın düşünce metinleri üst üste binip okunaksız oluyordu ("15:00" ve
+  "15:05" çakışıp "1510005" gibi görünüyordu, ekran görüntüsüyle
+  bildirildi). Düzeltme: son iki işaret arası `totalSpan`'ın %3.5'inden
+  yakınsa aradaki tam saat İŞARETİNİN METNİ gizlenir (`hideTickIndex`),
+  sadece gerçek bitiş gösterilir — ızgara çizgileri etkilenmez.
 - `src/components/ProductionBars.jsx` + `timeline.js#hourlyPaket` —
   saatlik paket üretimi, TEK seri/tek ton (sequential, gökkuşağı yok,
   lejant gerekmiyor). `hourlyPaket` de `shiftPaket` gibi her paleti

@@ -339,9 +339,23 @@
   gap: clamp(2rem, 3.5vw, 4rem);
 }
 
+/*
+ * `.history-detail-ratio`'nun temel `gap: 0.15rem`'i küçük (1.5rem) rakam
+ * için yeterliydi ama wall varyantının 5.5rem'e kadar çıkan rakamıyla
+ * birlikte, global `line-height: 145%` (index.css) yüzünden rakamın görünmez
+ * satır kutusu etiketin ÜSTÜNE biniyordu (yaşanmış hata: "%0" ile "AÇIK
+ * KALMA" üst üste bindi, ekran görüntüsüyle bildirildi). ManagerDashboard'un
+ * kendi devasa rakamları (`.now-elapsed` vb.) aynı sebeple `line-height`'ı
+ * hep AÇIKÇA sıkıştırır — buradaki de aynı prensip.
+ */
+.history-detail--wall .history-detail-ratio {
+  gap: clamp(0.25rem, 0.4vw, 0.5rem);
+}
+
 .history-detail--wall .history-detail-ratio-value {
   font-size: clamp(2.5rem, 4vw, 5.5rem);
   font-weight: 700;
+  line-height: 1;
 }
 
 .history-detail--wall .history-detail-ratio-label {
@@ -359,6 +373,7 @@
 .history-detail--wall .history-detail-figure dd {
   font-size: clamp(1.5rem, 2vw, 2.75rem);
   font-weight: 700;
+  line-height: 1.15;
 }
 
 .history-detail--wall .history-detail-subtitle {
