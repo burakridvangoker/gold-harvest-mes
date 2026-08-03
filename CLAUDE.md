@@ -53,6 +53,8 @@ SPA rewrite kuralı taşır, olmadan `/operator`/`/mudur` doğrudan girişte 404
     filtreler
 12. `add_personnel_vardiya.sql` — `personnel.vardiya_no`, otomatik ekip
     ataması/ön-doldurma için
+13. `add_manager_visits.sql` — `manager_dashboard_visits`, müdür panosu
+    ne zaman/ne kadar açıldı (anonim)
 
 RLS tüm tablolarda açık, tüm politikalar `using (true)` — henüz
 kimlik doğrulama yok, sahada hızlı iterasyon için bilinçli bir tercih.
@@ -505,6 +507,29 @@ kapısı: hangi hatta çalıştığı belirsiz/hatlar arası ortak bir kişi
 girilirse (satırında `line_code` boş bırakılırsa) o kişi HER hatta
 görünmeye devam eder — CLAUDE.md'nin "eksik alan sonradan doldurulur,
 uydurma kayıttan iyidir" ilkesiyle tutarlı.
+
+## Müdür panosu görüntüleme kaydı — anonim, sadece operatör ekranında görünür
+
+Kullanıcı isteği: müdür panosunun ne zaman/ne kadar açıldığını görmek
+istedi. Kimin baktığı BİLEREK tutulmuyor — login yok, isim de
+sorulmuyor (kullanıcı "kim baktı diye bişey yapmayalım" dedi, teklif
+edilen isim alanı reddedildi). `manager_dashboard_visits`
+(`add_manager_visits.sql`) sadece `line_code` + `opened_at` +
+`last_seen_at` tutar.
+
+**Kayıt akışı (`ManagerDashboard.jsx`):** panoya girildiğinde bir satır
+eklenir (`opened_at = now()`), açık kaldığı sürece 20 saniyede bir
+`last_seen_at` güncellenir (heartbeat) — sekme aniden kapanırsa
+(`beforeunload` mobilde güvenilir ateşlenmiyor) süre son heartbeat'te
+kalır, tam kapanış anı değil ama yeterince yakın bir tahmin.
+Unmount'ta da best-effort bir son güncelleme denenir.
+
+**Nerede görünür:** SADECE operatör ekranında (`OperatorPanel.jsx`,
+"Müdür panosu görüntülemeleri" satırı, `useDashboardVisits` hook'u ile
+son 10 kayıt). Müdür panosunun kendisi bu veriyi hiç okumaz/göstermez —
+ManagerDashboard sadece YAZAR, okuma/gösterme tamamen operatör
+tarafında. Kullanıcı bunu netlik için özellikle sordu: müdür panosunda
+"birileri seni izliyor" hissi yaratmasın diye kasıtlı bir ayrım.
 
 ## Müdür panosunda liste kesmeleri kaldırıldı
 

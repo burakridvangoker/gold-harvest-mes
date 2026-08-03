@@ -356,6 +356,46 @@ button.operator-line-code {
   color: var(--film);
 }
 
+/* Müdür panosu görüntülemeleri — anonim, kimin baktığı yok, sadece
+ * ne zaman/ne kadar (bkz. add_manager_visits.sql). Vardiya toplamıyla
+ * aynı sessiz/soluk tonda, ayrı bir kart değil. */
+.operator-visits {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--steel-line);
+}
+
+.operator-visits-label {
+  font-size: clamp(0.8rem, 2.6vw, 1rem);
+  color: var(--film-dim);
+}
+
+.operator-visits-empty {
+  font-size: 0.85rem;
+  color: var(--film-dim);
+  margin: 0;
+}
+
+.operator-visits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.operator-visits-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--film);
+}
+
+.operator-visits-row-duration {
+  color: var(--film-dim);
+}
+
 
 .count-label {
   font-size: clamp(0.8rem, 2.6vw, 1rem);

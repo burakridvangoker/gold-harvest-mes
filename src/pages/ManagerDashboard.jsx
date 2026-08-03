@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
 import { useShift } from '../hooks/useShift'
 import { useLineCode } from '../hooks/useLineCode'
 import LineSelect from '../components/LineSelect'
@@ -32,6 +33,7 @@ import './ManagerDashboard.css'
 
 const NO_REASON_LABEL = 'Sebep girilmemiş'
 const TAM_ISRAR_MS = 30 * 60 * 1000
+const VISIT_HEARTBEAT_MS = 20 * 1000
 
 function ManagerDashboard() {
   const { lineCode, selectLine, clearLine } = useLineCode()
@@ -44,6 +46,50 @@ function ManagerDashboard() {
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  /*
+   * Müdür panosu bu hatta açıldığında anonim bir ziyaret kaydı düşer
+   * (bkz. add_manager_visits.sql) — kimin baktığı tutulmuyor, sadece
+   * ne zaman/ne kadar. Süre `last_seen_at` heartbeat'iyle yaklaşık tutulur:
+   * sekme aniden kapanırsa (beforeunload her zaman güvenilir ateşlenmiyor,
+   * özellikle mobilde) süre son heartbeat'te kalır — tam kapanış anı değil
+   * ama yeterince yakın bir tahmin. Operatör ekranı bu kayıtları listeler.
+   */
+  useEffect(() => {
+    if (!lineCode) return
+
+    let visitId = null
+    let cancelled = false
+
+    supabase
+      .from('manager_dashboard_visits')
+      .insert({ line_code: lineCode })
+      .select('id')
+      .single()
+      .then(({ data }) => {
+        if (!cancelled && data) visitId = data.id
+      })
+
+    const heartbeat = setInterval(() => {
+      if (visitId) {
+        supabase
+          .from('manager_dashboard_visits')
+          .update({ last_seen_at: new Date().toISOString() })
+          .eq('id', visitId)
+      }
+    }, VISIT_HEARTBEAT_MS)
+
+    return () => {
+      cancelled = true
+      clearInterval(heartbeat)
+      if (visitId) {
+        supabase
+          .from('manager_dashboard_visits')
+          .update({ last_seen_at: new Date().toISOString() })
+          .eq('id', visitId)
+      }
+    }
+  }, [lineCode])
 
   const runsById = useMemo(() => new Map(runs.map((run) => [run.id, run])), [runs])
 

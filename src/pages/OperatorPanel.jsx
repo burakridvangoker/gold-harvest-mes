@@ -4,6 +4,7 @@ import { useShift } from '../hooks/useShift'
 import { useFrequentNotes } from '../hooks/useFrequentNotes'
 import { usePersonnel } from '../hooks/usePersonnel'
 import { useLineCode } from '../hooks/useLineCode'
+import { useDashboardVisits } from '../hooks/useDashboardVisits'
 import {
   buildIntervals,
   currentState,
@@ -17,7 +18,7 @@ import {
   shiftPaket,
 } from '../lib/timeline'
 import { formatBreakdown, formatDelta, formatDuration } from '../lib/duration'
-import { formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
+import { formatDateLabel, formatShortTime, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import RadialGauge from '../components/RadialGauge'
 import ShiftClockBar from '../components/ShiftClockBar'
@@ -43,6 +44,7 @@ function OperatorPanel() {
   const { shift, runs, events, pallets, segments, loading, error, setError, refresh } = useShift(lineCode)
   const suggestions = useFrequentNotes(lineCode)
   const personnel = usePersonnel(lineCode)
+  const dashboardVisits = useDashboardVisits(lineCode)
 
   const [now, setNow] = useState(() => Date.now())
   const [busy, setBusy] = useState(false)
@@ -756,6 +758,38 @@ function OperatorPanel() {
                 {formatBreakdown(koliParts, paletlerToplam.koliAdedi)} koli ·{' '}
                 {formatBreakdown(paketParts, paket)} paket
               </span>
+            </div>
+
+            {/*
+             * Kimin baktığı tutulmuyor (login yok, isim de sorulmuyor) —
+             * sadece bu hattın müdür panosu ne zaman/ne kadar açıldı.
+             * ManagerDashboard'daki heartbeat'ten gelir (bkz.
+             * add_manager_visits.sql), en son 10 kayıt.
+             */}
+            <div className="operator-visits">
+              <span className="operator-visits-label plate">Müdür panosu görüntülemeleri</span>
+              {dashboardVisits.length === 0 ? (
+                <p className="operator-visits-empty">Henüz görüntülenmedi</p>
+              ) : (
+                <ul className="operator-visits-list">
+                  {dashboardVisits.map((visit) => {
+                    const openedMs = new Date(visit.opened_at).getTime()
+                    const lastSeenMs = new Date(visit.last_seen_at).getTime()
+                    const durationDk = Math.round((lastSeenMs - openedMs) / 60000)
+
+                    return (
+                      <li key={visit.id} className="operator-visits-row">
+                        <span className="operator-visits-row-time tnum">
+                          {formatShortTime(new Date(openedMs))}
+                        </span>
+                        <span className="operator-visits-row-duration tnum">
+                          {durationDk < 1 ? '<1 dk' : formatDelta(durationDk)}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
             </div>
 
             <ProductHistory
