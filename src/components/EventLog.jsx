@@ -142,16 +142,20 @@ function EventLog({
               const interval = entry.type === 'event' ? durationByEventId.get(entry.id) : null
               const run = entry.productRunId ? runsById.get(entry.productRunId) : null
 
+              /*
+               * 'uretim' ve 'mola' dışındaki HER kind burada duruş gibi ele
+               * alınır — addToTotals'taki final else ile aynı desen.
+               * Kaldırılmış özelliklerden kalan satırlar bu sayede yanlış
+               * bir etikete düşmez.
+               */
               const label =
                 entry.type === 'pallet'
                   ? `${entry.koliCount} koli`
-                  : entry.note ||
-                    (entry.kind === 'durus'
-                      ? 'Sebep girilmemiş'
-                      : entry.kind === 'mola'
-                        ? 'Mola'
-                        : run?.urun_adi) ||
-                    '—'
+                  : entry.kind === 'uretim'
+                    ? entry.note || run?.urun_adi || '—'
+                    : entry.kind === 'mola'
+                      ? entry.note || 'Mola'
+                      : entry.note || 'Sebep girilmemiş'
 
               return (
                 <li key={`${entry.type}-${entry.id}`}>

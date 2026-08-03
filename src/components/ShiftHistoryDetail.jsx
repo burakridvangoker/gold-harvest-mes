@@ -289,11 +289,11 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
                       >
                         <span className="tnum">{formatShortTime(new Date(interval.startMs))}</span>
                         <span className="history-detail-events-label">
-                          {interval.kind === 'durus'
-                            ? interval.note || NO_REASON_LABEL
+                          {interval.kind === 'uretim'
+                            ? runsById.get(interval.productRunId)?.urun_adi || 'Üretim'
                             : interval.kind === 'mola'
                               ? 'Mola'
-                              : runsById.get(interval.productRunId)?.urun_adi || 'Üretim'}
+                              : interval.note || NO_REASON_LABEL}
                         </span>
                         <span className="tnum">{formatDuration(interval.durationMs)}</span>
                       </li>

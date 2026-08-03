@@ -536,12 +536,19 @@ function ManagerDashboard() {
                           <span className="quarter-row-time tnum">
                             {formatShortTime(new Date(interval.startMs))}
                           </span>
+                          {/*
+                           * 'uretim' ve 'mola' dışındaki HER kind burada duruş
+                           * gibi ele alınır (tek satır 'durus' kontrolü değil) —
+                           * addToTotals'taki final else ile aynı desen. Kaldırılmış
+                           * özelliklerden (ör. eski 'hazirlik') kalan satırlar bu
+                           * sayede "Üretim" gibi yanlış bir etikete düşmez.
+                           */}
                           <span className="quarter-row-label">
-                            {interval.kind === 'durus'
-                              ? interval.note || NO_REASON_LABEL
+                            {interval.kind === 'uretim'
+                              ? runsById.get(interval.productRunId)?.urun_adi || 'Üretim'
                               : interval.kind === 'mola'
                                 ? 'Mola'
-                                : runsById.get(interval.productRunId)?.urun_adi || 'Üretim'}
+                                : interval.note || NO_REASON_LABEL}
                           </span>
                           <span className="quarter-row-duration tnum">
                             {formatDuration(interval.durationMs)}
