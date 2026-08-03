@@ -534,6 +534,22 @@ tekrar öne geldiği ANDA bir ping atılır — süre panoya her dönüşte
 güncel tutulur, sadece saf arka plan süresi sayılmaz (zaten kimse
 bakmıyordu demektir, dürüst bir sınırlama).
 
+**Bu tek başına yetmedi — ikinci, daha derin bir sorun (yaşanmış
+durum):** kullanıcı `visibilitychange` düzeltmesinden sonra bile
+operatör ekranında art arda 4-5 ayrı "1 dk altı" kaydı gördü (hepsi
+birbirine yakın saatlerde). Kök sebep: Android'de arka plana düşen bir
+sekme genelde SADECE yavaşlatılmıyor, bellek boşaltmak için tamamen
+KAPATILIYOR — sekme tekrar öne gelince "devam" değil SIFIRDAN yeniden
+yükleniyor, React yeniden mount oluyor, ziyaret efekti en baştan
+çalışıp alakasız yeni bir satır açıyor. Çözüm: ziyaret kimliği artık
+`sessionStorage`'a da yazılıyor (`mes_manager_visit` anahtarı) —
+sessionStorage sayfa yeniden yüklense de AYNI sekme için kalıcı kalır
+(gerçek kapatma/yeni sekmede sıfırlanır). Mount'ta önce sessionStorage
+kontrol edilir: aynı hat için `VISIT_RESUME_WINDOW_MS` (30 dk) içinde
+bir kayıt varsa YENİ satır açılmaz, o kaydın `last_seen_at`'i
+güncellenir — "aynı bakışın devamı" sayılır. 30 dakikalık pencere,
+unutulmuş çok eski bir kaydın sonsuza dek büyümesini engeller.
+
 **Nerede görünür:** SADECE operatör ekranında (`OperatorPanel.jsx`,
 "Müdür panosu görüntülemeleri" satırı, `useDashboardVisits` hook'u ile
 son 10 kayıt). Müdür panosunun kendisi bu veriyi hiç okumaz/göstermez —

@@ -34,6 +34,8 @@ import './ManagerDashboard.css'
 const NO_REASON_LABEL = 'Sebep girilmemiş'
 const TAM_ISRAR_MS = 30 * 60 * 1000
 const VISIT_HEARTBEAT_MS = 20 * 1000
+const VISIT_SESSION_KEY = 'mes_manager_visit'
+const VISIT_RESUME_WINDOW_MS = 30 * 60 * 1000
 
 function ManagerDashboard() {
   const { lineCode, selectLine, clearLine } = useLineCode()
@@ -57,12 +59,25 @@ function ManagerDashboard() {
    *
    * Sekme ARKA PLANA düşünce mobil tarayıcılar setInterval'i büyük ölçüde
    * durdurur/yavaşlatır (pil tasarrufu) — 20 saniyelik heartbeat arka
-   * planda hiç ateşlenmeyebilir, süre olduğu yerde donar (yaşanmış durum:
-   * sekme dakikalarca arka planda açık kalmış ama kayıt "1 dk altı"
-   * gösteriyordu). `visibilitychange`/`focus` ile sekme tekrar öne
-   * geldiği ANDA bir ping atılır — bu, arka planda geçen süreyi saymaz
-   * (o zaten kimse bakmıyordu demektir) ama panoya her dönüşte süreyi
-   * güncel tutar.
+   * planda hiç ateşlenmeyebilir, süre olduğu yerde donar. `visibilitychange`/
+   * `focus` ile sekme tekrar öne geldiği ANDA bir ping atılır ama bu tek
+   * başına yetmedi: Android'de arka plana düşen bir sekme genelde SADECE
+   * yavaşlatılmıyor, belleği boşaltmak için tamamen KAPATILIP sekme tekrar
+   * öne gelince SIFIRDAN yeniden yükleniyor — React yeniden mount oluyor,
+   * bu useEffect en baştan çalışıyor, yeni bir INSERT ile alakasız yeni bir
+   * ziyaret satırı açılıyor. Sonuç (yaşanmış durum, kullanıcı ekran
+   * görüntüsüyle bildirdi): birkaç dakika arayla art arda 4-5 satır,
+   * hepsi "1 dk altı" — her biri gerçekten kısa ömürlü ayrı bir yeniden
+   * yükleme, tekilleştirilmiş "sekme açık kaldı" süresi hiç oluşmuyordu.
+   *
+   * Çözüm: `sessionStorage` sayfa yeniden yüklense de AYNI sekme için
+   * kalıcı kalır (gerçek kapatma/yeni sekmede sıfırlanır) — bu yüzden
+   * ziyaret kimliğini oraya yazıyoruz. Mount'ta önce sessionStorage'a
+   * bakılır: aynı hat için yakın zamanda (VISIT_RESUME_WINDOW_MS içinde)
+   * bir ziyaret varsa YENİ satır AÇILMAZ, o satırın last_seen_at'i
+   * güncellenerek "aynı bakışın devamı" sayılır. Yoksa/çok eskiyse yeni
+   * satır açılır. Pencere süresi (30 dk) çok eski/unutulmuş bir kaydın
+   * sonsuza kadar "devam ediyormuş" gibi büyümesini engeller.
    */
   useEffect(() => {
     if (!lineCode) return
@@ -70,22 +85,57 @@ function ManagerDashboard() {
     let visitId = null
     let cancelled = false
 
-    const ping = () => {
-      if (!visitId) return
-      supabase
-        .from('manager_dashboard_visits')
-        .update({ last_seen_at: new Date().toISOString() })
-        .eq('id', visitId)
+    const readStored = () => {
+      try {
+        const raw = sessionStorage.getItem(VISIT_SESSION_KEY)
+        return raw ? JSON.parse(raw) : null
+      } catch {
+        return null
+      }
     }
 
-    supabase
-      .from('manager_dashboard_visits')
-      .insert({ line_code: lineCode })
-      .select('id')
-      .single()
-      .then(({ data }) => {
-        if (!cancelled && data) visitId = data.id
-      })
+    const writeStored = (id) => {
+      try {
+        sessionStorage.setItem(
+          VISIT_SESSION_KEY,
+          JSON.stringify({ lineCode, visitId: id, lastPingAt: Date.now() }),
+        )
+      } catch {
+        /* sessionStorage kapalı/dolu olabilir — sessizce vazgeç, sadece
+         * her yeniden yüklemede yeni bir satır açılır, kritik değil. */
+      }
+    }
+
+    const ping = () => {
+      if (!visitId) return
+      const now = new Date().toISOString()
+      supabase.from('manager_dashboard_visits').update({ last_seen_at: now }).eq('id', visitId)
+      writeStored(visitId)
+    }
+
+    const start = async () => {
+      const stored = readStored()
+      const isFresh = stored && Date.now() - stored.lastPingAt < VISIT_RESUME_WINDOW_MS
+
+      if (isFresh && stored.lineCode === lineCode) {
+        visitId = stored.visitId
+        ping()
+        return
+      }
+
+      const { data } = await supabase
+        .from('manager_dashboard_visits')
+        .insert({ line_code: lineCode })
+        .select('id')
+        .single()
+
+      if (!cancelled && data) {
+        visitId = data.id
+        writeStored(data.id)
+      }
+    }
+
+    start()
 
     const heartbeat = setInterval(ping, VISIT_HEARTBEAT_MS)
 
