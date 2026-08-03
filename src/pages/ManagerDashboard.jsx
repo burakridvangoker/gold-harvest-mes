@@ -380,10 +380,6 @@ function ManagerDashboard() {
               <dt className="figure-label plate">Mola</dt>
               <dd className="figure-value tnum">{formatDuration(totals.molaMs)}</dd>
             </div>
-            <div className="figure figure--hazirlik">
-              <dt className="figure-label plate">Hazırlık</dt>
-              <dd className="figure-value tnum">{formatDuration(totals.hazirlikMs)}</dd>
-            </div>
             <div className="figure">
               <dt className="figure-label plate">Palet</dt>
               <dd className="figure-value tnum">{formatBreakdown(paletParts, paletler.paletAdedi)}</dd>
@@ -545,9 +541,7 @@ function ManagerDashboard() {
                               ? interval.note || NO_REASON_LABEL
                               : interval.kind === 'mola'
                                 ? 'Mola'
-                                : interval.kind === 'hazirlik'
-                                  ? 'Hazırlık'
-                                  : runsById.get(interval.productRunId)?.urun_adi || 'Üretim'}
+                                : runsById.get(interval.productRunId)?.urun_adi || 'Üretim'}
                           </span>
                           <span className="quarter-row-duration tnum">
                             {formatDuration(interval.durationMs)}

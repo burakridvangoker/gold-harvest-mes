@@ -54,11 +54,6 @@
   --tone-text: var(--signal-idle-text);
 }
 
-.timesheet-sheet--hazirlik {
-  --tone: var(--signal-hazirlik);
-  --tone-text: var(--signal-hazirlik-text);
-}
-
 .timesheet-handle {
   width: 2.75rem;
   height: 0.25rem;

@@ -12,7 +12,7 @@
 --
 -- Bu tablo o modele hiç dokunmadan, mevcut BİR 'durus' olayının (event_id)
 -- İÇİNE ikinci, bağımsız bir katman ekliyor: dış durum (uretim/durus/
--- mola/hazirlik) tek sıralı kalır, süre/oran hesapları (shiftTotals,
+-- mola) tek sıralı kalır, süre/oran hesapları (shiftTotals,
 -- zamanKullanimi...) hiç etkilenmez; segmentler sadece "hangi sebep ne
 -- zaman etkiliydi" raporlaması için var. start_at/end_at ebeveyn duruş
 -- aralığının sınırları İÇİNDE kalmalı (uygulama katmanında doğrulanır,

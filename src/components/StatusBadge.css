@@ -60,7 +60,3 @@
 .status-badge--molada {
   --badge-color: var(--signal-idle);
 }
-
-.status-badge--hazirlikta {
-  --badge-color: var(--signal-hazirlik);
-}

@@ -430,10 +430,6 @@
   border-left-color: var(--signal-idle);
 }
 
-.figure--hazirlik {
-  border-left-color: var(--signal-hazirlik);
-}
-
 .figure-label {
   font-size: clamp(1rem, 1.05vw, 1.6rem);
 }
@@ -623,10 +619,6 @@
 
 .quarter-row--mola {
   border-left-color: var(--signal-idle);
-}
-
-.quarter-row--hazirlik {
-  border-left-color: var(--signal-hazirlik);
 }
 
 .quarter-row-time {

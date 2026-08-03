@@ -4,8 +4,8 @@ import { supabase } from '../lib/supabaseClient'
 /*
  * Hangi hatlarda şu an açık (bitmemiş) bir vardiya var — hat seçim
  * ekranında sade bir "aktif" göstergesi için. "Aktif" = açık vardiya
- * var demek; üretimde/durmuş/molada/hazırlıkta farkı gözetilmiyor,
- * sadece "şu an biri bu hattı çalıştırıyor" sinyali.
+ * var demek; üretimde/durmuş/molada farkı gözetilmiyor, sadece "şu an
+ * biri bu hattı çalıştırıyor" sinyali.
  */
 export function useActiveLines() {
   const [activeLines, setActiveLines] = useState(new Set())

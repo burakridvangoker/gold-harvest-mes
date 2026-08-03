@@ -16,7 +16,7 @@ import './ShiftTimelineBar.css'
  * birbirine karışmasın diye.
  */
 
-const KIND_LABEL = { uretim: 'Üretim', durus: 'Duruş', mola: 'Mola', hazirlik: 'Hazırlık' }
+const KIND_LABEL = { uretim: 'Üretim', durus: 'Duruş', mola: 'Mola' }
 
 function ShiftTimelineBar({ intervals }) {
   const [hover, setHover] = useState(null)
@@ -55,10 +55,6 @@ function ShiftTimelineBar({ intervals }) {
         <span className="shift-timeline-legend-item">
           <span className="shift-timeline-swatch shift-timeline-swatch--mola" />
           Mola
-        </span>
-        <span className="shift-timeline-legend-item">
-          <span className="shift-timeline-swatch shift-timeline-swatch--hazirlik" />
-          Hazırlık
         </span>
         <span className="shift-timeline-hover tnum">
           {hover

@@ -539,10 +539,6 @@ button.operator-line-code {
   --btn-face: var(--signal-idle);
 }
 
-.action-primary--hazirlik {
-  --btn-face: var(--signal-hazirlik);
-}
-
 /* MOLA ve +1 PALET yan yana — ikisi de DURDUR/BAŞLAT'tan daha seyrek
  * kullanılıyor (vardiyada 3 mola), o yüzden tek büyük butonun altında
  * paylaşılan, daha küçük bir satırda. */

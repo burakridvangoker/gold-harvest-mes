@@ -109,10 +109,6 @@
   border-left-color: var(--signal-idle);
 }
 
-.eventlog-row--hazirlik {
-  border-left-color: var(--signal-hazirlik);
-}
-
 .eventlog-row--palet {
   border-left-color: var(--film-dim);
 }

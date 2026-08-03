@@ -40,27 +40,21 @@
    * dili) — remap'ten bağımsız sabit. */
   --ink: #131916;
 
-  /* Sinyal — andon lambasının durumları (yüzey renkleri) */
+  /* Sinyal — andon lambasının üç durumu (yüzey renkleri) */
   --signal-run: #009440;
   --signal-idle: #ffb000;
   --signal-stop: #e02718;
-  /* Hazırlık: mavi, nötr — ne üretim yeşili ne duruş kırmızısı ne mola
-   * amberi. Ürünsüz makine ayarı gerçek bir duruş değil, ama mola'yla da
-   * karışmasın diye kendi rengi var. */
-  --signal-hazirlik: #1f6fd6;
 
   /* Açık zeminde METİN olarak sinyal: derin varyantlar. Parlak lamba
    * renkleri beyaz üstünde okunmaz; yazıya dönüşünce koyulaşırlar. */
   --signal-run-text: #00722f;
   --signal-idle-text: #8a5f00;
   --signal-stop-text: #c31f10;
-  --signal-hazirlik-text: #14559e;
 
   /* Sinyal zeminleri (ortam yıkaması) */
   --wash-run: rgba(0, 148, 64, 0.07);
   --wash-idle: rgba(255, 176, 0, 0.1);
   --wash-stop: rgba(224, 39, 24, 0.07);
-  --wash-hazirlik: rgba(31, 111, 214, 0.08);
 
   /* Duruş sebebi aileleri (açık zemine göre koyulaştırıldı) */
   --plansiz: #b95d19;
@@ -103,14 +97,6 @@
   --status: var(--signal-idle);
   --status-wash: var(--wash-idle);
   --status-text: var(--signal-idle-text);
-}
-
-/* Hazırlık: ürünsüz makine ayarı, gerçek duruş değil — kendi rengi (mavi-gri)
- * var, mola'nın amberiyle de karışmasın diye. */
-.is-hazirlikta {
-  --status: var(--signal-hazirlik);
-  --status-wash: var(--wash-hazirlik);
-  --status-text: var(--signal-hazirlik-text);
 }
 
 /* Makine plakası etiketi: büyük harf, sıkışık, geniş harf aralığı */

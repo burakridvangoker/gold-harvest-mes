@@ -42,10 +42,6 @@
   background: var(--signal-idle);
 }
 
-.shift-timeline-seg--hazirlik {
-  background: var(--signal-hazirlik);
-}
-
 .shift-timeline-legend {
   display: flex;
   align-items: baseline;
@@ -78,10 +74,6 @@
 
 .shift-timeline-swatch--mola {
   background: var(--signal-idle);
-}
-
-.shift-timeline-swatch--hazirlik {
-  background: var(--signal-hazirlik);
 }
 
 .shift-timeline-hover {

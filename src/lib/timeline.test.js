@@ -156,11 +156,6 @@ describe('currentState', () => {
     const olaylar = [...ornekOlaylar(), { id: 'd', at: T(9, 30), kind: 'mola' }]
     assert.equal(currentState(olaylar), 'molada')
   })
-
-  it('son olay hazirlikse hazirlikta', () => {
-    const olaylar = [...ornekOlaylar(), { id: 'd', at: T(9, 30), kind: 'hazirlik' }]
-    assert.equal(currentState(olaylar), 'hazirlikta')
-  })
 })
 
 describe('mola: açık kalma oranına girmez', () => {
@@ -178,24 +173,6 @@ describe('mola: açık kalma oranına girmez', () => {
     assert.equal(totals.durusMs, 0)
     // Payda mola hariç: 105dk üretim / 105dk toplam = %100, mola hiç düşürmüyor
     assert.equal(totals.toplamMs, 105 * DK)
-    assert.equal(totals.zamanKullanimi, 1)
-  })
-})
-
-describe('hazırlık: açık kalma oranına girmez', () => {
-  it('hazirlikMs ayrı tutulur, toplamMs (payda) hazırlık içermez', () => {
-    // 07:00 hazırlık (20dk) → 07:20 üretim (40dk), şimdi 08:00
-    const olaylar = [
-      { id: '1', at: T(7, 0), kind: 'hazirlik' },
-      { id: '2', at: T(7, 20), kind: 'uretim' },
-    ]
-    const totals = shiftTotals(buildIntervals(olaylar, ms(T(8, 0))))
-
-    assert.equal(totals.uretimMs, 40 * DK)
-    assert.equal(totals.hazirlikMs, 20 * DK)
-    assert.equal(totals.durusMs, 0)
-    // Payda hazırlık hariç: 40dk üretim / 40dk toplam = %100
-    assert.equal(totals.toplamMs, 40 * DK)
     assert.equal(totals.zamanKullanimi, 1)
   })
 })

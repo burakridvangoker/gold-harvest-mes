@@ -50,19 +50,17 @@ export function buildIntervals(events, endMs = Date.now()) {
 }
 
 function emptyTotals() {
-  return { uretimMs: 0, durusMs: 0, molaMs: 0, hazirlikMs: 0 }
+  return { uretimMs: 0, durusMs: 0, molaMs: 0 }
 }
 
 /**
- * Bir aralığın süresini doğru kovaya ekler. Mola VE hazırlık duruş SAYILMAZ —
- * planlı bir mola/ürünsüz makine ayarı makinenin "açık kalma" performansını
- * düşürüyormuş gibi görünmesin diye ayrı tutuluyor (bkz. shiftTotals'taki
- * toplamMs).
+ * Bir aralığın süresini doğru kovaya ekler. Mola, duruş SAYILMAZ — planlı bir
+ * mola makinenin "açık kalma" performansını düşürüyormuş gibi görünmesin diye
+ * ayrı tutuluyor (bkz. shiftTotals'taki toplamMs).
  */
 function addToTotals(totals, interval) {
   if (interval.kind === 'uretim') totals.uretimMs += interval.durationMs
   else if (interval.kind === 'mola') totals.molaMs += interval.durationMs
-  else if (interval.kind === 'hazirlik') totals.hazirlikMs += interval.durationMs
   else totals.durusMs += interval.durationMs
   return totals
 }
@@ -80,10 +78,9 @@ export function totalsByRun(intervals) {
 }
 
 /**
- * Vardiya geneli. Makinenin toplam verimi buradan okunur. Mola VE hazırlık,
- * açık kalma oranının paydasına (toplamMs) hiç girmez — bilinçli karar: 3
- * planlı mola / ürünsüz makine ayarı yüzünden oran hep düşük görünmesin,
- * ikisi de gerçek "çalışma dışı" zaman değil.
+ * Vardiya geneli. Makinenin toplam verimi buradan okunur. Mola, açık kalma
+ * oranının paydasına (toplamMs) hiç girmez — bilinçli karar: 3 planlı mola
+ * yüzünden oran hep düşük görünmesin, mola gerçek "çalışma dışı" zaman değil.
  */
 export function shiftTotals(intervals) {
   const totals = intervals.reduce(addToTotals, emptyTotals())
@@ -107,7 +104,6 @@ export function currentState(events) {
   if (!last) return 'beklemede'
   if (last.kind === 'uretim') return 'uretimde'
   if (last.kind === 'mola') return 'molada'
-  if (last.kind === 'hazirlik') return 'hazirlikta'
   return 'durdu'
 }
 

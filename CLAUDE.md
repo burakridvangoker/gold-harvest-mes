@@ -44,15 +44,14 @@ SPA rewrite kuralı taşır, olmadan `/operator`/`/mudur` doğrudan girişte 404
    `calisma_hizi_pkt_dk` yeniden adlandırma, `bos_paket_agirlik_g` /
    `ortalama_gramaj_g` kolonları
 7. `add_mola.sql` — `timeline_events.kind`'a üçüncü değer: `'mola'`
-8. `add_hazirlik.sql` — `timeline_events.kind`'a dördüncü değer: `'hazirlik'`
-9. `add_stop_reason_segments.sql` — `stop_reason_segments`, bir duruş
+8. `add_stop_reason_segments.sql` — `stop_reason_segments`, bir duruş
    olayının İÇİNDE çakışabilen sebep segmentleri
-10. `setup_personnel.sql` — `personnel` tablosu (GH VARDİYA'dan tek
-    yönlü kopya)
-11. `seed_personnel.sql` — PFM-4/10/11 vardiya çizelgesinden 56 kişi
-12. `add_personnel_hat.sql` — `personnel.line_code`, listeyi hatta göre
+9. `setup_personnel.sql` — `personnel` tablosu (GH VARDİYA'dan tek
+   yönlü kopya)
+10. `seed_personnel.sql` — PFM-4/10/11 vardiya çizelgesinden 56 kişi
+11. `add_personnel_hat.sql` — `personnel.line_code`, listeyi hatta göre
     filtreler
-13. `add_personnel_vardiya.sql` — `personnel.vardiya_no`, otomatik ekip
+12. `add_personnel_vardiya.sql` — `personnel.vardiya_no`, otomatik ekip
     ataması/ön-doldurma için
 
 RLS tüm tablolarda açık, tüm politikalar `using (true)` — henüz
@@ -313,41 +312,6 @@ artık düz bir toplam değil, paleti çıkmış her ürünün kendi katkısı
 (henüz paleti çıkmamış) listeye girmez, tek ürün/tek katkı varsa
 gereksiz "+" eklenmez, düz sayı gösterilir. Üç yüzeyde de aynı desen
 (`contributingRuns`/`paletParts`/`koliParts`/`paketParts`).
-
-## Hazırlık: dördüncü durum, mola'nın ikizi
-
-Sahada yaşanan karışıklık: vardiya başında/ürün değişiminde operatör
-makinenin ambalaj/bobin ayarını yapıyor (ör. boş paket ayarı) — ürün
-henüz gelmeden yapılan gerçek ve gerekli bir iş, ama makine "gerçekten
-duruyor" da değil. Bu bugüne kadar düz `'durus'` yazılıyordu: açık kalma
-oranını haksız yere düşürüyor, "duruş sebepleri" listesine bir arızaymış
-gibi giriyordu — mola'nın çözdüğü sorunun birebir aynısı.
-
-**Mola ile TAM AYNI mimari:** `timeline_events.kind`'a dördüncü değer
-`'hazirlik'` eklendi (`add_hazirlik.sql`). `currentState()` artık dört
-değerden birini döner: `uretimde` / `durdu` / `molada` / `hazirlikta`;
-kendi rengi var (`--signal-hazirlik`, mavi-gri) — ne üretim yeşili ne
-duruş kırmızısı ne de mola amberi, ikisiyle de karışmasın diye.
-
-**Hazırlık dönüşü de direkt duruşa geçer, üretime değil:** "HAZIRLIK
-BİTTİ" butonu `kind='durus'` bir olay yazar (not otomatik "Hazırlık
-bitti"), üretim ancak BAŞLAT'a basılınca başlar — mola'nın "Moladan
-dönüş" davranışıyla birebir aynı mantık.
-
-**Hazırlık da bir ürüne bağlı değil:** mola gibi `activeRun` şartına
-BAĞLI DEĞİL — ürün girilmeden de hazırlık yapılabilir. `OperatorPanel`'in
-ana buton mantığında `isHazirlik` kontrolü de (mola'daki `isMola` gibi)
-her zaman `!activeRun` kontrolünden ÖNCE gelir — aynı yaşanmış hata
-sınıfına (ürün girilmeden başlatılan bir durumun bitirilememesi) tekrar
-düşülmesin diye. MOLA ve HAZIRLIK butonları birbirini dışlar (biri
-aktifken diğeri gizlenir) — geçiş her zaman önce "bitir" ile duruşa
-dönüp oradan başlar, mola↔hazırlık arası direkt atlama yok.
-
-**Açık kalma oranının paydasına hiç girmez:** `emptyTotals()`'a
-`hazirlikMs` eklendi, `molaMs` gibi `uretimMs`/`durusMs`'ten ayrı
-tutuluyor; `toplamMs` hâlâ SADECE `uretimMs + durusMs`. `downtimeByNote`
-zaten `kind !== 'durus'` filtresiyle hazırlığı da otomatik dışarıda
-bırakıyor — kod değişmedi, davranış zaten doğruydu.
 
 ## Müdür panosu: iki oran, birbirine karıştırılmasın
 
@@ -721,14 +685,13 @@ değiştir akışı), ürün geçmişi kartları, çalışma hızını her an d�
 ambalaj firesi hesabı, müdür panosunda ürün bazlı + genel verim ayrımı
 (açık kalma/hız verimi hem vardiya genelinde/aktif üründe hem her ürünün
 kendi satırında), geçmiş vardiyalar (donmuş özet + operatörde düzeltme,
-müdürde salt-okunur), mola (üçüncü durum, açık kalmaya girmez), hazırlık
-(dördüncü durum, mola'nın ikizi), vardiya bölümleri/çeyrekler (mola
-başlangıçlarına göre yan yana), palet çıkış saatleri listesi, çoklu
-sebep desteği (StopNoteSheet çip birleştirme + ReasonSegments zaman
-çubuğu), personel listesi entegrasyonu (hatta göre filtre, otomatik
-ekip ataması/ön-doldurma), Porselen Andon v2 (açık tema) ve gerçek veri
-görselleştirmeleri (dairesel göstergeler, vardiya zaman şeridi, saatlik
-üretim grafiği).
+müdürde salt-okunur), mola (üçüncü durum, açık kalmaya girmez), vardiya
+bölümleri/çeyrekler (mola başlangıçlarına göre yan yana), palet çıkış
+saatleri listesi, çoklu sebep desteği (StopNoteSheet çip birleştirme +
+ReasonSegments zaman çubuğu), personel listesi entegrasyonu (hatta göre
+filtre, otomatik ekip ataması/ön-doldurma), Porselen Andon v2 (açık
+tema) ve gerçek veri görselleştirmeleri (dairesel göstergeler, vardiya
+zaman şeridi, saatlik üretim grafiği).
 
 **Yapılmadı:** eski ürüne geri dönüp üretime devam etme UI'ı (şema/`
 runSpans` bunu zaten destekliyor, sadece "bu ürüne dön" butonu yok), not→kod
