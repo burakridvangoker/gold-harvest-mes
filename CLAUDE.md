@@ -708,19 +708,25 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
   olaylar" hiç görünmüyordu. `min-height: 100dvh`'ye çevrildi — sayfa artık
   gerektiğinde kaydırılabilir, sığdığında zaten fark etmez.
 - `OperatorPanel` da benzer bir "sabit kabuk + içeride kayan bölge"
-  tasarımı taşıyor (`.operator-shell` sabit `100dvh`, sadece
+  tasarımı taşıyor (`.operator-shell` sabit yükseklik, sadece
   `.operator-readout` kendi içinde kayar — BAŞLAT/DURDUR hiç ekran
   dışına kaçmasın diye, bkz. dosyanın kendi yorumu) ama BAŞKA bir hata
-  yaşandı: gerçek telefonda (mobil site modu) `.operator-readout` hiç
-  dokunma-kaydırması yapmıyordu, "masaüstü sitesi" moduna geçilince
-  sorun kayboluyordu. Kök sebep `100dvh`'nin adres çubuğu her gizlenip
-  göründüğünde yeniden hesaplanması — bu canlı yeniden hesaplama bazı
-  mobil tarayıcılarda tam bir dokunma-kaydırma hareketinin ortasında
-  devreye girip hareketi iptal ediyordu. `.operator-shell` `100svh`'ye
-  çevrildi (adres çubuğu tam açıkken sabit kalan en küçük görünür alan —
-  `index.css`'teki `#root` de zaten bunu kullanıyor), `.operator-readout`'a
-  da `overscroll-behavior: contain` + `-webkit-overflow-scrolling: touch`
-  eklendi.
+  yaşandı: gerçek telefonda (mobil site modu) sayfa aşağı hiç kaymıyordu,
+  "masaüstü sitesi" moduna geçilince sorun kayboluyordu. İlk denenen
+  düzeltme (`100dvh` → `100svh`, adres çubuğunun canlı yeniden
+  hesaplamasının kaydırma hareketini iptal ettiği varsayımıyla) sorunu
+  ÇÖZMEDİ — kök sebep başka çıktı: `ShiftClockBar` eklenince sabit
+  içerik (başlık + saat çubuğu + ikincil butonlar) küçük telefon
+  ekranlarında `.operator-readout` boş olsa bile viewport'u aşabiliyordu;
+  bu durumda `.operator-actions` (BAŞLAT/MOLA/+1 PALET) ekranın altından
+  TAŞIP `overflow: hidden` tarafından kırpılıyor, hiçbir şekilde
+  ERİŞİLEMEZ oluyordu — masaüstü modunda sayfa küçültülerek (zoom-out)
+  gösterildiği için aynı içerik sığıyor, sorun hiç ortaya çıkmıyordu.
+  Düzeltme: `.operator-shell`'in `overflow: hidden`'ı `overflow-y: auto`
+  yapıldı — kabuğun kendisi bir GÜVENLİK AĞI: içerik sığdığında hiçbir
+  şey değişmez, sığmadığında sayfa kayarak her şeye erişilebilir kalır.
+  `100svh` değişikliği de (daha kararlı bir viewport birimi olarak)
+  kalıcı bırakıldı ama tek başına yeterli değildi.
 
 ## Kod konumu haritası
 

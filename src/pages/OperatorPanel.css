@@ -12,21 +12,26 @@
   flex-direction: column;
   /*
    * Sabit yükseklik: birincil aksiyon (BAŞLAT/DURDUR) hiçbir zaman ekranın
-   * altına kaçmamalı. İçerik büyürse okunan kısım kendi içinde kayar,
-   * butonlar yerinde kalır.
+   * altına kaçmamalı. İçerik sığdığı sürece `.operator-readout` kendi
+   * içinde kayar, butonlar yerinde kalır — bkz. aşağısı.
    *
-   * `100dvh` DEĞİL `100svh` — dvh, tarayıcı adres çubuğu her gizlenip
-   * göründüğünde yeniden hesaplanır; bu canlı yeniden hesaplama bazı
-   * mobil tarayıcılarda (masaüstü site modunda sorun yoktu, "gerçek"
-   * mobil modda vardı — yaşanmış hata) tam da bir dokunma-kaydırma
-   * hareketinin ORTASINDA devreye girip iç kaydırma alanının (aşağıdaki
-   * `.operator-readout`) hiç kaymamasına yol açıyordu. `svh` (adres
-   * çubuğu tam açıkken, en küçük görünür alan) sabit kalır, bu titremeyi
-   * ortadan kaldırır — bedeli, çubuk gizlendiğinde altta birkaç piksellik
-   * kullanılmayan boşluk kalması, kaydırmanın hiç çalışmamasından iyidir.
+   * `100dvh` yerine `100svh`: dvh, adres çubuğu her gizlenip göründüğünde
+   * yeniden hesaplanır, bu da mobilde kaydırmayı kararsızlaştırabiliyordu.
+   *
+   * `overflow: hidden` DEĞİL `overflow-y: auto` — ShiftClockBar eklenince
+   * (üstteki saat çubuğu) sabit içerik (başlık + çubuk + ikincil butonlar +
+   * ana aksiyon) küçük telefon ekranlarında TEK BAŞINA `.operator-readout`
+   * boş olsa bile 100svh'yi aşabiliyor; bu durumda `.operator-readout`
+   * sıfıra kadar küçülse de fazlalık hâlâ vardı ve `.operator-actions`
+   * (BAŞLAT/MOLA/+1 PALET) ekranın altından TAŞIP hiçbir şekilde
+   * ERİŞİLEMEZ oluyordu — `overflow:hidden` bunu kırpıp gizliyordu, "aşağı
+   * kaymıyor" diye bildirilen tam olarak buydu (yaşanmış hata). Kabuğun
+   * kendisi de bir GÜVENLİK AĞI olarak kaydırılabilir: içerik sığdığında
+   * hiçbir şey değişmez (taşma yok, kaydıracak bir şey yok), sığmadığında
+   * en azından sayfa kayarak her şeye erişilebilir kalır.
    */
   height: 100svh;
-  overflow: hidden;
+  overflow-y: auto;
   background:
     linear-gradient(var(--status-wash), var(--status-wash)),
     var(--steel-900);
