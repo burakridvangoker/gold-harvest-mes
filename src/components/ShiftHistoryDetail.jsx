@@ -21,6 +21,7 @@ import { formatDateLabel, formatShortTime } from '../lib/time'
 import ProductHistory from './ProductHistory'
 import EventLog from './EventLog'
 import OperatorNameField from './OperatorNameField'
+import ShiftClockBar from './ShiftClockBar'
 import './Sheet.css'
 import './ShiftHistoryDetail.css'
 
@@ -43,6 +44,7 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
   /* Salt-okunur (müdür) görünümde operatör düzenlenemez, liste hiç çekilmez. */
   const personnel = usePersonnel(shift?.line_code, !readOnly)
   const [logOpen, setLogOpen] = useState(false)
+  const [logFocusEventId, setLogFocusEventId] = useState(null)
   const [operatorOpen, setOperatorOpen] = useState(false)
   const [operatorName, setOperatorName] = useState('')
   const [busy, setBusy] = useState(false)
@@ -182,6 +184,26 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
 
       {error && <div className="history-detail-error">{error}</div>}
 
+      {/* Vardiyanın tamamı saat eksenine bağlı görünüm — canlı ekranlarda
+       * (ManagerDashboard/OperatorPanel) zaten var, donmuş özette de aynı
+       * bileşen kullanılır. shiftEndMs BİLEREK verilmiyor: vardiya kapandığı
+       * için "planlanan bitişe göre gelecek/taralı kısım" yok, eksen doğrudan
+       * vardiyanın gerçek bitişine (nowMs = shift.ended_at) kadar uzanır. */}
+      <ShiftClockBar
+        intervals={intervals}
+        shiftStartMs={shiftStartMs}
+        runsById={runsById}
+        nowMs={nowMs}
+        onEdit={
+          readOnly
+            ? undefined
+            : (interval) => {
+                setLogFocusEventId(interval.eventId)
+                setLogOpen(true)
+              }
+        }
+      />
+
       <div className="history-detail-ratios">
         <div
           className={`history-detail-ratio${acikKalmaDurum ? ` history-detail-ratio--${acikKalmaDurum}` : ''}`}
@@ -312,7 +334,10 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
           <button
             type="button"
             className="history-detail-log-button"
-            onClick={() => setLogOpen(true)}
+            onClick={() => {
+              setLogFocusEventId(null)
+              setLogOpen(true)
+            }}
           >
             Olay geçmişi
           </button>
@@ -324,11 +349,15 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
             runsById={runsById}
             shiftStartMs={shiftStartMs}
             nowMs={nowMs}
+            focusEventId={logFocusEventId}
             onSaveEvent={updateEvent}
             onDeleteEvent={deleteEvent}
             onSavePallet={updatePallet}
             onDeletePallet={deletePallet}
-            onClose={() => setLogOpen(false)}
+            onClose={() => {
+              setLogOpen(false)
+              setLogFocusEventId(null)
+            }}
             frozen
           />
 

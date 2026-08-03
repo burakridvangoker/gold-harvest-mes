@@ -432,6 +432,20 @@ ama pratikte ulaşılamıyordu.
 - Her iki ekranda da hem "Açık vardiya yok" boş ekranında hem canlı vardiya
   varken üstte "Geçmiş vardiyalar" girişi var — vardiya bitmeden de geçmişe
   bakılabilsin diye.
+- **`ShiftClockBar` donmuş özette de var — yaşanmış eksiklik, düzeltildi.**
+  İlk sürümde `ShiftClockBar` sadece canlı ekranlarda (ManagerDashboard,
+  OperatorPanel) render ediliyordu; `ShiftHistoryDetail` sadece metinsel
+  "Vardiya bölümleri" listesini gösteriyordu — kullanıcı geçmiş bir
+  vardiyaya bakınca saat eksenli çubuğun HİÇ görünmediğini fark etti
+  ("bugün yaptığımız zaman çubuğu geçmiş vardiyalarda gözükmüyor").
+  Düzeltme: `ShiftHistoryDetail` de aynı bileşeni, aynı üç canlı ekran
+  gibi kullanır — `shiftEndMs` BİLEREK verilmez (vardiya kapandığı için
+  "planlanan bitişe göre gelecek/taralı kısım" kavramı burada anlamsız,
+  eksen doğrudan `nowMs = shift.ended_at`'e kadar uzanır, "Şimdi" çizgisi
+  hiç çıkmaz). `onEdit` sadece `readOnly` değilken verilir (operatör
+  ekranı) — `logFocusEventId` state'i + `EventLog`'un `focusEventId`
+  prop'u üstünden OperatorPanel'deki AYNI "balonda Düzenle → olay
+  geçmişinde o kayda odaklan" akışı burada da çalışır.
 
 ## Personel listesi: GH VARDİYA'dan tek yönlü kopya, FK yok
 
