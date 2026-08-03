@@ -11,8 +11,16 @@
 
 .clockbar-nav-row {
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   gap: clamp(0.4rem, 0.8vw, 0.75rem);
+  /* Balonun (.clockbar-tip) üstte oturacağı boşluk. Burada tanımlanıp
+   * `.clockbar-timeline`'a (padding-top) ve `.clockbar-nav-button`'a
+   * (margin-top) birlikte aktarılıyor — ikisi de aynı yükseklikten
+   * başlasın diye TEK kaynak. NOT: bottom:100% bir absolute elemanın
+   * konumlanma bloğunun ÜST kenarına (padding'den bağımsız, y=0)
+   * sabitlenir; bu yüzden balon bottom değil, bu değişkeni kullanan
+   * top + translateY(-100%) ile konumlanıyor (bkz. .clockbar-tip). */
+  --tip-offset: clamp(3.75rem, 5.6vw, 5rem);
 }
 
 /*
@@ -20,10 +28,20 @@
  * ettirmesi zor — bu ok çiftler `.clockbar-seg`'in ihtiyaç duyduğu piksel
  * hassasiyeti olmadan segment listesinde adım adım gezinmeyi sağlıyor.
  * Kendi rengi yok (andon sinyal paletine ait değil), nötr bir kontrol.
+ *
+ * Yükseklik BİLEREK `.clockbar-track`'inkiyle birebir aynı (aynı clamp)
+ * ve `margin-top` `--tip-offset` ile hizalanıyor — böylece buton sadece
+ * renkli ÇUBUĞUN yanında durur, üstteki boş balon alanını ve alttaki saat
+ * eksenini KAPSAMAZ. Önceki sürümde `align-items: stretch` yüzünden
+ * buton `.clockbar-timeline`'ın TAMAMI kadar (balon boşluğu + çubuk +
+ * eksen) uzuyordu — boş, oransız, "kırık" görünen dikey bir kutu
+ * (yaşanmış şikayet, kullanıcı ekran görüntüsüyle bildirdi).
  */
 .clockbar-nav-button {
   flex: 0 0 auto;
   width: clamp(2.25rem, 3vw, 3rem);
+  height: clamp(2.75rem, 4.6vw, 5rem);
+  margin-top: var(--tip-offset);
   border: 1px solid var(--steel-line);
   border-radius: clamp(0.6rem, 0.9vw, 1rem);
   background: var(--steel-800);
@@ -49,12 +67,6 @@
   flex: 1;
   min-width: 0;
   position: relative;
-  /* Balonun (aşağıda .clockbar-tip) üstte oturacağı boşluk. NOT:
-   * bottom:100% bir absolute elemanın konumlanma bloğunun ÜST kenarına
-   * (padding'den bağımsız, y=0) sabitlenir; bu yüzden balon burada
-   * bottom değil, bu değişkeni kullanan top + translateY(-100%) ile
-   * konumlanıyor (bkz. .clockbar-tip). */
-  --tip-offset: clamp(3.75rem, 5.6vw, 5rem);
   padding-top: var(--tip-offset);
 }
 
