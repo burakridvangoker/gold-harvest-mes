@@ -469,6 +469,18 @@ ama pratikte ulaşılamıyordu.
   sebeple `line-height`'ı hep AÇIKÇA sıkıştırır — `history-detail--wall`
   altında `.history-detail-ratio-value`/`-figure dd` için de aynı
   prensip uygulandı (`line-height: 1` / `1.15`), `gap` de büyütüldü.
+  **Kapsam genişletildi — `ProductHistory` da dahil:** ilk sürümde
+  `wall` sadece `ShiftHistoryDetail`'in KENDİ başlık/oran/rakamlarını
+  büyütüyordu; içine gömülü `ProductHistory` (ürün kartları + detay
+  sayfası) ve onun paylaştığı `Sheet.css` hiç büyümüyordu — müdür
+  panosunda bir ürün kartına dokununca aniden küçük/sıkışık bir sayfa
+  açılıyordu. Ekstra bir JS prop gerekmedi: `ProductHistory` zaten
+  `.history-detail--wall`'ın DOM içinde render edildiği için (position:
+  fixed sheet'ler dahil, CSS cascade DOM konumuna bakar) saf descendant
+  selector'larla (`.history-detail--wall .history-card`,
+  `.sheet-title`, `.sheet-stat-value` vb.) büyütüldü — `ProductHistory.css`/
+  `Sheet.css`'in kendisi hiç değişmedi, diğer ekranlar (`SpeedSheet`/
+  `RunEndSheet`, OperatorPanel'in canlı `ProductHistory`'si) etkilenmedi.
 
 ## Personel listesi: GH VARDİYA'dan tek yönlü kopya, FK yok
 

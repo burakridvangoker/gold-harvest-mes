@@ -403,3 +403,75 @@
 .history-detail--wall .history-detail-events-row {
   font-size: clamp(1rem, 1.05vw, 1.5rem);
 }
+
+/*
+ * `ProductHistory` (ürün kartları + dokununca açılan detay sayfası) ve
+ * onun paylaştığı `Sheet.css` (SpeedSheet/RunEndSheet'le ortak) BURADA
+ * hiç büyümüyordu — müdür panosunda geçmiş bir vardiyada bir ürün
+ * kartına dokununca aniden küçük/sıkışık bir sayfa açılıyordu, hemen
+ * üstündeki devasa oranlarla tezat oluşturuyordu (yaşanmış şikayet).
+ * `ProductHistory`/`Sheet.css`'in kendisine dokunmadan, SADECE bu
+ * sınıfın altındaki descendant selector'larla büyütülüyor — DOM ağacında
+ * `ProductHistory` zaten `.history-detail--wall`'ın İÇİNDE render
+ * ediliyor (position:fixed sheet'ler dahil, CSS cascade DOM konumuna
+ * bakar), bu yüzden hiçbir component API'si değişmiyor. Diğer ekranlar
+ * (OperatorPanel'in canlı `ProductHistory`'si, `SpeedSheet`/`RunEndSheet`)
+ * bu sınıfın altında OLMADIĞI için hiç etkilenmiyor.
+ *
+ * Gap/line-height de büyütülen her yerde birlikte ayarlandı — aynı ders
+ * (yukarıdaki `.history-detail-ratio-value` yorumuna bkz.): büyük rakam +
+ * dar `gap` + sıkıştırılmamış `line-height` üst üste binmeye yol açıyor.
+ */
+.history-detail--wall .history-strip-label {
+  font-size: clamp(1.05rem, 1.15vw, 1.7rem);
+}
+
+.history-detail--wall .history-card {
+  min-width: clamp(9rem, 12vw, 14rem);
+  padding: clamp(0.9rem, 1.2vw, 1.4rem) clamp(1.1rem, 1.4vw, 1.6rem);
+  gap: clamp(0.4rem, 0.6vw, 0.6rem);
+}
+
+.history-detail--wall .history-card-name {
+  font-size: clamp(1.15rem, 1.3vw, 1.7rem);
+  line-height: 1.2;
+}
+
+.history-detail--wall .history-card-time {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+}
+
+.history-detail--wall .history-pallets-label {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+}
+
+.history-detail--wall .history-pallets-row {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+  padding: clamp(0.4rem, 0.55vw, 0.6rem) clamp(0.9rem, 1.1vw, 1.3rem);
+}
+
+.history-detail--wall .sheet-panel {
+  max-width: clamp(640px, 45vw, 900px);
+}
+
+.history-detail--wall .sheet-title {
+  font-size: clamp(1.5rem, 2vw, 2.5rem);
+  line-height: 1.2;
+}
+
+.history-detail--wall .sheet-subtitle {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+}
+
+.history-detail--wall .sheet-stats {
+  gap: clamp(0.6rem, 0.9vw, 1rem);
+}
+
+.history-detail--wall .sheet-stat-label {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+}
+
+.history-detail--wall .sheet-stat-value {
+  font-size: clamp(1.3rem, 1.6vw, 2.2rem);
+  line-height: 1.2;
+}

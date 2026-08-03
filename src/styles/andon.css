@@ -56,10 +56,6 @@
   --wash-idle: rgba(255, 176, 0, 0.1);
   --wash-stop: rgba(224, 39, 24, 0.07);
 
-  /* Duruş sebebi aileleri (açık zemine göre koyulaştırıldı) */
-  --plansiz: #b95d19;
-  --planli: #0f7d6f;
-
   --data: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --plate: 'Saira Condensed', 'IBM Plex Sans Condensed', 'Arial Narrow', system-ui, sans-serif;
 
