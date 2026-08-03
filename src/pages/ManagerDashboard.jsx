@@ -54,12 +54,29 @@ function ManagerDashboard() {
    * sekme aniden kapanırsa (beforeunload her zaman güvenilir ateşlenmiyor,
    * özellikle mobilde) süre son heartbeat'te kalır — tam kapanış anı değil
    * ama yeterince yakın bir tahmin. Operatör ekranı bu kayıtları listeler.
+   *
+   * Sekme ARKA PLANA düşünce mobil tarayıcılar setInterval'i büyük ölçüde
+   * durdurur/yavaşlatır (pil tasarrufu) — 20 saniyelik heartbeat arka
+   * planda hiç ateşlenmeyebilir, süre olduğu yerde donar (yaşanmış durum:
+   * sekme dakikalarca arka planda açık kalmış ama kayıt "1 dk altı"
+   * gösteriyordu). `visibilitychange`/`focus` ile sekme tekrar öne
+   * geldiği ANDA bir ping atılır — bu, arka planda geçen süreyi saymaz
+   * (o zaten kimse bakmıyordu demektir) ama panoya her dönüşte süreyi
+   * güncel tutar.
    */
   useEffect(() => {
     if (!lineCode) return
 
     let visitId = null
     let cancelled = false
+
+    const ping = () => {
+      if (!visitId) return
+      supabase
+        .from('manager_dashboard_visits')
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq('id', visitId)
+    }
 
     supabase
       .from('manager_dashboard_visits')
@@ -70,24 +87,20 @@ function ManagerDashboard() {
         if (!cancelled && data) visitId = data.id
       })
 
-    const heartbeat = setInterval(() => {
-      if (visitId) {
-        supabase
-          .from('manager_dashboard_visits')
-          .update({ last_seen_at: new Date().toISOString() })
-          .eq('id', visitId)
-      }
-    }, VISIT_HEARTBEAT_MS)
+    const heartbeat = setInterval(ping, VISIT_HEARTBEAT_MS)
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') ping()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
 
     return () => {
       cancelled = true
       clearInterval(heartbeat)
-      if (visitId) {
-        supabase
-          .from('manager_dashboard_visits')
-          .update({ last_seen_at: new Date().toISOString() })
-          .eq('id', visitId)
-      }
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+      ping()
     }
   }, [lineCode])
 

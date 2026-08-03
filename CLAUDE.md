@@ -524,6 +524,16 @@ eklenir (`opened_at = now()`), açık kaldığı sürece 20 saniyede bir
 kalır, tam kapanış anı değil ama yeterince yakın bir tahmin.
 Unmount'ta da best-effort bir son güncelleme denenir.
 
+**Arka plandaki sekme sorunu (yaşanmış durum):** sekme arka plana
+düşünce mobil tarayıcılar `setInterval`'i büyük ölçüde durdurur/
+yavaşlatır (pil tasarrufu) — 20 saniyelik heartbeat arka planda hiç
+ateşlenmeyebilir, kullanıcı "sekme dakikalarca açık ama kayıt '1 dk
+altı' gösteriyor" diye bildirdi. Çözüm tam değil (arka planda JS
+çalıştırmayı zorlayamayız) ama `visibilitychange`/`focus` ile sekme
+tekrar öne geldiği ANDA bir ping atılır — süre panoya her dönüşte
+güncel tutulur, sadece saf arka plan süresi sayılmaz (zaten kimse
+bakmıyordu demektir, dürüst bir sınırlama).
+
 **Nerede görünür:** SADECE operatör ekranında (`OperatorPanel.jsx`,
 "Müdür panosu görüntülemeleri" satırı, `useDashboardVisits` hook'u ile
 son 10 kayıt). Müdür panosunun kendisi bu veriyi hiç okumaz/göstermez —
