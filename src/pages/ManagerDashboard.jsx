@@ -25,7 +25,7 @@ import { formatBreakdown, formatDelta, formatDuration } from '../lib/duration'
 import { formatClock, formatDateLabel, formatShortTime } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import RadialGauge from '../components/RadialGauge'
-import ShiftTimelineBar from '../components/ShiftTimelineBar'
+import ShiftClockBar from '../components/ShiftClockBar'
 import ProductionBars from '../components/ProductionBars'
 import './ManagerDashboard.css'
 
@@ -286,8 +286,15 @@ function ManagerDashboard() {
 
         {error && <div className="manager-error">{error}</div>}
 
-        {/* Vardiyanın tamamı tek bakışta — üretim/duruş/mola şeridi. */}
-        <ShiftTimelineBar intervals={intervals} />
+        {/* Vardiyanın tamamı, planlanan bitişe (07:00→15:00 gibi) kadar tek
+         * bakışta — henüz gelmemiş kısım taralı, "ŞİMDİ" çizgisi net. */}
+        <ShiftClockBar
+          intervals={intervals}
+          shiftStartMs={shiftStartMs}
+          shiftEndMs={shiftEndMs}
+          runsById={runsById}
+          nowMs={now}
+        />
 
         {/* ŞİMDİ */}
         <section className="zone zone--now">

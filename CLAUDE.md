@@ -591,18 +591,34 @@ kullanılarak:
   verimi, operatör panelinde ürün planı ilerlemesi. Renk andon durum
   paletinden (`--signal-*-text`, iyi/orta/kötü) — kategorik değil,
   durum. Tek değer olduğu için lejant gerekmiyor (dataviz kuralı).
-- `src/components/ShiftTimelineBar.jsx` — vardiyanın TAMAMINI tek
-  bakışta gösteren yatay şerit (`buildIntervals`'tan gelen aralıklar,
-  süreyle orantılı genişlik). Segmentler arası 2px zemin boşluğu (mark
-  spec), üç durum için KALICI bir lejant satırı (renk-körü/gri
-  ekranda bile ayrım metinden okunsun) + hover'da saat/sebep/süre
-  ipucu. Palet doğrulaması: ham sinyal renkleri (`#009440/#ffb000/
-  #e02718`) açık zeminde FILL olarak kullanılınca kontrast/açıklık
-  eşiğini geçemiyor (validator FAIL) — bu yüzden segment dolgusu ham
-  sinyal rengiyle, METİN/etiketler `--signal-*-text` ile kalıyor;
-  ayrıca 3 sabit durum + her zaman görünen lejant + metin etiketi
-  olduğu için CVD ayrımı "secondary encoding" şartıyla kabul edilebilir
-  (validator'ın izin verdiği istisna).
+- `src/components/ShiftClockBar.jsx` — müdür panosunda "Duruş
+  sebepleri"nin hemen üstünde, vardiyanın TAMAMINI SAATE bağlı (07:00 →
+  planlanan bitiş 15:00 gibi) gösteren yatay çubuk. İlk sürümü
+  (`ShiftTimelineBar.jsx`, silindi) segment genişliklerini "şimdiye
+  kadar geçen süre"ye oranlıyordu — vardiya yeni başlamışken tüm çubuk
+  doluymuş gibi görünüyordu, saatle ilişki kurulamıyordu. `ShiftClockBar`
+  genişlikleri vardiyanın TAM planlanan süresine oranlar: henüz
+  gelmemiş kısım taralı zemin olarak görünür, dikey "ŞİMDİ" çizgisi
+  nerede olunduğunu gösterir (vardiya uzarsa — `nowMs` planlanan bitişi
+  geçtiyse — eksen "şimdi"ye kadar uzar, gelecek hiç gösterilmez).
+  Kullanıcı isteği üzerine metin etiketleri bilerek çubuğun ÜSTÜNDE
+  değil (renk zaten durumu anlatıyor); sebep/ürün adı + dakika cinsinden
+  süre sadece bir segmente DOKUNUNCA (hover değil — sahada dokunmatik
+  ekran/duvar ekranı, `tap` state `activeId` ile) beliren bir balonda
+  gösterilir. Palet doğrulaması `ShiftTimelineBar`'daki gibi aynı
+  gerekçeyle: segment dolgusu ham sinyal rengiyle, METİN/etiketler
+  `--signal-*-text` ile; 3 sabit durum + her zaman görünen lejant + tıklanan
+  balondaki metin etiketiyle CVD ayrımı "secondary encoding" şartıyla
+  kabul edilebilir.
+  **CSS tuzağı (yaşanmış hata):** balon (`.clockbar-tip`) `.clockbar-timeline`
+  içinde `bottom: 100%` ile üstte konumlanıyordu; konteynerin
+  `padding-top`'unu artırmak balona daha fazla boşluk AÇMADI, çünkü
+  `bottom: 100%` bir absolute elemanı konumlanma bloğunun `padding-top`'tan
+  BAĞIMSIZ üst kenarına (y=0) sabitler. Düzeltme: `.clockbar-timeline`'a
+  `--tip-offset` custom property'si (balonun oturacağı boşluğun tek
+  kaynağı), balon `top: calc(var(--tip-offset) - 0.5rem)` +
+  `transform: translate(-50%, -100%)` ile konumlanıyor — "şimdi" çizgisi
+  de aynı değişkeni kullanır, ikisi otomatik senkron kalır.
 - `src/components/ProductionBars.jsx` + `timeline.js#hourlyPaket` —
   saatlik paket üretimi, TEK seri/tek ton (sequential, gökkuşağı yok,
   lejant gerekmiyor). `hourlyPaket` de `shiftPaket` gibi her paleti
