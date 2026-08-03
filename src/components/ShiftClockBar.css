@@ -97,21 +97,10 @@
 
 .clockbar-now-line {
   position: absolute;
-  top: var(--tip-offset);
-  bottom: -1.9rem;
+  top: 0;
+  bottom: 0;
   width: 2px;
   background: var(--film);
-}
-
-.clockbar-now-remaining {
-  position: absolute;
-  bottom: -1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  font-variant-numeric: tabular-nums;
-  font-size: clamp(0.75rem, 0.85vw, 1.1rem);
-  color: var(--film-dim);
-  white-space: nowrap;
 }
 
 .clockbar-now-label {

@@ -108,15 +108,9 @@ function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs })
           })}
 
           {hasFuture && <div className="clockbar-future" style={{ left: `${nowPct}%`, right: 0 }} />}
-        </div>
 
-        {hasFuture && (
-          <div className="clockbar-now-line" style={{ left: `${nowPct}%` }}>
-            <span className="clockbar-now-remaining">
-              {formatDelta(Math.round((shiftEndMs - nowMs) / 60000))} kaldı
-            </span>
-          </div>
-        )}
+          {hasFuture && <div className="clockbar-now-line" style={{ left: `${nowPct}%` }} />}
+        </div>
 
         <div className="clockbar-axis">
           {hourTicks.map((tick) => (
