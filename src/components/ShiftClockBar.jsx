@@ -11,7 +11,11 @@ const NO_REASON_LABEL = 'Sebep girilmemiş'
  * bitişe kadar) gösteren yatay çubuk — ShiftTimelineBar'ın yerini aldı.
  * Ondan farkı: segment genişlikleri "şimdiye kadar geçen süre"ye değil,
  * vardiyanın TAMAMINA (planlanan bitişe) oranlanır — henüz gelmemiş kısım
- * boş/taralı görünür, "ŞİMDİ" çizgisi nerede olunduğunu gösterir.
+ * taralı görünür; dolu/taralı sınırı zaten "şimdi"nin nerede olduğunu
+ * gösterdiği için üstteki "ŞİMDİ" saat etiketinin dışında ayrıca dikey bir
+ * çizgi/çubuk YOK — dolu/taralı ayrımı + saat etiketi yeterli, ekstra
+ * bir çizgi altındaki lejantla çakışıp kalabalık yaratıyordu (yaşanmış
+ * şikayet).
  *
  * Metin etiketleri bilerek çubuğun ÜSTÜNDE değil: renk zaten durumu
  * anlatıyor (yeşil/kırmızı/amber, andon dili ile tutarlı). Sebep/ürün adı
@@ -108,8 +112,6 @@ function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs })
           })}
 
           {hasFuture && <div className="clockbar-future" style={{ left: `${nowPct}%`, right: 0 }} />}
-
-          {hasFuture && <div className="clockbar-now-line" style={{ left: `${nowPct}%` }} />}
         </div>
 
         <div className="clockbar-axis">

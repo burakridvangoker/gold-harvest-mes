@@ -11,12 +11,11 @@
 
 .clockbar-timeline {
   position: relative;
-  /* Balonun (aşağıda .clockbar-tip) üstte oturacağı boşluk — tek bir
-   * değişkende tutulur ki balon ve "şimdi" çizgisinin üst konumu hep
-   * senkron kalsın. NOT: bottom:100% bir absolute elemanın konumlanma
-   * bloğunun ÜST kenarına (padding'den bağımsız, y=0) sabitlenir; bu
-   * yüzden balon burada bottom değil, bu değişkeni kullanan top +
-   * translateY(-100%) ile konumlanıyor (bkz. .clockbar-tip). */
+  /* Balonun (aşağıda .clockbar-tip) üstte oturacağı boşluk. NOT:
+   * bottom:100% bir absolute elemanın konumlanma bloğunun ÜST kenarına
+   * (padding'den bağımsız, y=0) sabitlenir; bu yüzden balon burada
+   * bottom değil, bu değişkeni kullanan top + translateY(-100%) ile
+   * konumlanıyor (bkz. .clockbar-tip). */
   --tip-offset: clamp(3.75rem, 5.6vw, 5rem);
   padding-top: var(--tip-offset);
 }
@@ -93,14 +92,6 @@
     transparent 0 6px,
     rgba(18, 24, 21, 0.05) 6px 12px
   );
-}
-
-.clockbar-now-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--film);
 }
 
 .clockbar-now-label {
