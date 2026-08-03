@@ -11,27 +11,27 @@
   /* Lamba bandı üstte, içerik altta — kabuk artık dikey akar. */
   flex-direction: column;
   /*
-   * Sabit yükseklik: birincil aksiyon (BAŞLAT/DURDUR) hiçbir zaman ekranın
-   * altına kaçmamalı. İçerik sığdığı sürece `.operator-readout` kendi
-   * içinde kayar, butonlar yerinde kalır — bkz. aşağısı.
+   * ESKİ TASARIM (kaldırıldı): sabit `height:100svh` + kabuk `overflow-y:
+   * auto` + `.operator-readout` KENDİ İÇİNDE ayrıca `overflow-y:auto` —
+   * iki İÇ İÇE bağımsız kaydırma alanı. Bu, gerçek telefonlarda tutarsız
+   * davrandı: bazen `.operator-readout`'un içeriği (Duruş süresi/sebepleri,
+   * Bu ürün, Vardiya toplamı, Müdür panosu listesi) TAMAMEN KAYBOLUYORDU —
+   * aynı sayfa aynı durumda bir seferinde tam, bir seferinde bomboş
+   * geliyordu (yaşanmış hata, kullanıcı iki ekran görüntüsüyle bildirdi).
+   * İç içe iki bağımsız `overflow-y:auto` konteynerinin flex yükseklik
+   * hesaplaması mobil tarayıcılarda kararsız.
    *
-   * `100dvh` yerine `100svh`: dvh, adres çubuğu her gizlenip göründüğünde
-   * yeniden hesaplanır, bu da mobilde kaydırmayı kararsızlaştırabiliyordu.
-   *
-   * `overflow: hidden` DEĞİL `overflow-y: auto` — ShiftClockBar eklenince
-   * (üstteki saat çubuğu) sabit içerik (başlık + çubuk + ikincil butonlar +
-   * ana aksiyon) küçük telefon ekranlarında TEK BAŞINA `.operator-readout`
-   * boş olsa bile 100svh'yi aşabiliyor; bu durumda `.operator-readout`
-   * sıfıra kadar küçülse de fazlalık hâlâ vardı ve `.operator-actions`
-   * (BAŞLAT/MOLA/+1 PALET) ekranın altından TAŞIP hiçbir şekilde
-   * ERİŞİLEMEZ oluyordu — `overflow:hidden` bunu kırpıp gizliyordu, "aşağı
-   * kaymıyor" diye bildirilen tam olarak buydu (yaşanmış hata). Kabuğun
-   * kendisi de bir GÜVENLİK AĞI olarak kaydırılabilir: içerik sığdığında
-   * hiçbir şey değişmez (taşma yok, kaydıracak bir şey yok), sığmadığında
-   * en azından sayfa kayarak her şeye erişilebilir kalır.
+   * Şimdiki tasarım: TEK bir kaydırma alanı — sayfanın kendisi. Kabuk
+   * artık sabit yükseklik/kırpma yapmıyor, `min-height` ile en az ekran
+   * kadar, İÇERİK NE KADAR BÜYÜRSE büyüsün. Sığdığında görünüm eskisiyle
+   * birebir aynı (BAŞLAT en altta, hiç kaydırma gerekmez); sığmadığında
+   * sayfa doğal olarak kayar — ManagerDashboard'un aynı sınıf soruna
+   * verdiği çözümle (`min-height:100dvh`, bkz. CLAUDE.md) aynı prensip.
+   * Bedel: BAŞLAT artık "hiçbir koşulda asla kaymaz" değil, sadece içerik
+   * sığdığında sabit görünür — ama bu, içeriğin bazen tamamen
+   * KAYBOLMASINDAN kesinlikle iyidir.
    */
-  height: 100svh;
-  overflow-y: auto;
+  min-height: 100svh;
   background:
     linear-gradient(var(--status-wash), var(--status-wash)),
     var(--steel-900);
@@ -166,16 +166,13 @@ button.operator-line-code {
   display: flex;
   flex-direction: column;
   /*
-   * Taşarsa burası kayar. Flexbox'ta justify-content:center taşan içeriğin
-   * üstünü kırptığı için flex-start kullanılıyor.
+   * Kendi başına ARTIK ayrı bir kaydırma alanı değil (bkz. .operator-shell
+   * başındaki uzun yorum — iç içe iki bağımsız overflow-y:auto konteyneri
+   * mobilde içeriği bazen tamamen kayboluyor gösteriyordu). Taşarsa sayfa
+   * (.operator-shell) kayar. `justify-content:flex-start`: flexbox'ta
+   * center taşan içeriğin üstünü kırpar, bu yüzden start kullanılıyor.
    */
   justify-content: flex-start;
-  overflow-y: auto;
-  /* Mobil dokunma-kaydırmasını sağlamlaştırır: taşma ana sayfaya
-   * "zincirlenip" dış overflow:hidden kabuğu tarafından yutulmasın diye
-   * (`overscroll-behavior`), eski WebView'lerde momentum kaydırma için. */
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
   gap: clamp(0.6rem, 2vh, 1.5rem);
 }
 

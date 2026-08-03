@@ -722,11 +722,21 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
   TAŞIP `overflow: hidden` tarafından kırpılıyor, hiçbir şekilde
   ERİŞİLEMEZ oluyordu — masaüstü modunda sayfa küçültülerek (zoom-out)
   gösterildiği için aynı içerik sığıyor, sorun hiç ortaya çıkmıyordu.
-  Düzeltme: `.operator-shell`'in `overflow: hidden`'ı `overflow-y: auto`
-  yapıldı — kabuğun kendisi bir GÜVENLİK AĞI: içerik sığdığında hiçbir
-  şey değişmez, sığmadığında sayfa kayarak her şeye erişilebilir kalır.
-  `100svh` değişikliği de (daha kararlı bir viewport birimi olarak)
-  kalıcı bırakıldı ama tek başına yeterli değildi.
+  İlk düzeltme (`.operator-shell`'in `overflow:hidden`'ını `overflow-y:
+  auto` yapmak, `.operator-readout` KENDİ İÇİNDE de ayrıca `overflow-y:
+  auto` kalmaya devam ederek) de YETERSİZ çıktı — iç içe iki BAĞIMSIZ
+  kaydırma konteyneri (kabuk + readout) mobilde kararsız davrandı:
+  kullanıcı aynı sayfanın aynı durumda bir seferinde `.operator-readout`
+  içeriğinin (Duruş süresi/sebepleri, Bu ürün, Vardiya toplamı, Müdür
+  panosu listesi) TAMAMEN KAYBOLDUĞUNU, bir sonraki yüklemede yerinde
+  olduğunu gösteren iki ekran görüntüsü attı. Kesin düzeltme: TEK bir
+  kaydırma alanına indirildi — `.operator-readout`'un kendi
+  `overflow-y:auto`'su tamamen kaldırıldı, `.operator-shell` artık sabit
+  `height` değil `min-height:100svh` (ManagerDashboard'un aynı sınıf
+  soruna verdiği çözümle birebir aynı prensip). Sığdığında görünüm
+  birebir aynı (BAŞLAT en altta, kaydırma gerekmez); sığmadığında SAYFA
+  doğal olarak kayar. Bedel: BAŞLAT artık "hiçbir koşulda asla kaymaz"
+  değil — ama bu, içeriğin bazen tamamen kaybolmasından kesinlikle iyidir.
 
 ## Kod konumu haritası
 
