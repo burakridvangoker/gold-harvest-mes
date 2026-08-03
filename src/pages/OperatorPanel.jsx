@@ -20,6 +20,7 @@ import { formatBreakdown, formatDelta, formatDuration } from '../lib/duration'
 import { formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import RadialGauge from '../components/RadialGauge'
+import ShiftClockBar from '../components/ShiftClockBar'
 import TimeSheet from '../components/TimeSheet'
 import StopNoteSheet from '../components/StopNoteSheet'
 import ReasonSegments from '../components/ReasonSegments'
@@ -52,6 +53,7 @@ function OperatorPanel() {
   const [operatorOpen, setOperatorOpen] = useState(false)
   const [operatorName, setOperatorName] = useState('')
   const [logOpen, setLogOpen] = useState(false)
+  const [logFocusEventId, setLogFocusEventId] = useState(null)
   const [historyPickerOpen, setHistoryPickerOpen] = useState(false)
   const [historyShiftId, setHistoryShiftId] = useState(null)
   const [pending, setPending] = useState(null)
@@ -74,6 +76,7 @@ function OperatorPanel() {
   }, [events, runs, runsById])
 
   const shiftStartMs = shift ? new Date(shift.started_at).getTime() : null
+  const shiftEndMs = shift?.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null
   const intervals = useMemo(() => buildIntervals(events, now), [events, now])
   const paletlerToplam = useMemo(() => palletTotals(pallets), [pallets])
   const state = useMemo(() => currentState(events), [events])
@@ -592,13 +595,39 @@ function OperatorPanel() {
         {error && <div className="operator-error">{error}</div>}
 
         {/*
+         * Müdür panosundaki aynı bileşen (bkz. CLAUDE.md "Veri
+         * görselleştirme"), tek farkla: `onEdit` verildiği için balondaki
+         * "Düzenle" butonu görünür ve dokununca EventLog'u o olaya
+         * odaklanmış açar (`logFocusEventId`) — müdür panosunda bu prop hiç
+         * geçirilmez, orası salt-okunur kalır.
+         */}
+        <ShiftClockBar
+          intervals={intervals}
+          shiftStartMs={shiftStartMs}
+          shiftEndMs={shiftEndMs}
+          runsById={runsById}
+          nowMs={now}
+          onEdit={(interval) => {
+            setLogFocusEventId(interval.eventId)
+            setLogOpen(true)
+          }}
+        />
+
+        {/*
          * Her zaman görünür: bunlar kaydırılabilir alanın içinde kalırsa
          * küçük telefonlarda (ör. 375×667) kaydırma ipucu olmadan ekran
          * dışına taşabiliyordu. "İstediğini sil/düzelt" sözü verdiğimiz
          * erişim noktası hiçbir zaman gizlenmemeli.
          */}
         <div className="operator-secondary">
-          <button type="button" className="ghost-button" onClick={() => setLogOpen(true)}>
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={() => {
+              setLogFocusEventId(null)
+              setLogOpen(true)
+            }}
+          >
             Olay geçmişi
           </button>
           <button
@@ -951,6 +980,7 @@ function OperatorPanel() {
 
         <EventLog
           open={logOpen}
+          focusEventId={logFocusEventId}
           events={events}
           pallets={pallets}
           runsById={runsById}
@@ -960,7 +990,10 @@ function OperatorPanel() {
           onDeleteEvent={deleteEvent}
           onSavePallet={updatePallet}
           onDeletePallet={deletePallet}
-          onClose={() => setLogOpen(false)}
+          onClose={() => {
+            setLogOpen(false)
+            setLogFocusEventId(null)
+          }}
         />
 
         <ShiftHistoryPicker

@@ -154,6 +154,31 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Balon kendisi pointer-events:none (segmentlerin üstüne binmesin diye) —
+ * bu buton tek başına auto ile geri açılır, tıklanabilir kalır. */
+.clockbar-tip-edit {
+  pointer-events: auto;
+  margin-top: 0.3rem;
+  align-self: flex-start;
+  border: none;
+  border-radius: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-family: var(--plate);
+  font-size: clamp(0.7rem, 0.78vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.clockbar-tip-edit:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .clockbar-axis {
   position: relative;
   height: 1.3rem;

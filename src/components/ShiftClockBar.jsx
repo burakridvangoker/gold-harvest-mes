@@ -23,6 +23,14 @@ const NO_REASON_LABEL = 'Sebep girilmemiş'
  * ve dakika cinsinden süre sadece bir segmente dokununca (tıkla-aç/kapa)
  * beliren bir balonda gösterilir — sürekli metin duvar ekranından
  * kalabalık görünürdü.
+ *
+ * `onEdit` opsiyonel: verilirse balona bir "Düzenle" butonu eklenir —
+ * operatör ekranında kullanılır (müdür panosu salt-okunur, bu prop hiç
+ * geçirilmez). Tek dokunuşla dokunuşa çıkma riskine karşı düzenleme
+ * doğrudan segmenti tıklayınca değil, önce balonu açıp İÇİNDEKİ ayrı bir
+ * "Düzenle" dokunuşuyla tetiklenir — TimeSheet'in kaydırmalı çarkına
+ * kadar giden akışı `EventLog` üstlenir (bkz. OperatorPanel'deki
+ * `logFocusEventId`), burada sadece o akışı tetikleyen bir çağrı yapılır.
  */
 function reasonLabel(interval, runsById) {
   if (interval.kind === 'uretim') return runsById.get(interval.productRunId)?.urun_adi || 'Üretim'
@@ -30,7 +38,7 @@ function reasonLabel(interval, runsById) {
   return interval.note || NO_REASON_LABEL
 }
 
-function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs }) {
+function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs, onEdit }) {
   const [activeId, setActiveId] = useState(null)
 
   if (shiftStartMs == null) return null
@@ -76,6 +84,11 @@ function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs })
               <span className="clockbar-tip-meta">
                 {range} · {durationLabel}
               </span>
+              {onEdit && (
+                <button type="button" className="clockbar-tip-edit" onClick={() => onEdit(interval)}>
+                  Düzenle
+                </button>
+              )}
             </div>
           )
         })}
@@ -137,7 +150,9 @@ function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs })
           <span className="clockbar-legend-dot clockbar-legend-dot--mola" />
           Mola
         </span>
-        <span className="clockbar-legend-hint">Sebebi görmek için bir bloğa dokun</span>
+        <span className="clockbar-legend-hint">
+          {onEdit ? 'Sebebi görmek ve düzenlemek için bir bloğa dokun' : 'Sebebi görmek için bir bloğa dokun'}
+        </span>
       </div>
     </div>
   )

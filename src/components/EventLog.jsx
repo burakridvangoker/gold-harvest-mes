@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { buildIntervals, segmentKind, validEditWindow } from '../lib/timeline'
 import { formatDuration } from '../lib/duration'
 import { formatShortTime } from '../lib/time'
@@ -35,6 +35,7 @@ function EventLog({
   onDeletePallet,
   onClose,
   frozen = false,
+  focusEventId = null,
 }) {
   const [editing, setEditing] = useState(null)
   const [draftNote, setDraftNote] = useState('')
@@ -72,6 +73,20 @@ function EventLog({
 
     return [...eventRows, ...palletRows].sort((a, b) => b.atMs - a.atMs)
   }, [events, pallets])
+
+  /*
+   * ShiftClockBar'daki "Düzenle" balonundan gelen kısayol: listeyi açıp
+   * operatörü aramaya zorlamak yerine, hangi olay düzenlenecekse doğrudan
+   * onun TimeSheet'ini açar — aşağıdaki startEdit ile birebir aynı akış.
+   */
+  useEffect(() => {
+    if (!open || !focusEventId) return
+    const entry = entries.find((item) => item.type === 'event' && item.id === focusEventId)
+    if (!entry) return
+    setEditing(entry)
+    setConfirmDelete(false)
+    setDraftNote(entry.note ?? '')
+  }, [open, focusEventId, entries])
 
   if (!open) return null
 
