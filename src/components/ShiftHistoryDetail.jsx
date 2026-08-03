@@ -38,8 +38,16 @@ const NO_REASON_LABEL = 'Sebep girilmemiş'
  * aynen çalışır — kapanmış bir vardiyada unutulan duruş notu, yanlış palet,
  * eksik ürün bilgisi hâlâ düzeltilebilir. readOnly=true (ManagerDashboard):
  * hiçbir yazma çağrısı yok, sadece rakamlar.
+ *
+ * `wall` (sadece ManagerDashboard true geçirir): canlı vardiyanın "çok şık,
+ * çok dinamik" duvar-ekranı hissi geçmiş vardiyada kayboluyordu — bu
+ * bileşen kendi taşınabilir rem ölçeğini KORUYOR (telefonda da gömülüyor,
+ * bkz. dosya başındaki ölçek notu), ama `wall` true iken başlık/oranlar/
+ * rakamlar/alt başlıklar `.history-detail--wall` ile ManagerDashboard'ın
+ * vw/clamp ölçeğine geçiyor — SADECE bu ek sınıf üstünden, temel rem
+ * değerleri hâlâ orada, telefon tarafı hiç etkilenmiyor.
  */
-function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
+function ShiftHistoryDetail({ shiftId, readOnly, wall, onBack }) {
   const { shift, runs, events, pallets, loading, error, setError, refresh } = useShiftById(shiftId)
   /* Salt-okunur (müdür) görünümde operatör düzenlenemez, liste hiç çekilmez. */
   const personnel = usePersonnel(shift?.line_code, !readOnly)
@@ -150,7 +158,7 @@ function ShiftHistoryDetail({ shiftId, readOnly, onBack }) {
   }
 
   return (
-    <div className="history-detail">
+    <div className={`history-detail${wall ? ' history-detail--wall' : ''}`}>
       <div className="history-detail-header">
         <button type="button" className="history-detail-back" onClick={onBack}>
           ← Canlıya dön

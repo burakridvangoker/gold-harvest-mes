@@ -446,6 +446,19 @@ ama pratikte ulaşılamıyordu.
   ekranı) — `logFocusEventId` state'i + `EventLog`'un `focusEventId`
   prop'u üstünden OperatorPanel'deki AYNI "balonda Düzenle → olay
   geçmişinde o kayda odaklan" akışı burada da çalışır.
+- **`wall` prop'u — sadece müdür panosunda büyük/canlı tipografi.**
+  Kullanıcı geçmiş vardiyaya bakınca canlı ekranın "şık/dinamik" hissinin
+  kaybolduğunu bildirdi ("yazılar küçük"). `ShiftHistoryDetail` kendi
+  taşınabilir rem ölçeğini KORUYOR (telefonda da gömülüyor — bkz. dosya
+  başındaki not) ama `ManagerDashboard` artık `wall` prop'unu `true`
+  geçiriyor; bu, kök `div`'e `history-detail--wall` ekliyor ve SADECE bu
+  sınıfın altında başlık/oranlar/rakamlar/alt başlıklar
+  `ManagerDashboard.css`'in vw/clamp aileleriyle (`.zone-title`,
+  `.now-elapsed` vb. ile aynı değerler) büyütülüyor — temel rem
+  değerleri değişmedi, `OperatorPanel`'in geçmiş vardiya görünümü
+  (`wall` hiç geçirilmiyor) bundan hiç etkilenmiyor. Kullanıcı bilinçli
+  olarak "sadece müdür panosunda büyüsün" seçeneğini seçti (telefon/duvar
+  tek ölçek alternatifine karşı).
 
 ## Personel listesi: GH VARDİYA'dan tek yönlü kopya, FK yok
 

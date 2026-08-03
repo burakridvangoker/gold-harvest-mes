@@ -197,6 +197,7 @@ function ManagerDashboard() {
           <ShiftHistoryDetail
             shiftId={historyShiftId}
             readOnly
+            wall
             onBack={() => setHistoryShiftId(null)}
           />
         </div>
