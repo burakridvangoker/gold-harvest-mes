@@ -1,5 +1,9 @@
 import { buildIntervals, shiftTotals, palletTotals, palletTotalsByRun, shiftPaket, hizVerimi, totalsByRun, downtimeByNote } from '../../src/lib/timeline.js'
-import { product_runs, timeline_events, pallet_records, NOW_MS } from './sample-data.js'
+import { product_runs, timeline_events, pallet_records } from './hazir-vardiya.js'
+import { SHIFT_START_MS } from './sample-data.js'
+
+/* Hazır vardiya ekran görüntüleri 14:52'ye sabitleniyor (bkz. shots.cjs). */
+const NOW_MS = SHIFT_START_MS + 472 * 60 * 1000
 
 const iv = buildIntervals(timeline_events, NOW_MS)
 const t = shiftTotals(iv)

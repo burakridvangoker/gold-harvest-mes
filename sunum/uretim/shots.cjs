@@ -48,7 +48,7 @@ async function main() {
    * telefonda ne görünüyorsa o görünsün). ÜRETİMDE anı (yeşil).
    * Üst: durum + saat çubuğu. Alt: büyük aksiyon butonları. */
   const phone = await newPage(browser, { width: 400, height: 860 }, 3, at(14, 35))
-  await phone.goto(`${BASE}/?ekran=operator`)
+  await phone.goto(`${BASE}/?ekran=operator&hazir=1`)
   await phone.waitForSelector('.operator-actions', { timeout: 15000 })
   await phone.waitForTimeout(900)
   await phone.screenshot({ path: path.join(OUT, 'operator-ust.png') })
@@ -61,7 +61,7 @@ async function main() {
 
   // 2) Müdür panosu — geniş ekran, DURDU anı (kırmızı)
   const wall = await newPage(browser, { width: 1600, height: 1000 }, 2, at(14, 52))
-  await wall.goto(`${BASE}/?ekran=mudur`)
+  await wall.goto(`${BASE}/?ekran=mudur&hazir=1`)
   await wall.waitForSelector('.zone--now', { timeout: 15000 })
   await wall.waitForTimeout(900)
   await wall.screenshot({ path: path.join(OUT, 'mudur.png') })

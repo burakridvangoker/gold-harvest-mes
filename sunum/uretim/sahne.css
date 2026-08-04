@@ -1,14 +1,35 @@
 /*
- * Video sahnesi — 1920×1080. Porselen Andon paletiyle tutarlı koyu bir
- * "stüdyo" zemini; iki gerçek uygulama ekranı bunun üstünde birer cihaz
- * gibi durur.
+ * Video sahnesi — 1920×1080, koyu "stüdyo" zemini; iki gerçek uygulama
+ * ekranı bunun üstünde birer cihaz gibi durur.
  *
- * Ekranlar iframe (bkz. Sahne.jsx'teki not): uygulamanın vw/vh ölçeği
- * kendi viewport'una göre hesaplansın diye. Küçültme burada, dıştan
- * transform: scale ile yapılıyor.
+ * ÖLÇÜ MANTIĞI (bozmadan önce oku):
+ *   Kullanılabilir cihaz yüksekliği 842px
+ *     = 1080 − 124 (üst) − 4 (şerit) − 26/30 (gövde dolgusu)
+ *       − 32 (etiket) − 22 (çerçeve dolgusu)
+ *   Telefon : iframe 400×860,  ölçek 0.979 → 392×842
+ *   Pano    : iframe 1600×996, ölçek 0.845 → 1352×842
+ *   Genişlik: 44 + (392+22) + 44 + (1352+22) + 44 = 1920 ✓
+ *
+ * Telefon BİLEREK neredeyse 1:1 — öğretici videoda sihirbaz alanları,
+ * etiketler ve girilen değerler okunabilmeli.
  */
 
+/*
+ * Sahne sayfası ASLA kaymamalı (yaşanmış hata): sürücü imleç konumu için
+ * iframe İÇİNDE `scrollIntoView` çağırıyor ve bu, çerçeve sınırını aşıp
+ * ana belgeyi de kaydırıyor — üst şerit (altyazı, saat, ilerleme çubuğu)
+ * kadrajın dışına çıkıp videodan tamamen kayboluyordu.
+ * Bu kurallar yalnızca sahne belgesinde geçerli: sahne.css'i sadece
+ * Sahne.jsx yüklüyor, iki ekran ayrı iframe/belge.
+ */
+html,
+body {
+  overflow: hidden;
+  height: 1080px;
+}
+
 .sahne {
+  position: relative;
   width: 1920px;
   height: 1080px;
   overflow: hidden;
@@ -20,12 +41,11 @@
   box-sizing: border-box;
 }
 
-/* --- Açılış / kapanış kartları ---
-   Sürücü body'ye sınıf ekler, --kart-opaklik ile kare kare soldurur. */
+/* --- Açılış / kapanış kartları --- */
 .sahne-kart {
   position: absolute;
   inset: 0;
-  z-index: 20;
+  z-index: 40;
   display: none;
   flex-direction: column;
   align-items: center;
@@ -94,8 +114,7 @@ body.kart-kapanis .sahne-kart--kapanis { display: flex; }
   color: rgba(248, 250, 247, 0.5);
 }
 
-.sahne { position: relative; }
-
+/* --- Üst şerit --- */
 .sahne-ust {
   flex: 0 0 auto;
   height: 124px;
@@ -137,12 +156,14 @@ body.kart-kapanis .sahne-kart--kapanis { display: flex; }
   line-height: 1.15;
   letter-spacing: -0.01em;
   margin-bottom: 6px;
+  min-height: 35px;
 }
 
 .sahne-anlati-alt {
   font-size: 17.5px;
   line-height: 1.4;
   color: rgba(248, 250, 247, 0.66);
+  min-height: 25px;
 }
 
 .sahne-saat-kutu { text-align: right; }
@@ -166,22 +187,19 @@ body.kart-kapanis .sahne-kart--kapanis { display: flex; }
   color: rgba(248, 250, 247, 0.45);
 }
 
-/* Vardiyanın ne kadarının geçtiğini gösteren ince şerit */
 .sahne-ilerleme {
   flex: 0 0 auto;
   height: 4px;
   background: rgba(248, 250, 247, 0.1);
 }
-.sahne-ilerleme-dolgu {
-  height: 100%;
-  background: #009440;
-}
+.sahne-ilerleme-dolgu { height: 100%; background: #009440; }
 
+/* --- Gövde --- */
 .sahne-govde {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: 414px 1fr;
   gap: 44px;
   padding: 26px 44px 30px;
 }
@@ -198,15 +216,6 @@ body.kart-kapanis .sahne-kart--kapanis { display: flex; }
   color: rgba(248, 250, 247, 0.5);
 }
 
-/*
- * Cihaz çerçeveleri. Kullanılabilir yükseklik ~842px:
- * 1080 − 124 (üst) − 4 (şerit) − 26/30 (gövde dolgusu) − 32 (etiket)
- * − 22 (çerçeve dolgusu).
- *
- * Alttaki `::after` yumuşak bir karartma: müdür panosu 842px'e sığmadığı
- * için altı kesiliyor; düz kesik "eksik render" gibi duruyordu, karartma
- * bunu bilinçli bir kadraj hâline getiriyor.
- */
 .sahne-telefon,
 .sahne-duvar {
   position: relative;
@@ -218,7 +227,30 @@ body.kart-kapanis .sahne-kart--kapanis { display: flex; }
   overflow: hidden;
 }
 
-.sahne-telefon::after,
+.sahne-telefon { border-radius: 24px; }
+.sahne-duvar { border-radius: 16px; }
+
+.sahne-telefon-ic {
+  width: 400px;
+  height: 860px;
+  border: 0;
+  display: block;
+  border-radius: 14px;
+  transform: scale(0.979);
+  transform-origin: top left;
+}
+
+.sahne-duvar-ic {
+  width: 1600px;
+  height: 996px;
+  border: 0;
+  display: block;
+  border-radius: 10px;
+  transform: scale(0.845);
+  transform-origin: top left;
+}
+
+/* Panoda alt kesim yumuşasın — düz kesik "eksik render" gibi duruyordu. */
 .sahne-duvar::after {
   content: '';
   position: absolute;
@@ -230,34 +262,57 @@ body.kart-kapanis .sahne-kart--kapanis { display: flex; }
   pointer-events: none;
 }
 
-/* Telefonda kesme yok — içerik tam sığıyor, karartma da gereksiz. */
-.sahne-telefon::after { display: none; }
+/*
+ * ODAK — hangi ekranda işlem yapılıyorsa o öne çıkar, diğeri soluklaşır.
+ * Sınıflar body'ye sürücü tarafından konur. Geometri DEĞİŞMEZ (yeniden
+ * yerleşim videoda zıplama yaratıyordu); sadece opaklık, doygunluk ve
+ * ince bir vurgu halkası değişir.
+ */
+.sahne-sutun { transition: none; }
 
-/* iframe 400×1060, 0.794 → 318×842 */
-.sahne-telefon {
-  width: 340px;
-  border-radius: 24px;
+body.odak-telefon .sahne-sutun--pano,
+body.odak-pano .sahne-sutun--telefon {
+  opacity: 0.34;
+  filter: saturate(0.5);
 }
 
-.sahne-telefon-ic {
-  width: 400px;
-  height: 1060px;
-  border: 0;
-  display: block;
-  border-radius: 14px;
-  transform: scale(0.794);
-  transform-origin: top left;
+body.odak-telefon .sahne-sutun--telefon .sahne-telefon,
+body.odak-pano .sahne-sutun--pano .sahne-duvar {
+  box-shadow: 0 0 0 3px rgba(0, 148, 64, 0.85), 0 24px 60px -18px rgba(0, 0, 0, 0.9);
 }
 
-/* iframe 1600×1020, 0.8255 → 1321×842 */
-.sahne-duvar { border-radius: 16px; }
+body.odak-telefon .sahne-sutun--telefon .sahne-etiket,
+body.odak-pano .sahne-sutun--pano .sahne-etiket {
+  color: #4ade80;
+}
 
-.sahne-duvar-ic {
-  width: 1600px;
-  height: 1020px;
-  border: 0;
-  display: block;
-  border-radius: 10px;
-  transform: scale(0.8255);
-  transform-origin: top left;
+/* --- Dokunma imleci --- */
+.sahne-imlec {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  border: 2.5px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.55);
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.sahne-tiklama {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 148, 64, 0.9);
+  z-index: 29;
+  pointer-events: none;
+  opacity: 0;
 }

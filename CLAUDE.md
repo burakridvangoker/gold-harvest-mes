@@ -879,21 +879,39 @@ onu üreten düzenek. Ayrıntılar `sunum/README.md`'de. İki kalıcı karar:
 binme otomatik raporlanır (bu oturumda üst üste binen metin hataları
 defalarca yaşandı; gözle bakmak yetmiyor).
 
-**Vardiya videosu (`gold-harvest-mes-vardiya.mp4`, `uretim/video.cjs`):**
-bir vardiyanın 07:00'dan sonuna kadarki akışı, operatörün telefonu ve
-müdür panosu YAN YANA, ~34 saniyeye sıkıştırılmış. Sahte saat (Playwright
-`context.clock`) 3'er dakika ileri sarılır, her adımda
-`window.__mesYenile()` mock realtime'ı tetikler, iki ekran da yeniden
-çizer. Üç kalıcı kural (üçü de yaşanmış hatadan):
+**Öğretici tanıtım videosu (`gold-harvest-mes-tanitim.mp4`,
+`uretim/tanitim.cjs`):** ~2:47'lik, uygulamayı GERÇEKTEN kullanan demo —
+operatörün telefonu ve müdür panosu yan yana. Hiçbir kayıt önceden yok;
+vardiya, ürün, olay ve paletler senaryo boyunca gerçek arayüze
+tıklanarak oluşturuluyor. `HIZLI=1` ile kare üretmeden yalnızca senaryo
+koşturulup seçici hataları ucuza yakalanır.
+
+Kalıcı kurallar (hepsi yaşanmış hatadan):
 - **Ekranlar iframe olmalı.** Bileşenleri doğrudan sahneye gömmek
   uygulamanın `vw`/`vh` ölçeğini 1920px'lik sahne penceresine bağlıyor,
   telefon kadrajında sayaç taşıyor. iframe'in kendi viewport'u var.
-- **`?video=1` tüm geçiş/animasyonları kapatır.** Andon renk geçişleri
-  (0.5 sn) ve nabız gerçek zaman için; ~180× hızda kareler geçişin
-  ortasına denk gelip "ÜRETİMDE" yazarken sayacı kırmızı gösteriyordu.
-- **Altyazı tablosu (`Sahne.jsx#SAHNELER`) olay dakikalarıyla
-  eşleşmeli** — eşleşmezse ekran "üretimde" gösterirken altyazı "mola"
-  diyor (yaşanmış).
+- **Mock deposu `localStorage`'da olmalı.** İki iframe = iki ayrı belge;
+  ES modülü belge başına ayrı örneklendiği için operatörün açtığı
+  vardiyayı müdür panosu HİÇ görmüyordu ("Açık vardiya yok"). Ortak
+  depo + `storage` olayı, frame'ler arası realtime'ı da çözüyor.
+- **`scrollIntoView` kullanılmaz.** Çerçeve sınırını aşıp ANA belgeyi de
+  kaydırıyor; sahnenin üst şeridi (altyazı, saat, ilerleme) kadrajdan
+  çıkıyordu. Kaydırma yalnızca frame'in kendi görünümünde yapılır.
+- **Tıklama koordinatla değil `el.click()` ile.** iframe'ler `transform:
+  scale` taşıyor; imleç sadece görsel, işlem her hâlükârda çalışır.
+- **Mock, şema varsayılanlarını (`default now()`) doldurmalı.** Eksik
+  `opened_at` yüzünden operatör paneli `new Date(undefined)` ile
+  "Invalid time value" fırlatıp komple çöküyordu.
+- **`?video=1`** geçiş/animasyonları kapatır; **`?sade=1`** telefon
+  kadrajını sadeleştirir ama `.operator-secondary`'yi GİZLEMEZ ("Ürün
+  değiştir" akışı oradan başlıyor). **`?hazir=1`** ise PDF görselleri
+  için önceden dolu vardiyayı yükler (`hazir-vardiya.js`).
+- **Altyazı ekrandaki durumla çelişmemeli** — anlatı `tanitim.cjs`
+  içindeki `anlat(...)` çağrılarında.
+
+Önceki 34 sn'lik hızlandırılmış sürüm (`gold-harvest-mes-vardiya.mp4`)
+dosya olarak duruyor ama üreticisi kaldırıldı; öğretici sürüm onu
+kapsıyor.
 
 `playwright` ve `ffmpeg-static` bilinçli olarak `package.json`'a
 eklenmedi (uygulamayla ilgileri yok, sadece bu klasör için):

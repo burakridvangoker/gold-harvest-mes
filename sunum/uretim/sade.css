@@ -8,7 +8,10 @@
  * çubuk müdür panosunda zaten büyük ve okunaklı gösteriliyor, telefonda
  * tekrar etmesi hem yer yiyor hem eksen etiketleri sıkışık çıkıyor.
  */
-body.sade .operator-secondary,
+/*
+ * `.operator-secondary` BİLEREK gizlenmiyor: "Ürün değiştir" akışı
+ * oradan başlıyor ve videoda gösteriliyor (gizlenince senaryo tıklayamaz).
+ */
 body.sade .operator-visits,
 body.sade .history-strip,
 body.sade .operator-shift-totals,
