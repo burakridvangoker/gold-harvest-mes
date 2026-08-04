@@ -1,17 +1,29 @@
 # Müdür sunumu
 
-`gold-harvest-mes-sunum.pdf` — müdüre gönderilecek 10 sayfalık tanıtım
-sunumu. WhatsApp/e-postada kurulum gerektirmeden açılır.
+İki gönderilebilir dosya: 10 sayfalık tanıtım PDF'i ve bir vardiyanın
+baştan sona hızlandırılmış videosu. İkisi de WhatsApp/e-postada kurulum
+gerektirmeden açılır.
 
 ## İçindekiler
 
 | Dosya | Ne |
 |---|---|
-| `gold-harvest-mes-sunum.pdf` | **Gönderilecek dosya** |
+| `gold-harvest-mes-sunum.pdf` | **Gönderilecek — 10 sayfalık sunum** |
+| `gold-harvest-mes-vardiya.mp4` | **Gönderilecek — 34 sn'lik vardiya videosu** |
 | `sunum.html` | Sunumun kaynağı (tarayıcıda da açılır) |
 | `gorseller/` | Uygulamadan alınan ekran görüntüleri |
 | `fonts/` | IBM Plex Sans + Saira Condensed (uygulamayla aynı) |
-| `uretim/` | Görselleri ve PDF'i üreten düzenek |
+| `uretim/` | Görselleri, PDF'i ve videoyu üreten düzenek |
+
+## Gerekli araçlar
+
+`uretim/` altındaki betikler `playwright` ve (video için) `ffmpeg-static`
+ister. İkisi de `package.json`'a EKLENMEDİ — uygulamanın kendisiyle
+ilgileri yok, sadece bu klasördeki üretim için gerekli:
+
+```bash
+npm install --no-save playwright ffmpeg-static
+```
 
 ## Yeniden üretmek
 
@@ -38,6 +50,35 @@ node sunum/uretim/pdf.cjs
 
 `pdf.cjs` ayrıca `uretim/kontrol/` altına her slaydın PNG önizlemesini
 bırakır; PDF'i açmadan gözle kontrol etmek için.
+
+## Videoyu yeniden üretmek
+
+```bash
+# vite sunucusu ayakta iken (yukarıdaki 2. adım):
+node sunum/uretim/video.cjs
+```
+
+Video, `?ekran=sahne` sayfasını çeker: operatörün telefonu ve müdür
+panosu **iframe olarak yan yana**, ikisi de aynı sahte veriden beslenir.
+Playwright'ın sahte saati (`context.clock`) 3'er dakika ileri sarılır,
+her adımda `window.__mesYenile()` ile realtime taklit edilir ve iki ekran
+da yeniden çizer; her adımda bir kare alınır. 480 dakika → ~34 saniye.
+
+Üç tasarım kararı (hepsi yaşanmış bir hatanın sonucu):
+
+- **iframe şart.** Bileşenler doğrudan sahneye gömülünce uygulamanın
+  `vw`/`vh` ölçeği 1920px'lik sahne penceresine göre hesaplanıyor,
+  telefon kadrajında sayaç taşıyordu. iframe'in kendi viewport'u var.
+- **`?video=1` geçişleri kapatır.** Uygulamanın renk geçişleri (0.5 sn)
+  gerçek zaman için tasarlandı; ~180× hızda kareler geçişin ortasına
+  denk gelip "ÜRETİMDE" yazarken sayacı kırmızı gösteriyordu.
+- **`?sade=1`** telefon kadrajında ikincil bölümleri gizler (ikincil
+  butonlar, ürün kartları, saat çubuğu) — `src/` hiç değişmeden, sadece
+  `body.sade` altında.
+
+Anlatı başlıkları `uretim/Sahne.jsx` içindeki `SAHNELER` tablosunda;
+dakikalar `sample-data.js`'teki olaylarla eşleşmeli, yoksa altyazı
+ekranda görünen durumla çelişir.
 
 **Gerçek ekran görüntüleriyle değiştirmek istersen:** kendi telefonundan/
 bilgisayarından aldığın görüntüleri aynı adlarla `gorseller/` içine koy ve

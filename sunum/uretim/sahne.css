@@ -1,0 +1,263 @@
+/*
+ * Video sahnesi — 1920×1080. Porselen Andon paletiyle tutarlı koyu bir
+ * "stüdyo" zemini; iki gerçek uygulama ekranı bunun üstünde birer cihaz
+ * gibi durur.
+ *
+ * Ekranlar iframe (bkz. Sahne.jsx'teki not): uygulamanın vw/vh ölçeği
+ * kendi viewport'una göre hesaplansın diye. Küçültme burada, dıştan
+ * transform: scale ile yapılıyor.
+ */
+
+.sahne {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #0d1211;
+  color: #f8faf7;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* --- Açılış / kapanış kartları ---
+   Sürücü body'ye sınıf ekler, --kart-opaklik ile kare kare soldurur. */
+.sahne-kart {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  text-align: center;
+  background: #0d1211;
+  opacity: var(--kart-opaklik, 1);
+}
+
+body.kart-acilis .sahne-kart--acilis,
+body.kart-kapanis .sahne-kart--kapanis { display: flex; }
+
+.sahne-kart h1 {
+  margin: 0;
+  font-size: 78px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.sahne-kart p {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.45;
+  color: rgba(248, 250, 247, 0.7);
+  max-width: 52ch;
+}
+
+.sahne-kart-not {
+  margin-top: 18px;
+  font-family: 'Saira Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(248, 250, 247, 0.42);
+}
+
+/* Grid + eşit sütun: "8592" ile "%55" farklı genişlikte, flex'te
+   etiketler birbirine göre kayıyordu (yaşanmış). */
+.sahne-kart-oranlar {
+  display: grid;
+  grid-template-columns: repeat(3, 260px);
+  margin: 16px 0 8px;
+}
+.sahne-kart-oranlar div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.sahne-kart-oranlar strong {
+  font-size: 86px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: #4ade80;
+}
+.sahne-kart-oranlar span {
+  font-family: 'Saira Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  color: rgba(248, 250, 247, 0.5);
+}
+
+.sahne { position: relative; }
+
+.sahne-ust {
+  flex: 0 0 auto;
+  height: 124px;
+  display: grid;
+  grid-template-columns: 290px 1fr 210px;
+  align-items: center;
+  gap: 40px;
+  padding: 0 44px;
+  border-bottom: 1px solid rgba(248, 250, 247, 0.12);
+}
+
+.sahne-kimlik { display: flex; flex-direction: column; gap: 9px; align-items: flex-start; }
+
+.sahne-plaka {
+  display: inline-block;
+  padding: 5px 16px 7px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #eef1ee);
+  color: #131916;
+  font-family: 'Saira Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: 0.12em;
+}
+
+.sahne-vardiya {
+  font-family: 'Saira Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.15em;
+  color: rgba(248, 250, 247, 0.55);
+}
+
+.sahne-anlati { min-width: 0; }
+
+.sahne-anlati-baslik {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.sahne-anlati-alt {
+  font-size: 17.5px;
+  line-height: 1.4;
+  color: rgba(248, 250, 247, 0.66);
+}
+
+.sahne-saat-kutu { text-align: right; }
+
+.sahne-saat {
+  display: block;
+  font-size: 50px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.sahne-saat-etiket {
+  display: block;
+  margin-top: 7px;
+  font-family: 'Saira Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  color: rgba(248, 250, 247, 0.45);
+}
+
+/* Vardiyanın ne kadarının geçtiğini gösteren ince şerit */
+.sahne-ilerleme {
+  flex: 0 0 auto;
+  height: 4px;
+  background: rgba(248, 250, 247, 0.1);
+}
+.sahne-ilerleme-dolgu {
+  height: 100%;
+  background: #009440;
+}
+
+.sahne-govde {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 44px;
+  padding: 26px 44px 30px;
+}
+
+.sahne-sutun { min-width: 0; display: flex; flex-direction: column; }
+
+.sahne-etiket {
+  flex: 0 0 auto;
+  margin-bottom: 12px;
+  font-family: 'Saira Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  color: rgba(248, 250, 247, 0.5);
+}
+
+/*
+ * Cihaz çerçeveleri. Kullanılabilir yükseklik ~842px:
+ * 1080 − 124 (üst) − 4 (şerit) − 26/30 (gövde dolgusu) − 32 (etiket)
+ * − 22 (çerçeve dolgusu).
+ *
+ * Alttaki `::after` yumuşak bir karartma: müdür panosu 842px'e sığmadığı
+ * için altı kesiliyor; düz kesik "eksik render" gibi duruyordu, karartma
+ * bunu bilinçli bir kadraj hâline getiriyor.
+ */
+.sahne-telefon,
+.sahne-duvar {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 11px;
+  background: #1c2321;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+}
+
+.sahne-telefon::after,
+.sahne-duvar::after {
+  content: '';
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  bottom: 11px;
+  height: 52px;
+  background: linear-gradient(to bottom, rgba(28, 35, 33, 0), #1c2321);
+  pointer-events: none;
+}
+
+/* Telefonda kesme yok — içerik tam sığıyor, karartma da gereksiz. */
+.sahne-telefon::after { display: none; }
+
+/* iframe 400×1060, 0.794 → 318×842 */
+.sahne-telefon {
+  width: 340px;
+  border-radius: 24px;
+}
+
+.sahne-telefon-ic {
+  width: 400px;
+  height: 1060px;
+  border: 0;
+  display: block;
+  border-radius: 14px;
+  transform: scale(0.794);
+  transform-origin: top left;
+}
+
+/* iframe 1600×1020, 0.8255 → 1321×842 */
+.sahne-duvar { border-radius: 16px; }
+
+.sahne-duvar-ic {
+  width: 1600px;
+  height: 1020px;
+  border: 0;
+  display: block;
+  border-radius: 10px;
+  transform: scale(0.8255);
+  transform-origin: top left;
+}

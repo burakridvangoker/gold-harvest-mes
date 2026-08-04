@@ -83,14 +83,37 @@ function query(table) {
   return builder
 }
 
-const channel = {
-  on: () => channel,
-  subscribe: () => channel,
-  unsubscribe: () => channel,
+/*
+ * Realtime taklidi. Gerçek Supabase'te veri değişince kayıtlı geri
+ * çağırmalar tetikleniyor ve useShift yeniden çekiyor. Video düzeneğinde
+ * saat ileri sarıldıkça ekranların da güncellenmesi için aynı şey lazım:
+ * geri çağırmalar toplanır, sürücü her adımda window.__mesYenile() ile
+ * hepsini tetikler (zamanlayıcıya bağlamak yerine BİLEREK açık çağrı —
+ * sahte saat ileri sarılınca bir aralık yüzlerce kez ateşlenir ve
+ * kare üretimi sürünür).
+ */
+const dinleyiciler = new Set()
+
+const makeChannel = () => {
+  const ch = {
+    on: (_event, _filtre, geriCagirma) => {
+      if (typeof geriCagirma === 'function') dinleyiciler.add(geriCagirma)
+      return ch
+    },
+    subscribe: () => ch,
+    unsubscribe: () => ch,
+  }
+  return ch
+}
+
+if (typeof window !== 'undefined') {
+  window.__mesYenile = () => {
+    for (const geriCagirma of dinleyiciler) geriCagirma({})
+  }
 }
 
 export const supabase = {
   from: query,
-  channel: () => channel,
+  channel: makeChannel,
   removeChannel: () => {},
 }

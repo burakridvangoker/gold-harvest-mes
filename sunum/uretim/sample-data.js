@@ -20,6 +20,7 @@ const MIN = 60 * 1000
 
 export const NOW_MS = START_MS + 472 * MIN
 export const LINE_CODE = LINE
+export const SHIFT_START_MS = START_MS
 
 const iso = (minute) => new Date(START_MS + minute * MIN).toISOString()
 

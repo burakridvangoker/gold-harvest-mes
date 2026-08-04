@@ -879,6 +879,29 @@ onu üreten düzenek. Ayrıntılar `sunum/README.md`'de. İki kalıcı karar:
 binme otomatik raporlanır (bu oturumda üst üste binen metin hataları
 defalarca yaşandı; gözle bakmak yetmiyor).
 
+**Vardiya videosu (`gold-harvest-mes-vardiya.mp4`, `uretim/video.cjs`):**
+bir vardiyanın 07:00'dan sonuna kadarki akışı, operatörün telefonu ve
+müdür panosu YAN YANA, ~34 saniyeye sıkıştırılmış. Sahte saat (Playwright
+`context.clock`) 3'er dakika ileri sarılır, her adımda
+`window.__mesYenile()` mock realtime'ı tetikler, iki ekran da yeniden
+çizer. Üç kalıcı kural (üçü de yaşanmış hatadan):
+- **Ekranlar iframe olmalı.** Bileşenleri doğrudan sahneye gömmek
+  uygulamanın `vw`/`vh` ölçeğini 1920px'lik sahne penceresine bağlıyor,
+  telefon kadrajında sayaç taşıyor. iframe'in kendi viewport'u var.
+- **`?video=1` tüm geçiş/animasyonları kapatır.** Andon renk geçişleri
+  (0.5 sn) ve nabız gerçek zaman için; ~180× hızda kareler geçişin
+  ortasına denk gelip "ÜRETİMDE" yazarken sayacı kırmızı gösteriyordu.
+- **Altyazı tablosu (`Sahne.jsx#SAHNELER`) olay dakikalarıyla
+  eşleşmeli** — eşleşmezse ekran "üretimde" gösterirken altyazı "mola"
+  diyor (yaşanmış).
+
+`playwright` ve `ffmpeg-static` bilinçli olarak `package.json`'a
+eklenmedi (uygulamayla ilgileri yok, sadece bu klasör için):
+`npm install --no-save playwright ffmpeg-static`. **Dikkat:** `--no-save`
+ile kurulum yaparken tek komutta İKİSİNİ birden vermek gerekiyor; tek
+başına kurmak, `package.json`'da kayıtlı olmayan diğerini
+node_modules'dan düşürüyor (yaşanmış).
+
 ## Faz durumu
 
 **Tamamlandı:** vardiya yaşam döngüsü, zaman çizelgesi + geriye dönük
