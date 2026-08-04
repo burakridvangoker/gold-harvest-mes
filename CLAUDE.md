@@ -853,6 +853,32 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
   ölçeğini KULLANMAZ, kendi taşınabilir rem ölçeği var (telefonda da
   duvar ekranında da gömülüyor).
 
+## Müdür sunumu (`sunum/`)
+
+Müdüre önden gönderilmek üzere hazırlanmış 10 sayfalık tanıtım PDF'i ve
+onu üreten düzenek. Ayrıntılar `sunum/README.md`'de. İki kalıcı karar:
+
+- **Sunumda kod geçmez.** React/Supabase/şema anlatılmaz; müdürün gördüğü
+  tek şey "şu an göremediğim ne varmış". En değerli slayt açık kalma ile
+  hız verimi ayrımı (bkz. "Müdür panosu: iki oran" bölümü) — çoğu sahada
+  "makine çalıştı mı" bilinir, "çalışırken ne kadar yavaş çalıştı"
+  bilinmez.
+- **Ekran görüntüleri örnek veriyle üretilir.** Bu oturumun canlı
+  Supabase'e erişimi yok; `sunum/uretim/mock-supabase.js` gerçek
+  istemcinin yerine `vite.config.js` alias'ıyla geçer, `src/` içindeki
+  sayfa bileşenleri HİÇ DEĞİŞMEDEN gerçek kodla çalışır. Örnek veri
+  (`sample-data.js`) sahadaki gerçek rakamlara yakın tutulur — parlak
+  ama gerçekçi olmayan rakam uydurulmaz; düşük açık kalma oranı zaten
+  sunumun argümanının kendisi. Playwright saati sabitler (`page.clock`)
+  ve mock "şimdi"den sonraki kayıtları kırpar, böylece ekran her zaman o
+  anın tutarlı halini gösterir. Tarayıcı saat dilimi
+  `Europe/Istanbul`'a sabitlenmeli — `time.js` görüntülemede bunu
+  sabitliyor ama container UTC, yoksa saatler 3 saat kayıyor (yaşanmış).
+
+`pdf.cjs` her slaydı ölçer: içerik taşması ve sayfa numarasıyla üst üste
+binme otomatik raporlanır (bu oturumda üst üste binen metin hataları
+defalarca yaşandı; gözle bakmak yetmiyor).
+
 ## Faz durumu
 
 **Tamamlandı:** vardiya yaşam döngüsü, zaman çizelgesi + geriye dönük
