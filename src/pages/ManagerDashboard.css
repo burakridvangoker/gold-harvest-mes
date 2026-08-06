@@ -228,17 +228,6 @@
   flex-wrap: wrap;
 }
 
-.hourly-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding-top: clamp(0.4rem, 1vh, 0.75rem);
-}
-
-.hourly-label {
-  font-size: clamp(0.85rem, 0.95vw, 1.3rem);
-}
-
 .usage-figure {
   --usage-color: var(--film);
 
@@ -285,12 +274,31 @@
   gap: clamp(0.4rem, 0.9vh, 0.85rem);
 }
 
+/*
+ * Satırın tamamı dokunulabilir: dokununca o ürünün tam detayı
+ * (ambalaj firesi, gramaj, parti no, palet saatleri) açılır. `button`
+ * yerine div+role: `.plan-row--frozen` kendi kenarlık/zeminini
+ * kuruyor, buton varsayılanları onunla çakışıyordu.
+ */
 .plan-row {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
   font-size: clamp(1.05rem, 1.2vw, 1.8rem);
   --plan-color: var(--film);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.plan-row:active {
+  opacity: 0.72;
+}
+
+.plan-stack-hint {
+  font-size: clamp(0.8rem, 0.9vw, 1.2rem);
+  color: var(--film-dim);
+  align-self: flex-end;
 }
 
 .plan-row-head {

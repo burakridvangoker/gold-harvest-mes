@@ -1,15 +1,7 @@
 import { useMemo, useState } from 'react'
-import {
-  buildIntervals,
-  hizVerimi,
-  koliToPaket,
-  packagingWaste,
-  palletTotalsByRun,
-  runSpans,
-  totalsByRun,
-} from '../lib/timeline'
-import { formatDuration } from '../lib/duration'
+import { runSummaries } from '../lib/timeline'
 import { formatShortTime } from '../lib/time'
+import ProductDetail from './ProductDetail'
 import './Sheet.css'
 import './ProductHistory.css'
 
@@ -57,49 +49,12 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun, frozen = fa
     setEditing(false)
   }
 
-  const summaries = useMemo(() => {
-    const intervals = buildIntervals(events, nowMs)
-    const spans = runSpans(events, nowMs)
-    const zamanByRun = totalsByRun(intervals)
-    const paletByRun = palletTotalsByRun(pallets)
-
-    return [...runs]
-      .sort((a, b) => a.sira - b.sira)
-      .map((run) => {
-        const rawSpan = spans.get(run.id) ?? null
-        /*
-         * Kapanmış bir vardiyada hiçbir ürün gerçekten "sürüyor" değildir —
-         * son aralık yapısal olarak ongoing=true çıkar (vardiya bitince
-         * kesildiği için), ama bu "hâlâ üretimde" anlamına gelmez.
-         */
-        const span = rawSpan && frozen ? { ...rawSpan, ongoing: false } : rawSpan
-        const zaman = zamanByRun.get(run.id) ?? { uretimMs: 0, durusMs: 0 }
-        const palet = paletByRun.get(run.id) ?? { paletAdedi: 0, koliAdedi: 0 }
-        const paket = koliToPaket(palet.koliAdedi, run.koli_ici_adet)
-        const gercekPktDk =
-          zaman.uretimMs > 0 && paket ? paket / (zaman.uretimMs / 60000) : null
-        const toplamMs = zaman.uretimMs + zaman.durusMs
-        const acikKalmaOran = toplamMs > 0 ? zaman.uretimMs / toplamMs : null
-        const performans = run.calisma_hizi_pkt_dk
-          ? hizVerimi({ paketAdedi: paket ?? 0, uretimMs: zaman.uretimMs, hedefHizPktDk: run.calisma_hizi_pkt_dk })
-          : null
-        const waste = packagingWaste({
-          doluBaslangic: run.dolu_paket_baslangic,
-          doluBitis: run.dolu_paket_bitis,
-          bosBaslangic: run.bos_paket_baslangic,
-          bosBitis: run.bos_paket_bitis,
-          toplamPaket: paket ?? 0,
-          bosPaketAgirlikG: run.bos_paket_agirlik_g,
-        })
-        /* Bu ürüne ait paletler — ortak bir liste yerine her ürünün kendi
-         * kartında, hangi paletin hangi ürüne ait olduğu hiç belirsiz kalmasın. */
-        const paletKayitlari = [...pallets]
-          .filter((pallet) => pallet.product_run_id === run.id)
-          .reverse()
-
-        return { run, span, zaman, palet, paket, gercekPktDk, acikKalmaOran, performans, waste, paletKayitlari }
-      })
-  }, [runs, events, pallets, nowMs, frozen])
+  /* Hesap timeline.js'te — aynı rakamları müdür panosundaki ürün detayı da
+   * kullanıyor, iki yerde ayrı ayrı hesaplanmasın diye. */
+  const summaries = useMemo(
+    () => runSummaries(runs, events, pallets, nowMs, { frozen }),
+    [runs, events, pallets, nowMs, frozen],
+  )
 
   if (summaries.length === 0) return null
 
@@ -322,90 +277,7 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun, frozen = fa
               </>
             ) : (
               <>
-                <div className="sheet-stats">
-                  <div className="sheet-stat-row">
-                    <span className="sheet-stat-label">Süre</span>
-                    <span className="sheet-stat-value tnum">{formatDuration(open.zaman.uretimMs)}</span>
-                  </div>
-                  <div className="sheet-stat-row">
-                    <span className="sheet-stat-label">Duruş</span>
-                    <span className="sheet-stat-value tnum">{formatDuration(open.zaman.durusMs)}</span>
-                  </div>
-                  <div className="sheet-stat-row">
-                    <span className="sheet-stat-label">Palet</span>
-                    <span className="sheet-stat-value tnum">{open.palet.paletAdedi}</span>
-                  </div>
-                  <div className="sheet-stat-row">
-                    <span className="sheet-stat-label">Koli</span>
-                    <span className="sheet-stat-value tnum">{open.palet.koliAdedi}</span>
-                  </div>
-                  <div className="sheet-stat-row">
-                    <span className="sheet-stat-label">Paket</span>
-                    <span className="sheet-stat-value tnum">{open.paket ?? '—'}</span>
-                  </div>
-                  <div className="sheet-stat-row">
-                    <span className="sheet-stat-label">Gerçekleşen hız</span>
-                    <span className="sheet-stat-value tnum">
-                      {open.gercekPktDk ? `${open.gercekPktDk.toFixed(1)} pkt/dk` : '—'}
-                    </span>
-                  </div>
-                  <div className="sheet-stat-row">
-                    <span className="sheet-stat-label">Açık kalma</span>
-                    <span className="sheet-stat-value tnum">
-                      {open.acikKalmaOran != null ? `%${Math.round(open.acikKalmaOran * 100)}` : '—'}
-                    </span>
-                  </div>
-                  <div className="sheet-stat-row">
-                    <span className="sheet-stat-label">Hız verimi</span>
-                    <span className="sheet-stat-value tnum">
-                      {open.performans ? `%${Math.round(open.performans.oran * 100)}` : '—'}
-                    </span>
-                  </div>
-                  {open.run.hedef_koli ? (
-                    <div className="sheet-stat-row">
-                      <span className="sheet-stat-label">Hedef</span>
-                      <span className="sheet-stat-value tnum">
-                        {open.palet.koliAdedi} / {open.run.hedef_koli} koli
-                      </span>
-                    </div>
-                  ) : null}
-                </div>
-
-                {open.waste ? (
-                  <div className="sheet-stats">
-                    <div className="sheet-stat-row">
-                      <span className="sheet-stat-label">Dolu pakette fire</span>
-                      <span className="sheet-stat-value tnum">{open.waste.doluFire} adet</span>
-                    </div>
-                    <div className="sheet-stat-row">
-                      <span className="sheet-stat-label">Ambalaj firesi</span>
-                      <span className="sheet-stat-value tnum">
-                        {open.waste.ambalajFireAdet} adet
-                        {open.waste.ambalajFireGram != null ? ` · ${open.waste.ambalajFireGram} g` : ''}
-                      </span>
-                    </div>
-                    {open.run.ortalama_gramaj_g ? (
-                      <div className="sheet-stat-row">
-                        <span className="sheet-stat-label">Ortalama gramaj</span>
-                        <span className="sheet-stat-value tnum">{open.run.ortalama_gramaj_g} g</span>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {open.paletKayitlari.length > 0 ? (
-                  <div className="history-pallets">
-                    <span className="history-pallets-label plate">Palet çıkış saatleri</span>
-                    <ul className="history-pallets-list">
-                      {open.paletKayitlari.map((pallet) => (
-                        <li key={pallet.id} className="history-pallets-row tnum">
-                          <span>{formatShortTime(new Date(pallet.completed_at))}</span>
-                          <span>{pallet.koli_count} koli</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
+                <ProductDetail ozet={open} />
 
                 <div className="sheet-actions">
                   {onUpdateRun && (

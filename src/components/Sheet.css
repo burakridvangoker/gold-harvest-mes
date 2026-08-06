@@ -188,3 +188,87 @@
     opacity: 1;
   }
 }
+
+/*
+ * Duvar ekranı ölçeği — İKİ yüzey paylaşıyor:
+ *  - `.history-detail--wall` (donmuş vardiya özeti, müdür panosunda)
+ *  - `.sheet-overlay--wall` (müdür panosunun CANLI ürün detayı)
+ * İkisi de aynı 1920px duvar ekranında açılıyor; `Sheet.css`'in temel
+ * rem ölçeği orada devasa rakamların yanında minicik kalıyordu (yaşanmış
+ * şikayet: "yazılar küçük"). Değerler `ManagerDashboard.css`'in vw/clamp
+ * ailesiyle aynı hizada.
+ *
+ * Telefon yüzeyleri (OperatorPanel'in `ProductHistory`'si, `SpeedSheet`,
+ * `RunEndSheet`) bu sınıfların ALTINDA olmadığı için hiç etkilenmiyor.
+ *
+ * `line-height` her büyütülen yerde AÇIKÇA sıkıştırılır: index.css'in
+ * global `145%`'i büyük rakamlarda görünmez satır kutusunu alttaki
+ * etiketin üstüne bindiriyor (yaşanmış hata).
+ */
+.history-detail--wall .sheet-panel,
+.sheet-overlay--wall .sheet-panel {
+  max-width: clamp(640px, 45vw, 900px);
+}
+
+.history-detail--wall .sheet-title,
+.sheet-overlay--wall .sheet-title {
+  font-size: clamp(1.5rem, 2vw, 2.5rem);
+  line-height: 1.2;
+}
+
+.history-detail--wall .sheet-subtitle,
+.sheet-overlay--wall .sheet-subtitle {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+}
+
+.history-detail--wall .sheet-stats,
+.sheet-overlay--wall .sheet-stats {
+  gap: clamp(0.6rem, 0.9vw, 1rem);
+}
+
+.history-detail--wall .sheet-stat-label,
+.sheet-overlay--wall .sheet-stat-label {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+}
+
+.history-detail--wall .sheet-stat-value,
+.sheet-overlay--wall .sheet-stat-value {
+  font-size: clamp(1.3rem, 1.6vw, 2.2rem);
+  line-height: 1.2;
+}
+
+.history-detail--wall .sheet-button,
+.sheet-overlay--wall .sheet-button {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+  padding: clamp(0.9rem, 1.1vw, 1.3rem);
+}
+
+/* `ProductDetail`'in palet listesi de sheet'in İÇİNDE — aynı ölçek. */
+.history-detail--wall .history-pallets-label,
+.sheet-overlay--wall .history-pallets-label {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+}
+
+.history-detail--wall .history-pallets-row,
+.sheet-overlay--wall .history-pallets-row {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+  padding: clamp(0.4rem, 0.55vw, 0.6rem) clamp(0.9rem, 1.1vw, 1.3rem);
+}
+
+/*
+ * Duvar ölçeğinde içerik panelin 92dvh'sini aşabiliyor (büyük punto +
+ * uzun palet listesi) — "Kapat" ekranın altında kalıyordu. Panel zaten
+ * kendi içinde kayıyor; buton satırı yapışkan yapılıp her zaman
+ * erişilebilir tutuluyor. Telefon ölçeğinde içerik sığdığı için bu
+ * gerekmiyor, o yüzden sadece duvar sınıflarının altında.
+ */
+.history-detail--wall .sheet-actions,
+.sheet-overlay--wall .sheet-actions {
+  position: sticky;
+  /* Panelin kendi alt dolgusu kadar AŞAĞI çekilir, dolgu kadar da kendi
+   * içine eklenir — yoksa butonun altındaki dolgu boşluğundan kayan
+   * içerik (palet çipleri) sızıp görünüyor. */
+  bottom: calc(-1.25rem - env(safe-area-inset-bottom));
+  padding: 0.75rem 0 calc(1.25rem + env(safe-area-inset-bottom));
+  background: var(--steel-800);
+}

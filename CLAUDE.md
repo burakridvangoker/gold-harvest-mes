@@ -393,6 +393,39 @@ karışıklık) vardiya toplamı tek bir ürünün rakamıyla birebir aynı
 görününce "bu rakam nereden geliyor" belirsiz kalıyordu; artık aynı
 sayı (ör. 360 paket) doğrudan o ürünün kendi satırında da yazıyor.
 
+**Ürün satırına dokununca operatördekinin AYNISI detay açılır.** Kullanıcı
+isteği: "müdür ekranında ürünün üstüne bastığımda da tüm detayları
+görebileyim, operatör ekranındaki gibi ambalaj firesi, ürün bilgileri."
+Satır (`.plan-row`) artık `role="button"` + `tabIndex` ile tıklanabilir
+(`.plan-stack-hint` ile "Ürün detayı için satıra dokun" ipucu), açılan
+sayfa `ProductHistory`'nin detayıyla BİREBİR aynı gövdeyi kullanır.
+
+- `src/components/ProductDetail.jsx` — ortak, salt-okunur detay GÖVDESİ.
+  Bilerek kendi `sheet-overlay`/`sheet-panel` kabuğunu TAŞIMAZ: iki
+  çağıranın kabuğu farklı (operatörde aynı panelin içinde "Düzenle" ile
+  forma geçiliyor, müdürde sadece "Kapat"). Kabuğu paylaştırmaya
+  kalkışmayın — düzenleme formu operatöre özel kalmalı, müdür panosunda
+  hiçbir yazma çağrısı yok (bkz. "Geçmiş vardiyalar" bölümündeki
+  `readOnly` ayrımı).
+- `timeline.js#runSummaries(runs, events, pallets, nowMs, { frozen })` —
+  ürün başına süre/palet/paket/gerçek hız/açık kalma/hız verimi/ambalaj
+  firesi/palet kayıtları. Eskiden bu hesap `ProductHistory`'nin içindeki
+  bir `useMemo`'ydu; iki ekranın aynı rakamı ayrı ayrı hesaplaması
+  (ve zamanla ayrışması) riskine karşı `timeline.js`'e taşındı — kod
+  konumu haritasındaki "türetilmiş metrik bileşene değil buraya" kuralı.
+
+**Duvar ölçeği ortak, tek yerde:** `Sheet.css`'in temel rem ölçeği
+1920px'lik duvar ekranında devasa rakamların yanında minicik kalıyor
+(bkz. `wall` prop'unun hikâyesi). Bu yüzden müdür panosunun detay
+sayfası `sheet-overlay--wall` sınıfını taşır. Ölçek kuralları artık
+`Sheet.css`'te, `.history-detail--wall` ile TEK bir selector listesinde
+paylaşılıyor (önceden yalnız `ShiftHistoryDetail.css`'teydi) — iki
+yüzey aynı ekranda açıldığı için ayrı ayrı büyütülüp birbirinden
+kayması anlamsızdı. Duvar varyantında `.sheet-actions` ayrıca
+YAPIŞKANDIR (`position: sticky`): büyük punto + uzun palet listesi
+paneli 92dvh'yi aşınca "Kapat" ekranın altında kalıyordu. Telefon
+yüzeyleri bu sınıfların altında olmadığı için hiç etkilenmez.
+
 ## Geçmiş vardiyalar: vardiyayı bitirmek veri silmez
 
 Sahada yaşanan bir korku: "vardiyayı bitir dersem her şey sıfırlanacak
@@ -778,12 +811,17 @@ kullanılarak:
   bildirildi). Düzeltme: son iki işaret arası `totalSpan`'ın %3.5'inden
   yakınsa aradaki tam saat İŞARETİNİN METNİ gizlenir (`hideTickIndex`),
   sadece gerçek bitiş gösterilir — ızgara çizgileri etkilenmez.
-- `src/components/ProductionBars.jsx` + `timeline.js#hourlyPaket` —
-  saatlik paket üretimi, TEK seri/tek ton (sequential, gökkuşağı yok,
-  lejant gerekmiyor). `hourlyPaket` de `shiftPaket` gibi her paleti
-  KENDİ ürününün koli içi adediyle hesaplar (aynı yaşanmış hata sınıfı,
-  tek bir değerle çarpma tuzağına tekrar düşülmedi). Palet, tamamlandığı
-  saatin kovasına düşer; test edilir (`timeline.test.js`).
+- **"Saatlik üretim (paket)" grafiği KALDIRILDI.** Bir süre
+  `ProductionBars.jsx` + `timeline.js#hourlyPaket` ile müdür panosunda
+  saatlik paket kovaları çizilmişti. Kullanıcı sahada bakınca "bu bölme
+  ne işe yarıyor" dedi ve kaldırılmasını istedi: kova sınırı paletin
+  ÇIKTIĞI ana bağlı, üretim ise sürekli — bir palet 09:58'de de 10:02'de
+  de çıkabildiği için çubuklar saatler arasında zıplıyor, gerçek bir
+  tempo bilgisi vermiyordu. Aynı soruyu `ShiftClockBar` (saate bağlı,
+  gerçek aralıklar) ve `hizVerimi` (hız düşüşünü doğrudan ölçen) zaten
+  daha dürüst cevaplıyor. Bileşen, CSS'i, `hourlyPaket` ve testleri
+  komple silindi — geri eklenecekse önce "bu, ClockBar'ın vermediği
+  hangi bilgiyi veriyor" sorusu cevaplanmalı.
 
 Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
 - `<input type="time">` KULLANMAYIN — AM/PM gösterimi sayfa diline
@@ -864,9 +902,13 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
 - `src/components/ProductHistory.jsx` — vardiyadaki ürün kartları + detay.
   `frozen` prop'u kapanmış vardiya görünümünde "sürüyor" yanlış etiketini
   bastırır.
+- `src/components/ProductDetail.jsx` — ürün detayının salt-okunur ortak
+  gövdesi; `ProductHistory` (operatör) ve `ManagerDashboard` (müdür)
+  ikisi de bunu kullanır, kabuğu kendileri sarar.
 - `src/components/Sheet.css` — SpeedSheet/RunEndSheet/ProductHistory'nin
   paylaştığı nötr alttan-açılan sayfa iskeleti (TimeSheet/StopNoteSheet
-  kendi tonlarını taşıdığı için ayrı kaldı).
+  kendi tonlarını taşıdığı için ayrı kaldı). Duvar ölçeği varyantları
+  (`.history-detail--wall` / `.sheet-overlay--wall`) da burada.
 - `src/components/LineSelect.jsx` + `src/hooks/useLineCode.js` — hat
   seçimi, cihaz başına `localStorage`'da.
 - `src/lib/lines.js` — sahadaki hatların tek kaynağı (`LINE_CODES`).
@@ -963,7 +1005,8 @@ saatleri listesi, çoklu sebep desteği (StopNoteSheet çip birleştirme +
 ReasonSegments zaman çubuğu), personel listesi entegrasyonu (hatta göre
 filtre, otomatik ekip ataması/ön-doldurma), Porselen Andon v2 (açık
 tema) ve gerçek veri görselleştirmeleri (dairesel göstergeler, vardiya
-zaman şeridi, saatlik üretim grafiği).
+zaman şeridi), "Ürünü bitir" / "Yeni ürün" ayrımı, müdür panosunda
+ürün satırına dokununca açılan tam ürün detayı (ortak `ProductDetail`).
 
 **Yapılmadı:** eski ürüne geri dönüp üretime devam etme UI'ı (şema/`
 runSpans` bunu zaten destekliyor, sadece "bu ürüne dön" butonu yok), not→kod

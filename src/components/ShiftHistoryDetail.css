@@ -441,37 +441,7 @@
   font-size: clamp(1rem, 1.1vw, 1.5rem);
 }
 
-.history-detail--wall .history-pallets-label {
-  font-size: clamp(1rem, 1.1vw, 1.5rem);
-}
-
-.history-detail--wall .history-pallets-row {
-  font-size: clamp(1rem, 1.1vw, 1.5rem);
-  padding: clamp(0.4rem, 0.55vw, 0.6rem) clamp(0.9rem, 1.1vw, 1.3rem);
-}
-
-.history-detail--wall .sheet-panel {
-  max-width: clamp(640px, 45vw, 900px);
-}
-
-.history-detail--wall .sheet-title {
-  font-size: clamp(1.5rem, 2vw, 2.5rem);
-  line-height: 1.2;
-}
-
-.history-detail--wall .sheet-subtitle {
-  font-size: clamp(1rem, 1.1vw, 1.5rem);
-}
-
-.history-detail--wall .sheet-stats {
-  gap: clamp(0.6rem, 0.9vw, 1rem);
-}
-
-.history-detail--wall .sheet-stat-label {
-  font-size: clamp(1rem, 1.1vw, 1.5rem);
-}
-
-.history-detail--wall .sheet-stat-value {
-  font-size: clamp(1.3rem, 1.6vw, 2.2rem);
-  line-height: 1.2;
-}
+/* Alttan açılan sayfanın (Sheet.css) duvar ölçeği artık `Sheet.css`'te,
+ * `.sheet-overlay--wall` ile birlikte tek yerde — müdür panosunun CANLI
+ * ürün detayı da aynı ölçeği kullanıyor, iki dosyada ayrı ayrı
+ * büyütülüp birbirinden kaymasın diye. */

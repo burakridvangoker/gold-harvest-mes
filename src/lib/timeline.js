@@ -195,6 +195,60 @@ export function runSpans(events, nowMs = Date.now()) {
 }
 
 /**
+ * Vardiyadaki her ürünün tam özeti — süre, palet/koli/paket, gerçekleşen
+ * hız, açık kalma, hız verimi, ambalaj firesi ve o ürüne ait palet
+ * kayıtları. Sıra `sira`'ya göre.
+ *
+ * Hem operatör ekranındaki ürün kartları (`ProductHistory`) hem müdür
+ * panosundaki ürün detayı bunu kullanır — aynı rakam iki yerde ayrı ayrı
+ * hesaplanmasın diye (bileşende değil burada, projenin genel kuralı).
+ *
+ * `frozen`: kapanmış vardiyada hiçbir ürün gerçekten "sürüyor" değildir;
+ * son aralık yapısal olarak ongoing çıkar ama bu yanıltıcıdır.
+ */
+export function runSummaries(runs, events, pallets, nowMs = Date.now(), { frozen = false } = {}) {
+  const intervals = buildIntervals(events, nowMs)
+  const spans = runSpans(events, nowMs)
+  const zamanByRun = totalsByRun(intervals)
+  const paletByRun = palletTotalsByRun(pallets)
+
+  return [...runs]
+    .sort((a, b) => a.sira - b.sira)
+    .map((run) => {
+      const rawSpan = spans.get(run.id) ?? null
+      const span = rawSpan && frozen ? { ...rawSpan, ongoing: false } : rawSpan
+      const zaman = zamanByRun.get(run.id) ?? { uretimMs: 0, durusMs: 0 }
+      const palet = paletByRun.get(run.id) ?? { paletAdedi: 0, koliAdedi: 0 }
+      const paket = koliToPaket(palet.koliAdedi, run.koli_ici_adet)
+      const gercekPktDk = zaman.uretimMs > 0 && paket ? paket / (zaman.uretimMs / 60000) : null
+      const toplamMs = zaman.uretimMs + zaman.durusMs
+      const acikKalmaOran = toplamMs > 0 ? zaman.uretimMs / toplamMs : null
+      const performans = run.calisma_hizi_pkt_dk
+        ? hizVerimi({
+            paketAdedi: paket ?? 0,
+            uretimMs: zaman.uretimMs,
+            hedefHizPktDk: run.calisma_hizi_pkt_dk,
+          })
+        : null
+      const waste = packagingWaste({
+        doluBaslangic: run.dolu_paket_baslangic,
+        doluBitis: run.dolu_paket_bitis,
+        bosBaslangic: run.bos_paket_baslangic,
+        bosBitis: run.bos_paket_bitis,
+        toplamPaket: paket ?? 0,
+        bosPaketAgirlikG: run.bos_paket_agirlik_g,
+      })
+      /* Bu ürüne ait paletler — hangi paletin hangi ürüne ait olduğu
+       * hiç belirsiz kalmasın (bkz. CLAUDE.md "Palet çıkış saatleri"). */
+      const paletKayitlari = [...pallets]
+        .filter((pallet) => pallet.product_run_id === run.id)
+        .reverse()
+
+      return { run, span, zaman, palet, paket, gercekPktDk, acikKalmaOran, performans, waste, paletKayitlari }
+    })
+}
+
+/**
  * Şu an hangi ürün çalışılıyor — son olayın işaret ettiği ürün.
  *
  * Son olayın `product_run_id`'si AÇIKÇA null ise aktif ürün de YOKTUR.
@@ -386,35 +440,6 @@ export function packagingWaste({
   const ambalajFireGram = bosPaketAgirlikG ? ambalajFireAdet * bosPaketAgirlikG : null
 
   return { doluFark, bosFark, doluFire, ambalajFireAdet, ambalajFireGram }
-}
-
-/**
- * Vardiya boyunca saat başına düşen paket üretimi — müdür panosundaki
- * saatlik üretim grafiği için. Her palet KENDİ ürününün koli içi adediyle
- * hesaplanır (shiftPaket'teki aynı prensip: tek bir değerle çarpmak yanlış
- * sonuç verir). Palet, tamamlandığı saatin kovasına düşer; vardiya
- * başlangıcından şu ana kadar en az 1 saatlik kova döner (vardiya yeni
- * başlamışsa bile boş bir ilk kova görünsün diye).
- */
-export function hourlyPaket(pallets, runsById, shiftStartMs, nowMs = Date.now()) {
-  if (shiftStartMs == null) return []
-
-  const hours = Math.max(1, Math.ceil((nowMs - shiftStartMs) / SAAT_MS))
-  const buckets = Array.from({ length: hours }, (_, index) => ({ index, paket: 0 }))
-
-  for (const pallet of pallets) {
-    const completedMs = toMs(pallet.completed_at)
-    if (completedMs == null) continue
-
-    const bucketIndex = Math.floor((completedMs - shiftStartMs) / SAAT_MS)
-    if (bucketIndex < 0 || bucketIndex >= hours) continue
-
-    const run = runsById.get(pallet.product_run_id)
-    const paket = koliToPaket(pallet.koli_count ?? 0, run?.koli_ici_adet)
-    if (paket != null) buckets[bucketIndex].paket += paket
-  }
-
-  return buckets
 }
 
 /* ---- Duruş notları ---- */

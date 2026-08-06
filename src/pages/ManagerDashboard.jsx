@@ -11,12 +11,12 @@ import {
   currentState,
   downtimeByNote,
   hizVerimi,
-  hourlyPaket,
   koliToPaket,
   paceStatus,
   palletTotals,
   palletTotalsByRun,
   runSpans,
+  runSummaries,
   segmentKind,
   seviyeDurumu,
   shiftPaket,
@@ -29,7 +29,8 @@ import { formatClock, formatDateLabel, formatShortTime } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import RadialGauge from '../components/RadialGauge'
 import ShiftClockBar from '../components/ShiftClockBar'
-import ProductionBars from '../components/ProductionBars'
+import ProductDetail from '../components/ProductDetail'
+import '../components/Sheet.css'
 import './ManagerDashboard.css'
 
 const NO_REASON_LABEL = 'Sebep girilmemiş'
@@ -44,6 +45,9 @@ function ManagerDashboard() {
   const [now, setNow] = useState(() => Date.now())
   const [historyPickerOpen, setHistoryPickerOpen] = useState(false)
   const [historyShiftId, setHistoryShiftId] = useState(null)
+  /* Ürün satırına dokununca açılan detay — salt-okunur, operatördeki
+   * ProductHistory detayının aynısı (ortak `ProductDetail` bileşeni). */
+  const [detayRunId, setDetayRunId] = useState(null)
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -179,6 +183,13 @@ function ManagerDashboard() {
   /* Operatör ekranıyla aynı kural: son olay ürünsüzse ("Ürünü bitir" ya da
    * vardiya açılışı) aktif ürün yoktur — bkz. timeline.js#aktifUrun. */
   const activeRun = useMemo(() => aktifUrun(events, runs), [events, runs])
+
+  /* Ürün detayı için tam özet — operatör ekranıyla aynı fonksiyon. */
+  const ozetler = useMemo(
+    () => runSummaries(runs, events, pallets, now),
+    [runs, events, pallets, now],
+  )
+  const acikOzet = ozetler.find((ozet) => ozet.run.id === detayRunId) ?? null
 
   const nowDate = new Date(now)
 
@@ -357,7 +368,6 @@ function ManagerDashboard() {
 
   /* useMemo değil: bu noktada zaten early return'lerin ardındayız, hook
    * sırası bozulmasın diye diğer türetilmiş değerler gibi düz const. */
-  const hourlyBuckets = hourlyPaket(pallets, runsById, shiftStartMs, now)
 
   return (
     <div className={`manager-shell is-${state}`}>
@@ -512,14 +522,9 @@ function ManagerDashboard() {
             </div>
           </dl>
 
-          {/* Saatlik üretim — tek seri, tek ton; büyüklüğü/eğilimi tek bakışta gösterir. */}
-          <div className="hourly-block">
-            <span className="hourly-label plate">Saatlik üretim (paket)</span>
-            <ProductionBars buckets={hourlyBuckets} />
-          </div>
-
           {productRows.length > 0 && (
             <div className="plan-stack">
+              <span className="plan-stack-hint">Ürün detayı için satıra dokun</span>
               {productRows.map(
                 ({ run, acikKalmaOran, perf, pace, isActive, runPallets, paletAdedi, koli, runPaket }, index) => {
                 const isFirstFrozen = !isActive && (index === 0 || productRows[index - 1].isActive)
@@ -529,6 +534,16 @@ function ManagerDashboard() {
                   className={`plan-row${pace ? ` plan-row--${pace.durum}` : ''}${
                     isActive ? '' : ' plan-row--frozen'
                   }${isFirstFrozen ? ' plan-row--frozen-first' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${run.urun_adi} detayı`}
+                  onClick={() => setDetayRunId(run.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setDetayRunId(run.id)
+                    }
+                  }}
                 >
                   <div className="plan-row-head">
                     <span className="plan-row-label plate">{run.urun_adi}</span>
@@ -681,6 +696,41 @@ function ManagerDashboard() {
           </div>
         </section>
       </div>
+
+      {/*
+        * Ürün detayı — operatördeki `ProductHistory` detayının aynısı,
+        * ortak `ProductDetail` bileşeniyle. Salt-okunur: "Düzenle" yok,
+        * müdür panosu hiçbir yazma çağrısı içermez (bkz. CLAUDE.md).
+        */}
+      {acikOzet && (
+        <div className="sheet-overlay sheet-overlay--wall" onClick={() => setDetayRunId(null)}>
+          <div
+            className="sheet-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label={acikOzet.run.urun_adi}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-handle" />
+            <h2 className="sheet-title plate">{acikOzet.run.urun_adi}</h2>
+            {acikOzet.run.parti_no ? (
+              <p className="sheet-subtitle">{acikOzet.run.parti_no}</p>
+            ) : null}
+
+            <ProductDetail ozet={acikOzet} />
+
+            <div className="sheet-actions">
+              <button
+                type="button"
+                className="sheet-button sheet-button--primary"
+                onClick={() => setDetayRunId(null)}
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
