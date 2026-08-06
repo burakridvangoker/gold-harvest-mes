@@ -618,14 +618,41 @@ sayıyla aynı. `ShiftHistoryDetail` de aynı ilkeyle tam liste gösterir.
 
 ## Ürün geçmişi ve ürün değiştirme
 
-Aynı vardiyada birden çok ürün üretilebilir. Bir ürün üretimdeyken ikinci/
-üçüncü ürüne geçiş akışı farklı: operatör ekranındaki "Ürün değiştir" →
-`RunEndSheet` (bitiş numaratörleri + fire önizleme, aktif `product_run`'a
-kaydedilir) → `ShiftWizard mode="product"` (yeni ürün bilgisi) →
-`TimeSheet` ("yeni ürüne ne zaman geçildi") → yeni `product_run` satırı +
-o run'a işaret eden yeni `uretim` olayı. Eski ürüne dönmek istenirse
-(henüz UI'da yok, şema destekliyor) aynı prensip: eski `product_run_id`'
-siyle yeni bir olay.
+Aynı vardiyada birden çok ürün üretilebilir.
+
+**"Ürünü bitir" ve "Yeni ürün" AYRI iki iştir — birbirine bağlanmamalı.**
+Eskiden tek bir "Ürün değiştir" butonu vardı ve akış `RunEndSheet` →
+`ShiftWizard mode="product"` diye zincirlenmişti; yani ürünü bitirmenin
+TEK yolu yeni bir ürüne geçmekti. Sahada bu karşılığı olmayan bir
+zorlamaydı: "ürün bitti ama şimdilik yenisine geçmiyorum" çok normal
+(vardiya sonu, uzun temizlik, ürün beklemesi). İkisi ayrıldı:
+
+- **Ürünü bitir** (aktif ürün varken): `RunEndSheet` (bitiş numaratörleri
+  + fire önizleme, aktif `product_run`'a kaydedilir) → `TimeSheet` ("Ürün
+  ne zaman bitti?") → `product_run_id`'si **açıkça null** olan bir `durus`
+  olayı (`note: 'Ürün bitişi'`, otomatik — "Moladan dönüş" ile aynı
+  desen). Aktif ürün kalmaz, ana buton "ÜRÜN BAŞLAT"a döner.
+- **Yeni ürün** (her zaman): doğrudan `ShiftWizard mode="product"` →
+  `TimeSheet` → yeni `product_run` satırı + o run'a işaret eden `uretim`
+  olayı. Aktif ürün varken basılırsa eski ürün örtük olarak orada biter
+  (A→B davranışı korundu).
+
+**`timeline.js#aktifUrun` bu ayrımın temeli:** aktif ürün, son olayın
+işaret ettiği üründür; son olayın `product_run_id`'si null ise aktif ürün
+YOKTUR. Eskiden burada koşulsuz bir `runs[runs.length - 1]` yedeği vardı,
+o yüzden ürün bitirilse bile son ürün "aktif" görünüyordu. Yedek artık
+yalnızca hiç olay yokken devrede. `OperatorPanel` ve `ManagerDashboard`
+ikisi de bu fonksiyonu kullanır — ayrı ayrı hesaplamayın.
+
+**`RunEndSheet` operatörü ASLA kilitlemez.** Kaydet butonu eskiden
+başlangıç numaratörleri yoksa ya da bitişler boşsa devre dışıydı; üstteki
+metin "yine de kaydedebilirsin" derken buton kapalıydı (çelişki) ve
+"Ürünü bitir" tek kapatma yolu olduğu için ürün hiç kapatılamıyordu.
+Artık eksik alanlar `null` kaydedilir, fire hesabı atlanır, bilgi
+sonradan ürün geçmişinden doldurulur.
+
+Eski ürüne dönmek istenirse (henüz UI'da yok, şema destekliyor) aynı
+prensip: eski `product_run_id`'siyle yeni bir olay.
 
 `ProductHistory` (`src/components/ProductHistory.jsx`) vardiyadaki her
 ürünü `runSpans()` ile (ilk başlangıç → son bitiş, ara dönüşler dahil

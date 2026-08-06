@@ -39,17 +39,19 @@ function RunEndSheet({ open, run, koliAdedi, paketAdedi, onConfirm, onCancel }) 
   })
 
   const numaratorEksik = run.dolu_paket_baslangic == null || run.bos_paket_baslangic == null
-  const valid =
-    !numaratorEksik &&
-    Number.isFinite(parsedDolu) &&
-    Number.isFinite(parsedBos) &&
-    doluBitis.trim() !== '' &&
-    bosBitis.trim() !== ''
 
+  /*
+   * Ürünü bitirmek HİÇBİR koşulda engellenmez. Eskiden buton başlangıç
+   * numaratörleri yoksa ya da bitişler boşsa kilitliydi — üstteki metin
+   * "yine de kaydedebilirsin" derken buton kapalı kalıyordu (çelişki), ve
+   * "Ürünü bitir" tek kapatma yolu olduğu için ürün hiç kapatılamıyordu.
+   * Eksik alan fire hesabını atlar, sonradan ürün geçmişinden doldurulur —
+   * "eksik alan sonradan doldurulur, uydurma kayıttan iyidir".
+   */
   const handleConfirm = () => {
     onConfirm({
-      dolu_paket_bitis: parsedDolu,
-      bos_paket_bitis: parsedBos,
+      dolu_paket_bitis: Number.isFinite(parsedDolu) ? parsedDolu : null,
+      bos_paket_bitis: Number.isFinite(parsedBos) ? parsedBos : null,
       ortalama_gramaj_g: Number.isFinite(parsedGramaj) ? parsedGramaj : null,
     })
   }
@@ -145,10 +147,9 @@ function RunEndSheet({ open, run, koliAdedi, paketAdedi, onConfirm, onCancel }) 
           <button
             type="button"
             className="sheet-button sheet-button--primary"
-            disabled={!valid}
             onClick={handleConfirm}
           >
-            Kaydet ve devam et
+            Devam
           </button>
         </div>
       </div>

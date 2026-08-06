@@ -195,6 +195,29 @@ export function runSpans(events, nowMs = Date.now()) {
 }
 
 /**
+ * Şu an hangi ürün çalışılıyor — son olayın işaret ettiği ürün.
+ *
+ * Son olayın `product_run_id`'si AÇIKÇA null ise aktif ürün de YOKTUR.
+ * İki yerde böyle bir olay yazılır: vardiya açılışı (henüz ürün girilmedi)
+ * ve "Ürünü bitir" (ürün kapatıldı, yenisine geçilmedi).
+ *
+ * Eskiden burada koşulsuz bir `runs[runs.length - 1]` yedeği vardı; bu
+ * yüzden bir ürün bitirilse bile son ürün "aktif" görünüyor, ana buton
+ * "ÜRÜN BAŞLAT"a hiç dönmüyordu — yani ürünü bitirmenin tek yolu yeni bir
+ * ürüne geçmekti. Yedek artık yalnızca HİÇ olay yokken devrede (savunmacı;
+ * normalde vardiya en az bir olayla açılır).
+ */
+export function aktifUrun(events, runs = []) {
+  const sirali = sortEvents(events)
+  const son = sirali[sirali.length - 1]
+
+  if (!son) return runs[runs.length - 1] ?? null
+  if (!son.product_run_id) return null
+
+  return runs.find((run) => run.id === son.product_run_id) ?? null
+}
+
+/**
  * Vardiyayı mola başlangıçlarına göre bölümlere ayırır. N mola varsa N+1
  * bölüm çıkar (3 mola → 4 bölüm, hiç mola yoksa tek bölüm = vardiyanın
  * tamamı). Müdür panosunda "tüm vardiya alt alta" yerine bölümler yan yana

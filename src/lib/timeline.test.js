@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
 import {
+  aktifUrun,
   buildIntervals,
   assignLanes,
   clampToWindow,
@@ -174,6 +175,52 @@ describe('mola: açık kalma oranına girmez', () => {
     // Payda mola hariç: 105dk üretim / 105dk toplam = %100, mola hiç düşürmüyor
     assert.equal(totals.toplamMs, 105 * DK)
     assert.equal(totals.zamanKullanimi, 1)
+  })
+})
+
+describe('aktifUrun', () => {
+  const urunler = [
+    { id: 'r1', urun_adi: 'Kuru üzüm' },
+    { id: 'r2', urun_adi: 'Natura karışık' },
+  ]
+
+  it('son olayın işaret ettiği ürünü verir', () => {
+    const olaylar = [
+      { id: '1', at: T(7, 0), kind: 'durus', product_run_id: null },
+      { id: '2', at: T(7, 30), kind: 'uretim', product_run_id: 'r1' },
+    ]
+    assert.equal(aktifUrun(olaylar, urunler)?.id, 'r1')
+  })
+
+  it('ürün bitirilince (son olay ürünsüz) aktif ürün kalmaz', () => {
+    const olaylar = [
+      { id: '1', at: T(7, 0), kind: 'durus', product_run_id: null },
+      { id: '2', at: T(7, 30), kind: 'uretim', product_run_id: 'r1' },
+      { id: '3', at: T(11, 0), kind: 'durus', product_run_id: null, note: 'Ürün bitişi' },
+    ]
+    assert.equal(aktifUrun(olaylar, urunler), null)
+  })
+
+  it('yeni ürüne geçilince aktif ürün yenisidir', () => {
+    const olaylar = [
+      { id: '1', at: T(7, 30), kind: 'uretim', product_run_id: 'r1' },
+      { id: '2', at: T(11, 0), kind: 'durus', product_run_id: null },
+      { id: '3', at: T(11, 20), kind: 'uretim', product_run_id: 'r2' },
+    ]
+    assert.equal(aktifUrun(olaylar, urunler)?.id, 'r2')
+  })
+
+  it('sıralama bozuk gelse de son olaya bakar', () => {
+    const olaylar = [
+      { id: '2', at: T(11, 0), kind: 'durus', product_run_id: null },
+      { id: '1', at: T(7, 30), kind: 'uretim', product_run_id: 'r1' },
+    ]
+    assert.equal(aktifUrun(olaylar, urunler), null)
+  })
+
+  it('hiç olay yoksa son ürüne düşer', () => {
+    assert.equal(aktifUrun([], urunler)?.id, 'r2')
+    assert.equal(aktifUrun([], []), null)
   })
 })
 

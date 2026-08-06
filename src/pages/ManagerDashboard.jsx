@@ -6,6 +6,7 @@ import LineSelect from '../components/LineSelect'
 import ShiftHistoryPicker from '../components/ShiftHistoryPicker'
 import ShiftHistoryDetail from '../components/ShiftHistoryDetail'
 import {
+  aktifUrun,
   buildIntervals,
   currentState,
   downtimeByNote,
@@ -175,10 +176,9 @@ function ManagerDashboard() {
     [events, shiftStartMs, now],
   )
 
-  const activeRun = useMemo(() => {
-    const last = intervals[intervals.length - 1]
-    return (last?.productRunId && runsById.get(last.productRunId)) || runs[runs.length - 1] || null
-  }, [intervals, runs, runsById])
+  /* Operatör ekranıyla aynı kural: son olay ürünsüzse ("Ürünü bitir" ya da
+   * vardiya açılışı) aktif ürün yoktur — bkz. timeline.js#aktifUrun. */
+  const activeRun = useMemo(() => aktifUrun(events, runs), [events, runs])
 
   const nowDate = new Date(now)
 

@@ -6,6 +6,7 @@ import { usePersonnel } from '../hooks/usePersonnel'
 import { useLineCode } from '../hooks/useLineCode'
 import { useDashboardVisits } from '../hooks/useDashboardVisits'
 import {
+  aktifUrun,
   buildIntervals,
   currentState,
   groupSegmentsByEvent,
@@ -70,12 +71,9 @@ function OperatorPanel() {
   const runsById = useMemo(() => new Map(runs.map((run) => [run.id, run])), [runs])
   const paletlerByRun = useMemo(() => palletTotalsByRun(pallets), [pallets])
 
-  /* Aktif ürün son olayın işaret ettiği üründür; olay yoksa son açılan ürün. */
-  const activeRun = useMemo(() => {
-    const sorted = [...events].sort((a, b) => new Date(a.at) - new Date(b.at))
-    const lastRunId = sorted[sorted.length - 1]?.product_run_id
-    return (lastRunId && runsById.get(lastRunId)) || runs[runs.length - 1] || null
-  }, [events, runs, runsById])
+  /* Aktif ürün son olayın işaret ettiği üründür; son olay ürünsüzse ("Ürünü
+   * bitir" ya da vardiya açılışı) aktif ürün yoktur — bkz. timeline.js. */
+  const activeRun = useMemo(() => aktifUrun(events, runs), [events, runs])
 
   const shiftStartMs = shift ? new Date(shift.started_at).getTime() : null
   const shiftEndMs = shift?.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null
@@ -320,6 +318,52 @@ function OperatorPanel() {
     [guard],
   )
 
+  /*
+   * Ürünü bitirme: numaratör bitişleri kaydedilir, ürün kapanır ve hat
+   * duruşa geçer. Yeni ürüne geçmekten AYRI bir iş — eskiden ikisi tek
+   * akışa yapışıktı ve ürünü bitirmenin tek yolu yeni bir ürüne geçmekti;
+   * sahada "bitirdim ama yenisine geçmeyeceğim" durumu karşılanamıyordu.
+   */
+  const finishRun = useCallback(
+    async (values, atMs) => {
+      if (busy || !activeRun || !shift) return
+      setBusy(true)
+      setError(null)
+
+      const { error: runError } = await supabase
+        .from('product_runs')
+        .update(values)
+        .eq('id', activeRun.id)
+
+      if (runError) {
+        setError('Ürün bilgisi kaydedilemedi: ' + runError.message)
+        setBusy(false)
+        return
+      }
+
+      /*
+       * Ürünü kapatan olay: product_run_id AÇIKÇA null. Aktif ürün bundan
+       * sonra yok sayılır (timeline.js#aktifUrun), ana buton "ÜRÜN
+       * BAŞLAT"a döner. Not otomatik — "Moladan dönüş" ile aynı desen,
+       * operatöre ayrıca sebep sorulmaz.
+       */
+      const { error: eventError } = await supabase.from('timeline_events').insert({
+        line_code: lineCode,
+        shift_id: shift.id,
+        product_run_id: null,
+        at: new Date(atMs).toISOString(),
+        kind: 'durus',
+        note: 'Ürün bitişi',
+      })
+
+      if (eventError) setError('Ürün bitişi kaydedilemedi: ' + eventError.message)
+
+      await refresh()
+      setBusy(false)
+    },
+    [busy, activeRun, shift, lineCode, setError, refresh],
+  )
+
   /* ---- TimeSheet onayı: hangi aksiyon bekliyorsa o çalışır ---- */
 
   const handleTimeConfirm = useCallback(
@@ -376,6 +420,11 @@ function OperatorPanel() {
         return
       }
 
+      if (action.type === 'run-finish') {
+        await finishRun(action.values, atMs)
+        return
+      }
+
       if (action.type === 'shift-end') {
         await guard(
           () =>
@@ -387,7 +436,7 @@ function OperatorPanel() {
         )
       }
     },
-    [pending, createProductRun, addEvent, guard, shift, lineCode, activeRun, palletKoli],
+    [pending, createProductRun, addEvent, finishRun, guard, shift, lineCode, activeRun, palletKoli],
   )
 
   const saveNote = useCallback(
@@ -456,20 +505,19 @@ function OperatorPanel() {
     [shift, guard],
   )
 
-  const handleRunEndConfirm = useCallback(
-    async (values) => {
-      setRunEndOpen(false)
-      if (!activeRun) return
+  /*
+   * Ürünü bitirme, yeni ürüne geçmekten AYRI bir iş: numaratör bitişleri
+   * alınır, ürün kapanır ve hat duruşa geçer. Yeni ürüne geçilecekse
+   * ayrıca "Yeni ürün" (ya da ana ekrandaki "ÜRÜN BAŞLAT") kullanılır.
+   * Eskiden ikisi tek akışa yapışıktı; ürünü bitirmenin tek yolu yeni bir
+   * ürüne geçmekti — sahada "bitirdim ama yenisine geçmeyeceğim" durumu
+   * karşılanamıyordu.
+   */
+  const handleRunEndConfirm = useCallback((values) => {
+    setRunEndOpen(false)
+    setPending({ type: 'run-finish', values })
+  }, [])
 
-      await guard(
-        () => supabase.from('product_runs').update(values).eq('id', activeRun.id),
-        'Ürün bilgisi kaydedilemedi',
-      )
-
-      setProductWizardOpen(true)
-    },
-    [activeRun, guard],
-  )
 
   /* ---- Görünüm ---- */
 
@@ -632,13 +680,26 @@ function OperatorPanel() {
           >
             Olay geçmişi
           </button>
+          {/*
+            * İki ayrı iş, iki ayrı buton: "Ürünü bitir" numaratör bitişlerini
+            * alıp ürünü kapatır (hat duruşa geçer), "Yeni ürün" doğrudan yeni
+            * ürün sihirbazını açar. Eskiden tek bir "Ürün değiştir" vardı ve
+            * ürünü bitirmek zorunlu olarak yeni ürüne geçmeyi gerektiriyordu.
+            */}
           <button
             type="button"
             className="ghost-button"
             onClick={() => setRunEndOpen(true)}
             disabled={!activeRun}
           >
-            Ürün değiştir
+            Ürünü bitir
+          </button>
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={() => setProductWizardOpen(true)}
+          >
+            Yeni ürün
           </button>
           <button
             type="button"
@@ -916,6 +977,17 @@ function OperatorPanel() {
             </span>
           </label>
         </TimeSheet>
+
+        <TimeSheet
+          open={pending?.type === 'run-finish'}
+          title="Ürün ne zaman bitti?"
+          confirmLabel="Ürünü bitir"
+          tone="stop"
+          initialMs={now}
+          range={eventRange}
+          onConfirm={handleTimeConfirm}
+          onCancel={() => setPending(null)}
+        />
 
         <TimeSheet
           open={pending?.type === 'shift-end'}
