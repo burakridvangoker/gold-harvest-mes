@@ -590,7 +590,7 @@ girilirse (satırında `line_code` boş bırakılırsa) o kişi HER hatta
 görünmeye devam eder — CLAUDE.md'nin "eksik alan sonradan doldurulur,
 uydurma kayıttan iyidir" ilkesiyle tutarlı.
 
-## Müdür panosu görüntüleme kaydı — anonim, sadece operatör ekranında görünür
+## Müdür panosu görüntüleme kaydı — arka planda yazılıyor, gösterimi kaldırıldı
 
 Kullanıcı isteği: müdür panosunun ne zaman/ne kadar açıldığını görmek
 istedi. Kimin baktığı BİLEREK tutulmuyor — login yok, isim de
@@ -632,12 +632,18 @@ bir kayıt varsa YENİ satır açılmaz, o kaydın `last_seen_at`'i
 güncellenir — "aynı bakışın devamı" sayılır. 30 dakikalık pencere,
 unutulmuş çok eski bir kaydın sonsuza dek büyümesini engeller.
 
-**Nerede görünür:** SADECE operatör ekranında (`OperatorPanel.jsx`,
-"Müdür panosu görüntülemeleri" satırı, `useDashboardVisits` hook'u ile
-son 10 kayıt). Müdür panosunun kendisi bu veriyi hiç okumaz/göstermez —
-ManagerDashboard sadece YAZAR, okuma/gösterme tamamen operatör
-tarafında. Kullanıcı bunu netlik için özellikle sordu: müdür panosunda
-"birileri seni izliyor" hissi yaratmasın diye kasıtlı bir ayrım.
+**Gösterim kaldırıldı (yaşanmış karar):** İlk sürümde bu veri SADECE
+operatör ekranında (`OperatorPanel.jsx`, "Müdür panosu görüntülemeleri"
+satırı, `useDashboardVisits` hook'u ile son 10 kayıt) gösteriliyordu —
+müdür panosunun kendisi hiç okumuyordu/göstermiyordu, ManagerDashboard
+sadece YAZIYORDU. Kullanıcı sonradan bu bölümü operatör ekranından
+kaldırılmasını istedi; `useDashboardVisits.js` hook'u ve
+`.operator-visits*` CSS'i de bununla birlikte silindi (başka hiçbir
+yerden kullanılmıyordu). **`ManagerDashboard.jsx`'in yazma tarafı
+BİLEREK dokunulmadı** — `manager_dashboard_visits` tablosuna kayıt
+(`opened_at`/`last_seen_at` heartbeat) hâlâ oluyor, sadece hiçbir yerde
+gösterilmiyor. Görüntüleme geri istenirse veri zaten orada duruyor,
+sadece yeni bir okuma yüzeyi eklemek yeterli.
 
 ## Müdür panosunda liste kesmeleri kaldırıldı
 
