@@ -1,0 +1,272 @@
+<title>Gold Harvest — Aynı sabah, farklı bir şekilde</title>
+<style>
+/*FONTS*/
+
+/*
+ * Bu sayfa BİLEREK tek bir sanat yönüne bağlanır: koyu bölümler anlatı
+ * ve iddia, açık bölümler kanıt ve plan. Koyu→açık geçişi içeriğin
+ * kendisi — izleyicinin tema tercihiyle ters çevrilirse anlam yok olur.
+ * Bu yüzden prefers-color-scheme hiç dinlenmez; her renk açıkça boyanır
+ * ki sayfa hangi zeminde açılırsa açılsın aynı dursun.
+ *
+ * Palet ve yazı rolleri uygulamanın kendi dilinden (src/styles/andon.css):
+ * porselen beyazı, çeliğin yeşilimsi karası, andon sinyalleri.
+ * Saira Condensed yalnız büyük harf etiketlerde — rakamları orantılı,
+ * sayıya sokulmaz. IBM Plex Sans metin ve tüm rakamlar.
+ */
+:root{
+  --ink:#131916;
+  --paper:#f8faf7;
+  --paper-dim:#eef1ee;
+  --ink-soft:rgba(248,250,247,.66);
+  --paper-soft:#566059;
+  --green:#009440;
+  --amber:#ffb000;
+  --red:#e02718;
+  --data:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --plate:'Saira Condensed','Arial Narrow',sans-serif;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--ink);color:var(--paper);
+  font-family:var(--data);line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+.scene{
+  min-height:100svh;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  padding:clamp(56px,9vh,104px) clamp(22px,5vw,64px);
+  position:relative;
+}
+.scene--dark{background:var(--ink);color:var(--paper)}
+.scene--light{background:var(--paper);color:var(--ink)}
+
+.inner{width:100%;max-width:940px;display:flex;flex-direction:column;align-items:center;gap:clamp(26px,4vh,44px)}
+
+/* fade-in: tek çeşit hareket, başka efekt yok */
+.fx{opacity:0;transform:translateY(22px);transition:opacity .85s cubic-bezier(.22,.7,.3,1),transform .85s cubic-bezier(.22,.7,.3,1)}
+.in .fx{opacity:1;transform:none}
+.in .fx:nth-child(2){transition-delay:.14s}
+.in .fx:nth-child(3){transition-delay:.26s}
+
+/* ---- tipografi ---- */
+.line{
+  margin:0;text-align:center;text-wrap:balance;
+  font-size:clamp(25px,3.5vw,42px);line-height:1.34;font-weight:400;
+  letter-spacing:-.012em;max-width:22ch;
+}
+.line--wide{max-width:34ch}
+.line--big{
+  font-size:clamp(34px,6vw,72px);line-height:1.1;font-weight:700;
+  letter-spacing:-.028em;max-width:18ch;
+}
+.line b{font-weight:600}
+.dim{color:var(--ink-soft)}
+.scene--light .dim{color:var(--paper-soft)}
+
+.stamp{
+  font-family:var(--plate);font-weight:700;
+  font-size:clamp(13px,1.5vw,17px);letter-spacing:.2em;text-transform:uppercase;
+  color:var(--paper-soft);margin:0;
+}
+.scene--dark .stamp{color:var(--ink-soft)}
+
+/* ---- görseller ---- */
+.shot{
+  display:block;max-width:100%;max-height:60svh;width:auto;height:auto;
+  border-radius:14px;border:1px solid rgba(18,24,21,.14);
+  box-shadow:0 2px 4px rgba(18,24,21,.06),0 26px 54px -30px rgba(18,24,21,.5);
+  background:#fff;
+}
+.shot--wide{max-height:52svh}
+/* Telefon kareleri dar ve uzun — yükseklik sınırı aynı kalırsa
+ * masaüstünde okunamayacak kadar inceliyor. */
+.shot--tall{max-height:70svh}
+
+/* ---- sinyal vurguları: anlamı olan tek süsleme ---- */
+.signal{position:absolute;left:0;right:0;top:0;height:4px}
+.signal--red{background:var(--red)}
+.signal--green{background:var(--green)}
+
+/* ---- listeler ---- */
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:clamp(15px,2.2vh,24px);width:100%;max-width:760px}
+.list li{
+  display:flex;gap:16px;align-items:baseline;
+  font-size:clamp(17px,2vw,23px);line-height:1.45;
+}
+.list .mark{
+  flex:0 0 auto;font-family:var(--plate);font-weight:700;
+  font-size:clamp(14px,1.5vw,18px);letter-spacing:.1em;color:var(--green);
+  min-width:1.6em;
+}
+.list--dash .mark{color:var(--paper-soft)}
+
+/* ---- kaydırma ipucu ---- */
+.hint{
+  position:absolute;bottom:clamp(24px,4vh,40px);left:50%;transform:translateX(-50%);
+  font-family:var(--plate);font-weight:700;font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:rgba(248,250,247,.42);
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+}
+.hint span{display:block;width:1px;height:26px;background:rgba(248,250,247,.32);animation:drop 2.1s ease-in-out infinite}
+@keyframes drop{0%,100%{opacity:.25;transform:scaleY(.55);transform-origin:top}50%{opacity:1;transform:scaleY(1);transform-origin:top}}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .fx{opacity:1;transform:none;transition:none}
+  .hint span{animation:none;opacity:.6}
+}
+</style>
+
+<!-- 1 -->
+<section class="scene scene--dark" data-scene>
+  <div class="inner">
+    <p class="line line--wide fx">Sabah 07:00. PFM-4 hattı çalışıyor.</p>
+  </div>
+  <div class="hint">Kaydır<span></span></div>
+</section>
+
+<!-- 2 -->
+<section class="scene scene--dark" data-scene>
+  <div class="inner">
+    <p class="line fx">Bir şey ters gider. Makine durur.<br />
+      <span class="dim">Operatör elindeki kağıda saati yazar — ya da unutur.</span></p>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="scene scene--dark" data-scene>
+  <div class="inner">
+    <p class="line line--wide fx">Vardiya biter. Kağıt, müdürün masasına gider.</p>
+    <p class="line line--wide dim fx">Şimdi saat 15:20. Duruşun gerçekte ne zaman olduğunu,
+      ne kadar sürdüğünü, kaç kez tekrarlandığını — kimse tam bilmiyor.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="scene scene--dark" data-scene>
+  <div class="inner">
+    <p class="line line--big fx">Sorun gecikme değil.<br />Sorun, ne zaman fark edildiği.</p>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="scene scene--dark" data-scene>
+  <div class="inner">
+    <p class="line line--wide fx">Şimdi aynı sabahı, aynı hattı, farklı bir şekilde yaşayalım.</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="line line--wide fx"><b>07:00</b> — Operatör telefonundan vardiyayı açıyor.</p>
+    <img class="shot shot--tall fx" src="/*GORSEL:operator-ust*/" alt="Operatör ekranı — vardiya açık, hat üretimde" />
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="line line--wide fx"><b>07:32</b> — Makine durdu. Operatör 5 dakika sonra fark etti, girdi.<br />
+      <span class="dim">Sistem gerçek saati soruyor — geç girişi sorun etmiyor.</span></p>
+    <img class="shot fx" src="/*GORSEL:saat-girisi-panel*/" alt="Makine ne zaman durdu — kaydırmalı saat girişi" />
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="scene scene--light" data-scene>
+  <div class="signal signal--red"></div>
+  <div class="inner">
+    <p class="line line--wide fx">Aynı anda, müdürün ekranı. Kimse haber vermedi.<br />
+      <span class="dim">Kırmızıya döndü, kendiliğinden.</span></p>
+    <img class="shot shot--wide fx" src="/*GORSEL:mudur*/" alt="Müdür panosu — hat duruşta, ekran kırmızı" />
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="line line--wide fx">Vardiya sonunda soru artık “ne oldu” değil.<br />
+      <span class="dim">Cevap zaten orada: hangi sebep, kaç kez, kaç dakika.</span></p>
+    <img class="shot shot--wide fx" src="/*GORSEL:durus-sebepleri*/" alt="Duruş sebepleri — sebep, tekrar sayısı ve toplam süre" />
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="scene scene--dark" data-scene>
+  <div class="inner">
+    <p class="line line--big fx">Bu bir öğrenci projesi değil.</p>
+    <p class="line line--wide dim fx">Gold Harvest’in üç hattında — PFM-4, PFM-10, PFM-11 —
+      şu anda, gerçek verilerle çalışıyor.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Bu sistem ne değiştiriyor</p>
+    <ul class="list fx">
+      <li><span class="mark">—</span>Duruşlar anında görülüyor, vardiya sonunu beklemeye gerek yok</li>
+      <li><span class="mark">—</span>İki ayrı verim oranı: arıza mı, yavaşlama mı — ilk kez ayrışıyor</li>
+      <li><span class="mark">—</span>Hiçbir veri kaybolmuyor, geçmiş her zaman incelenebilir</li>
+      <li><span class="mark">—</span>Vardiya planlamasıyla entegre, tekrar veri girişi yok</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Sıradaki adımlar</p>
+    <ul class="list fx">
+      <li><span class="mark">1</span>Yaygınlaştırma: kullanıcı girişi, raporlama, dışa aktarma</li>
+      <li><span class="mark">2</span>Birleştirme: vardiya planlamasıyla tam entegrasyon</li>
+      <li><span class="mark">3</span>İleri vizyon: makinelerden doğrudan veri, elle girişe gerek kalmadan</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="line line--wide fx">Pilot aşamada güvenlik/yetkilendirme bilerek basit tutuldu, hız için.<br />
+      <span class="dim">Yaygınlaştırma kararıyla birlikte ilk yapılacak iş bu.</span></p>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="scene scene--dark" data-scene>
+  <div class="signal signal--green"></div>
+  <div class="inner">
+    <p class="line line--big fx">Bu sistemin fabrika genelinde yaygınlaştırılmasını öneriyoruz.</p>
+  </div>
+</section>
+
+<script>
+(function(){
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.28 });
+  document.querySelectorAll('[data-scene]').forEach(function(s){ io.observe(s); });
+
+  /* İlk bölüm yükte görünür — gözlemcinin ilk tetiklemesini beklemesin. */
+  requestAnimationFrame(function(){
+    var ilk = document.querySelector('[data-scene]');
+    if(ilk) ilk.classList.add('in');
+  });
+
+  /* Kaydırma ipucu ilk harekette kaybolsun. */
+  var hint = document.querySelector('.hint');
+  if(hint){
+    addEventListener('scroll', function(){
+      if(scrollY > 40){ hint.style.transition='opacity .4s ease'; hint.style.opacity='0'; }
+    }, { passive:true, once:true });
+  }
+})();
+</script>

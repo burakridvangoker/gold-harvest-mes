@@ -59,6 +59,27 @@ async function main() {
   await phone.screenshot({ path: path.join(OUT, 'operator-alt.png') })
   console.log('✓ operator-alt.png')
 
+  /* 1b) TimeSheet — "Ne zaman durdu?" saat çarkı.
+   * Hikaye sayfasının 7. bölümü için: sistemin geç girişi sorun etmeyip
+   * gerçek saati sorduğu an. Operatör ekranı ?hazir=1 ile ÜRETİMDE
+   * açılıyor; ana butona (DURDUR) basınca TimeSheet geliyor. */
+  const ts = await newPage(browser, { width: 400, height: 860 }, 3, at(14, 35))
+  await ts.goto(`${BASE}/?ekran=operator&hazir=1`)
+  await ts.waitForSelector('.action-primary', { timeout: 15000 })
+  await ts.locator('.action-primary').click()
+  await ts.waitForSelector('.timesheet-sheet', { timeout: 10000 })
+  await ts.waitForTimeout(800)
+  await ts.screenshot({ path: path.join(OUT, 'saat-girisi.png') })
+  console.log('✓ saat-girisi.png')
+
+  /* Sadece saat çarkı paneli — hikaye sayfasında telefonun tamamı
+   * masaüstünde okunamayacak kadar küçülüyordu (dar ve çok uzun bir
+   * kare); kırpılmış panel aynı anlatıyı taşıyıp okunur kalıyor. */
+  await ts.locator('.timesheet-sheet').screenshot({
+    path: path.join(OUT, 'saat-girisi-panel.png'),
+  })
+  console.log('✓ saat-girisi-panel.png')
+
   // 2) Müdür panosu — geniş ekran, DURDU anı (kırmızı)
   const wall = await newPage(browser, { width: 1600, height: 1000 }, 2, at(14, 52))
   await wall.goto(`${BASE}/?ekran=mudur&hazir=1`)

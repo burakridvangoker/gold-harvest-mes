@@ -9,6 +9,7 @@ Gönderilebilir dosyalar: iki ayrı seviyeye yazılmış tanıtım PDF'i ve
 |---|---|---|
 | `gold-harvest-mes-sunum.pdf` (10 sayfa) | **Hat müdürü** | "Şu an göremediğin ne varmış" — sistemin kendisi |
 | `sunum-komuta-merkezi.pdf` (14 sayfa) | **Genel müdür** | "Bu bize ne kazandırıyor" — maliyet, vizyon, karar |
+| `hikaye/` (14 bölüm, web) | **Genel müdür** | "Aynı sabah, farklı bir şekilde" — anlatı, kaydırmalı sayfa |
 
 Genel müdür sürümü yüz yüze anlatım OLMADAN gönderilmek üzere yazıldı;
 dosya kendi başına tüm soruları cevaplamalı. Üç kalıcı kuralı var:
@@ -38,6 +39,37 @@ dosya kendi başına tüm soruları cevaplamalı. Üç kalıcı kuralı var:
 | `gorseller/` | Uygulamadan alınan ekran görüntüleri |
 | `fonts/` | IBM Plex Sans + Saira Condensed (uygulamayla aynı) |
 | `uretim/` | Görselleri, PDF'i ve videoyu üreten düzenek |
+
+## Kaydırmalı hikaye sayfası (`hikaye/`)
+
+Aynı sabahı önce kağıtla, sonra sistemle yaşatan tek sayfalık anlatı.
+PDF'in yerine değil yanına: PDF analiz eder, bu sayfa **gösterir**.
+
+```bash
+# vite sunucusu ayakta iken önce görselleri tazele, sonra sayfayı üret
+node sunum/uretim/shots.cjs
+python3 sunum/hikaye/uret.py            # → sunum/hikaye/hikaye.html
+python3 sunum/hikaye/uret.py /yol/x.html
+```
+
+Kalıcı kararlar:
+
+- **Metin kullanıcının yazdığı hâliyle sabittir.** 14 bölümün cümleleri
+  birebir korunur — süslenmez, eklenmez, kısaltılmaz. (Tek istisna: 1.
+  bölümdeki hat kodu, ekran görüntüleriyle tutarlı olsun diye PFM-4.)
+- **Koyu/açık ritmi anlam taşır**, dekorasyon değil: koyu bölümler
+  (1-5, 10, 14) anlatı ve iddia, açık bölümler (6-9, 11-13) kanıt ve
+  plan. Sayfa problemden çözüme geçerken karanlıktan aydınlığa çıkar.
+  Bu yüzden sayfa `prefers-color-scheme`'i **hiç dinlemez** — izleyicinin
+  tema tercihiyle ters çevrilirse anlatı bozulur.
+- **Tek çeşit hareket:** bölüm görünür olunca fade-in. Başka efekt yok.
+  `prefers-reduced-motion` altında animasyon durur ama her şey son
+  hâlinde GÖRÜNÜR kalır — indirgenmiş harekette içerik kaybolmamalı.
+- **Her şey gömülü** (fontlar + PNG'ler data URI). Artifact olarak
+  yayınlandığında katı CSP dış isteklere izin vermiyor; `<img src="x.png">`
+  ve font CDN'i sessizce boşa düşer.
+- Türkçe için **latin VE latin-ext** alt kümelerinin ikisi de gömülmeli;
+  ğ/ı/ş latin-ext'te, biri eksikse harfler yedek fonta düşer.
 
 ## Gerekli araçlar
 
