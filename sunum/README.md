@@ -1,17 +1,40 @@
 # Müdür sunumu
 
-İki gönderilebilir dosya: 10 sayfalık tanıtım PDF'i ve bir vardiyanın
-baştan sona hızlandırılmış videosu. İkisi de WhatsApp/e-postada kurulum
-gerektirmeden açılır.
+Gönderilebilir dosyalar: iki ayrı seviyeye yazılmış tanıtım PDF'i ve
+öğretici video. Hepsi WhatsApp/e-postada kurulum gerektirmeden açılır.
+
+## İki sunum, iki seviye — karıştırmayın
+
+| Sunum | Kime | Çerçeve |
+|---|---|---|
+| `gold-harvest-mes-sunum.pdf` (10 sayfa) | **Hat müdürü** | "Şu an göremediğin ne varmış" — sistemin kendisi |
+| `sunum-komuta-merkezi.pdf` (14 sayfa) | **Genel müdür** | "Bu bize ne kazandırıyor" — maliyet, vizyon, karar |
+
+Genel müdür sürümü yüz yüze anlatım OLMADAN gönderilmek üzere yazıldı;
+dosya kendi başına tüm soruları cevaplamalı. Üç kalıcı kuralı var:
+
+1. **Uydurma rakam yok.** Gold Harvest'in gerçek maliyet verisi bizde
+   yok. Bu yüzden sunum formül + açıkça "örnek" etiketli hesap verir
+   (slayt 4-5), boşluğu müdür kendi rakamıyla doldurur. Etiketsiz tek
+   bir uydurma sayı, seni test eden bir genel müdürün gözünde tüm
+   dosyayı değersizleştirir.
+2. **Fotokopi en alt basamak.** Müdürün kendi verdiği kanca kabul
+   edilir ama orada bitmez — angarya üç katmanlı bir merdiven olarak
+   sunulur (kağıt → veri girişi → görünmeyen üretim kaybı). Asıl
+   argüman üçüncü basamak: ölçülmediği için faturalanmayan kayıp.
+3. **Riskler sorulmadan açılır** (slayt 13), tek kişiye bağımlılık
+   dahil. Zayıf tarafı kendin söylemek en güçlü hamledir.
 
 ## İçindekiler
 
 | Dosya | Ne |
 |---|---|
-| `gold-harvest-mes-sunum.pdf` | **Gönderilecek — 10 sayfalık sunum** |
+| `sunum-komuta-merkezi.pdf` | **Gönderilecek — 14 sayfalık genel müdür sunumu** |
+| `gold-harvest-mes-sunum.pdf` | **Gönderilecek — 10 sayfalık hat müdürü sunumu** |
 | `gold-harvest-mes-tanitim.mp4` | **Gönderilecek — 2:47'lik öğretici video** |
 | `gold-harvest-mes-vardiya.mp4` | Önceki 34 sn'lik hızlandırılmış sürüm (üreticisi kaldırıldı) |
-| `sunum.html` | Sunumun kaynağı (tarayıcıda da açılır) |
+| `sunum.html` | Hat müdürü sunumunun kaynağı (tarayıcıda da açılır) |
+| `sunum-komuta-merkezi.html` | Genel müdür sunumunun kaynağı |
 | `gorseller/` | Uygulamadan alınan ekran görüntüleri |
 | `fonts/` | IBM Plex Sans + Saira Condensed (uygulamayla aynı) |
 | `uretim/` | Görselleri, PDF'i ve videoyu üreten düzenek |
@@ -46,8 +69,19 @@ npx vite dev --config sunum/uretim/vite.config.js --port 5199
 node sunum/uretim/shots.cjs
 
 # 4) PDF'i üret — taşma ve üst üste binme kontrolü de yapar
-node sunum/uretim/pdf.cjs
+node sunum/uretim/pdf.cjs                             # hat müdürü sürümü
+node sunum/uretim/pdf.cjs sunum-komuta-merkezi.html   # genel müdür sürümü
 ```
+
+`pdf.cjs` kaynak dosyayı argümanla alır; argümansız çağrı eski
+davranışı birebir korur. Önizlemeler sunum başına ayrı klasöre düşer
+(`uretim/kontrol/<sunum-adı>/`), biri diğerinin karelerini ezmesin diye.
+
+**Uygulama değiştiğinde ekran görüntüleri BAYATLAR.** `shots.cjs`'i
+yeniden çalıştırmadan PDF üretmek, kaldırılmış bir özelliği müdüre
+göstermek demektir (yaşandı: "Ürün değiştir" butonu ve kaldırılan
+"Müdür panosu görüntülemeleri" bölümü eski görsellerde duruyordu).
+Arayüze dokunan her değişiklikten sonra 3. adımı tekrarlayın.
 
 `pdf.cjs` ayrıca `uretim/kontrol/` altına her slaydın PNG önizlemesini
 bırakır; PDF'i açmadan gözle kontrol etmek için.

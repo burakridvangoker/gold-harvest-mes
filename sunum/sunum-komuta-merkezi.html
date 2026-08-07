@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<title>Gold Harvest — Üretim Komuta Merkezi</title>
+<style>
+/* Yazı tipleri — uygulamanın kendisiyle aynı (IBM Plex Sans + Saira Condensed).
+   Türkçe ğ/ı/ş karakterleri latin-ext alt kümesinde, ikisi de yüklenmeli. */
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 400; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2122,U+2212; }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 400; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 600; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2122,U+2212; }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 600; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-ext-600-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 700; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2122,U+2212; }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 700; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-ext-700-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Saira Condensed'; font-weight: 600; font-display: block;
+  src: url('fonts/saira-condensed-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2122,U+2212; }
+@font-face { font-family: 'Saira Condensed'; font-weight: 600; font-display: block;
+  src: url('fonts/saira-condensed-latin-ext-600-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Saira Condensed'; font-weight: 700; font-display: block;
+  src: url('fonts/saira-condensed-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2122,U+2212; }
+@font-face { font-family: 'Saira Condensed'; font-weight: 700; font-display: block;
+  src: url('fonts/saira-condensed-latin-ext-700-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+
+:root {
+  /* Porselen Andon paleti — uygulamanın styles/andon.css'inden birebir */
+  --kagit: #f8faf7;
+  --kagit-alt: #eef1ee;
+  --murekkep: #131916;
+  --soluk: #566059;
+  --cizgi: rgba(18, 24, 21, 0.14);
+  --yesil: #00722f;
+  --amber: #8a5f00;
+  --kirmizi: #c31f10;
+  --sinyal-yesil: #009440;
+  --sinyal-amber: #ffb000;
+  --sinyal-kirmizi: #e02718;
+  --golge: 0 1px 2px rgba(18, 24, 21, 0.05), 0 12px 28px -18px rgba(18, 24, 21, 0.3);
+  --data: 'IBM Plex Sans', system-ui, sans-serif;
+  --plaka: 'Saira Condensed', 'Arial Narrow', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; background: #d8ded8; }
+
+body {
+  font-family: var(--data);
+  color: var(--murekkep);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.slayt {
+  position: relative;
+  width: 1280px;
+  height: 720px;
+  overflow: hidden;
+  background: var(--kagit);
+  page-break-after: always;
+  break-after: page;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+}
+
+.slayt:last-child { page-break-after: auto; break-after: auto; }
+
+/* Andon lamba bandı — uygulamanın imza öğesi, her slaydın üstünde.
+   Konusuna göre renk alır: yeşil (sistem), kırmızı (problem), amber (nötr). */
+.bant {
+  flex: 0 0 auto;
+  height: 14px;
+  background-color: var(--sinyal-yesil);
+  background-image: repeating-linear-gradient(
+    to right, transparent 0, transparent 54px,
+    rgba(0, 0, 0, 0.22) 54px, rgba(0, 0, 0, 0.22) 57px);
+}
+.bant--kirmizi { background-color: var(--sinyal-kirmizi); }
+.bant--amber { background-color: var(--sinyal-amber); }
+
+.govde {
+  flex: 1;
+  min-height: 0;
+  /* Alt boşluk sayfa numarasını (bottom: 28px) temizleyecek kadar geniş —
+     daha darken slayt 7'de vurgu kutusu numaranın üstüne biniyordu. */
+  padding: 52px 64px 60px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ustbaslik {
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--soluk);
+  margin-bottom: 14px;
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.spot {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.45;
+  color: var(--soluk);
+  max-width: 62ch;
+}
+
+.sayfa-no {
+  position: absolute;
+  right: 64px;
+  bottom: 28px;
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: var(--soluk);
+}
+
+/* ---------- Kapak / kapanış: koyu zemin ---------- */
+.slayt--koyu { background: var(--murekkep); color: var(--kagit); }
+.slayt--koyu .spot { color: rgba(248, 250, 247, 0.72); }
+.slayt--koyu .ustbaslik { color: rgba(248, 250, 247, 0.6); }
+.slayt--koyu .sayfa-no { color: rgba(248, 250, 247, 0.5); }
+
+/* align-items: flex-start şart — kabuk flex-column olduğu için plaka
+   varsayılan stretch ile tüm genişliğe yayılıyordu. */
+.kapak-govde { justify-content: center; align-items: flex-start; }
+
+.plaka {
+  display: inline-block;
+  padding: 8px 22px 11px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff, var(--kagit-alt));
+  color: var(--murekkep);
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: 0.12em;
+  margin-bottom: 30px;
+}
+
+.kapak-baslik {
+  font-size: 68px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  margin: 0 0 16px;
+}
+
+.kapak-alt {
+  margin-top: 42px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(248, 250, 247, 0.2);
+  display: flex;
+  gap: 46px;
+  font-size: 16px;
+  color: rgba(248, 250, 247, 0.72);
+}
+.kapak-alt strong { display: block; font-weight: 600; color: var(--kagit); margin-bottom: 3px; }
+
+/* ---------- Üç sütun ---------- */
+.uclu {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 34px;
+  margin-top: 40px;
+}
+
+.kart {
+  padding-top: 20px;
+  border-top: 3px solid var(--murekkep);
+}
+.kart--kirmizi { border-top-color: var(--sinyal-kirmizi); }
+.kart--yesil { border-top-color: var(--sinyal-yesil); }
+.kart--amber { border-top-color: var(--sinyal-amber); }
+
+.kart h3 {
+  margin: 0 0 10px;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.kart p { margin: 0; font-size: 16.5px; line-height: 1.5; color: var(--soluk); }
+
+/* ---------- Görsel + metin yerleşimi ---------- */
+.ikili {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 44px;
+  margin-top: 32px;
+  align-items: center;
+}
+.ikili--metin-sol { grid-template-columns: 400px 1fr; }
+
+.madde { list-style: none; margin: 0; padding: 0; }
+.madde li {
+  position: relative;
+  padding-left: 22px;
+  margin-bottom: 20px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--soluk);
+}
+.madde li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--sinyal-yesil);
+}
+.madde li strong { color: var(--murekkep); font-weight: 600; }
+
+.gorsel {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border: 1px solid var(--cizgi);
+  border-radius: 12px;
+  box-shadow: var(--golge);
+  background: #fff;
+}
+
+.telefonlar { display: flex; gap: 26px; justify-content: center; align-items: flex-start; }
+.telefonlar .gorsel { max-height: 452px; border-radius: 16px; }
+.telefonlar .tek-telefon { max-height: 500px; }
+
+.tam-gorsel { margin-top: 26px; display: flex; justify-content: center; }
+
+.dipnot {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--soluk);
+  font-style: italic;
+}
+
+/* ---------- İki oran (kilit slayt) ---------- */
+.oranlar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  margin-top: 38px;
+}
+
+.oran-sayi {
+  font-size: 104px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+}
+.oran--kirmizi .oran-sayi { color: var(--kirmizi); }
+.oran--amber .oran-sayi { color: var(--amber); }
+
+.oran-ad {
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.oran--kirmizi .oran-ad { color: var(--kirmizi); }
+.oran--amber .oran-ad { color: var(--amber); }
+
+.oran p { margin: 0; font-size: 17px; line-height: 1.5; color: var(--soluk); }
+
+.vurgu-kutu {
+  margin-top: 40px;
+  padding: 24px 28px;
+  background: var(--kagit-alt);
+  border-left: 4px solid var(--murekkep);
+  border-radius: 0 10px 10px 0;
+  font-size: 18.5px;
+  line-height: 1.5;
+}
+.vurgu-kutu strong { font-weight: 600; }
+
+/* ---------- Kapanış listesi ---------- */
+.durum-liste { list-style: none; margin: 34px 0 0; padding: 0; }
+.durum-liste li {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 15px 0;
+  border-bottom: 1px solid rgba(248, 250, 247, 0.16);
+  font-size: 18.5px;
+  line-height: 1.4;
+}
+.durum-liste li:last-child { border-bottom: none; }
+.durum-etiket {
+  flex: 0 0 auto;
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sinyal-yesil);
+  width: 96px;
+}
+
+.kapanis-not {
+  margin-top: 34px;
+  padding: 22px 26px;
+  background: rgba(248, 250, 247, 0.07);
+  border-left: 4px solid var(--sinyal-yesil);
+  border-radius: 0 10px 10px 0;
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--kagit);
+}
+
+
+/* ============ v2 — Komuta merkezi sunumuna özel bileşenler ============ */
+
+/* Dağınık veri kartları (slayt 2) */
+.dagitim { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 34px; }
+.kutu-veri {
+  padding: 22px 24px; background: var(--kagit-alt);
+  border: 1px solid var(--cizgi); border-radius: 10px;
+}
+.kutu-veri .yer {
+  font-family: var(--plaka); font-weight: 700; font-size: 13px;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--kirmizi);
+  margin-bottom: 7px;
+}
+.kutu-veri .nerede { font-size: 16px; line-height: 1.4; color: var(--murekkep); font-weight: 600; }
+.kutu-veri .nasil { font-size: 14px; line-height: 1.4; color: var(--soluk); margin-top: 4px; }
+
+/* Angarya merdiveni (slayt 3) */
+.merdiven { margin-top: 26px; display: flex; flex-direction: column; gap: 15px; }
+.basamak { display: grid; grid-template-columns: 42px 1fr 210px; gap: 20px; align-items: center; }
+.basamak-no {
+  font-family: var(--plaka); font-weight: 700; font-size: 30px;
+  line-height: 1; color: var(--soluk); text-align: right;
+}
+.basamak-cubuk {
+  padding: 17px 26px; border-radius: 9px; color: #fff;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.basamak-cubuk .ad { font-size: 21px; font-weight: 700; line-height: 1.2; }
+.basamak-cubuk .alt { font-size: 15.5px; line-height: 1.35; opacity: 0.86; }
+.basamak--1 .basamak-cubuk { background: #7d8a80; width: 46%; }
+.basamak--2 .basamak-cubuk { background: var(--amber); width: 70%; }
+.basamak--3 .basamak-cubuk { background: var(--kirmizi); width: 100%; }
+.basamak-durum { font-size: 14.5px; line-height: 1.35; color: var(--soluk); }
+.basamak-durum strong { display: block; color: var(--murekkep); font-weight: 600; font-size: 15px; }
+
+/* Hesap sütunları (slayt 4-5) */
+.hesaplar { display: grid; grid-template-columns: 1fr 1fr; gap: 46px; margin-top: 30px; }
+.hesap-baslik {
+  font-family: var(--plaka); font-weight: 700; font-size: 17px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding-bottom: 9px; margin-bottom: 16px; border-bottom: 3px solid var(--murekkep);
+}
+.formul {
+  font-size: 16px; line-height: 1.5; color: var(--soluk);
+  padding: 15px 18px; background: var(--kagit-alt); border-radius: 8px; margin-bottom: 14px;
+}
+.formul strong { color: var(--murekkep); font-weight: 600; }
+.sonuc { display: flex; align-items: baseline; gap: 12px; margin-bottom: 11px; }
+.sonuc-sayi {
+  font-size: 47px; font-weight: 700; line-height: 1;
+  letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+}
+.sonuc-birim { font-size: 16px; color: var(--soluk); line-height: 1.3; }
+.sonuc--kirmizi .sonuc-sayi { color: var(--kirmizi); }
+.sonuc--amber .sonuc-sayi { color: var(--amber); }
+
+/* Görünmeyen kayıp üçlüsü (slayt 5) */
+.kayiplar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 30px; }
+.kayip { padding-top: 17px; border-top: 3px solid var(--sinyal-kirmizi); }
+.kayip h3 { margin: 0 0 10px; font-size: 20px; font-weight: 700; line-height: 1.25; }
+.kayip .form {
+  font-size: 14.5px; line-height: 1.45; color: var(--murekkep);
+  background: var(--kagit-alt); border-radius: 7px; padding: 12px 14px; margin-bottom: 11px;
+}
+.kayip p { margin: 0; font-size: 15.5px; line-height: 1.45; color: var(--soluk); }
+
+/* Komuta merkezi zinciri (slayt 10) */
+.zincir { display: flex; align-items: stretch; gap: 0; margin-top: 38px; }
+.halka {
+  flex: 1 1 0; min-width: 0; min-height: 138px; padding: 20px 13px 17px;
+  border-radius: 10px; border: 1.5px solid var(--cizgi);
+  background: var(--kagit-alt); display: flex; flex-direction: column; gap: 6px;
+}
+.halka-no {
+  font-family: var(--plaka); font-weight: 700; font-size: 12px;
+  letter-spacing: 0.1em; color: var(--soluk);
+}
+.halka-ad { font-size: 16px; font-weight: 700; line-height: 1.22; }
+.halka-durum {
+  margin-top: auto; font-family: var(--plaka); font-weight: 700;
+  font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.halka--var {
+  background: var(--yesil); border-color: var(--yesil); color: #fff;
+  box-shadow: var(--golge); transform: scale(1.06); z-index: 2;
+}
+.halka--var .halka-no, .halka--var .halka-durum { color: rgba(255,255,255,0.88); }
+.halka--kismen { border-color: var(--sinyal-amber); background: #fdf4de; }
+.halka--kismen .halka-durum { color: var(--amber); }
+.halka--yok { color: var(--soluk); border-style: dashed; background: transparent; }
+.halka--yok .halka-durum { color: var(--soluk); }
+.ok { flex: 0 0 16px; display: flex; align-items: center; justify-content: center; color: var(--soluk); font-size: 15px; }
+
+.lejant { display: flex; gap: 26px; margin-top: 22px; font-size: 14.5px; color: var(--soluk); }
+.lejant span { display: flex; align-items: center; gap: 8px; }
+.lejant i { width: 13px; height: 13px; border-radius: 3px; display: inline-block; }
+
+/* Senaryo karşılaştırma (slayt 11) */
+.senaryo { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 32px; }
+.senaryo-yan { padding: 30px 32px; border-radius: 12px; }
+.senaryo--bugun { background: #fbeae8; border: 1.5px solid rgba(195,31,16,0.28); }
+.senaryo--sistem { background: #e6f3ea; border: 1.5px solid rgba(0,114,47,0.28); }
+.senaryo-etiket {
+  font-family: var(--plaka); font-weight: 700; font-size: 14px;
+  letter-spacing: 0.13em; text-transform: uppercase; margin-bottom: 12px;
+}
+.senaryo--bugun .senaryo-etiket { color: var(--kirmizi); }
+.senaryo--sistem .senaryo-etiket { color: var(--yesil); }
+.senaryo-sure { font-size: 50px; font-weight: 700; line-height: 1.05; letter-spacing: -0.03em; margin-bottom: 10px; }
+.senaryo--bugun .senaryo-sure { color: var(--kirmizi); }
+.senaryo--sistem .senaryo-sure { color: var(--yesil); }
+.senaryo-yan p { margin: 0; font-size: 16px; line-height: 1.5; color: var(--soluk); }
+
+/* Yol haritası fazları (slayt 12) */
+.fazlar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 38px; }
+.faz { padding: 26px 24px 24px; border-radius: 12px; background: var(--kagit-alt); border-top: 4px solid var(--murekkep); }
+.faz--1 { border-top-color: var(--sinyal-yesil); }
+.faz--2 { border-top-color: var(--sinyal-amber); }
+.faz--3 { border-top-color: var(--soluk); }
+.faz-no {
+  font-family: var(--plaka); font-weight: 700; font-size: 13px;
+  letter-spacing: 0.13em; text-transform: uppercase; color: var(--soluk); margin-bottom: 7px;
+}
+.faz h3 { margin: 0 0 11px; font-size: 20px; font-weight: 700; line-height: 1.2; }
+.faz ul { margin: 0; padding-left: 17px; }
+.faz li { font-size: 15.5px; line-height: 1.5; color: var(--soluk); margin-bottom: 9px; }
+
+/* Risk listesi (slayt 13) */
+.riskler { margin-top: 34px; display: flex; flex-direction: column; gap: 22px; }
+.risk { display: grid; grid-template-columns: 260px 1fr; gap: 30px; align-items: start;
+  padding-bottom: 22px; border-bottom: 1px solid var(--cizgi); }
+.risk:last-child { border-bottom: none; }
+.risk-ad { font-size: 18.5px; font-weight: 700; line-height: 1.3; }
+.risk p { margin: 0; font-size: 16.5px; line-height: 1.5; color: var(--soluk); }
+
+/* Talep (slayt 14) */
+.talep-kutu {
+  margin-top: 30px; padding: 26px 30px; border-radius: 12px;
+  background: rgba(248,250,247,0.07); border-left: 4px solid var(--sinyal-yesil);
+  font-size: 25px; line-height: 1.35; font-weight: 600; color: var(--kagit);
+}
+.gerekli { list-style: none; margin: 28px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3,1fr); gap: 26px; }
+.gerekli li { font-size: 16.5px; line-height: 1.45; color: rgba(248,250,247,0.78); padding-top: 15px; border-top: 2px solid rgba(248,250,247,0.24); }
+.gerekli strong { display: block; color: var(--kagit); font-weight: 600; font-size: 17.5px; margin-bottom: 5px; }
+
+@page { size: 1280px 720px; margin: 0; }
+</style>
+</head>
+<body>
+<!-- 1 — KAPAK -->
+<section class="slayt slayt--koyu">
+  <div class="bant"></div>
+  <div class="govde kapak-govde">
+    <span class="plaka">GOLD HARVEST</span>
+    <h1 class="kapak-baslik">Üretim Komuta Merkezi</h1>
+    <p class="spot">Siparişten sevkiyata kadar tek bir yerde ölçülen üretim.<br />
+      İlk halka kuruldu ve sahada çalışıyor.</p>
+    <div class="kapak-alt">
+      <div><strong>Durum</strong>PFM-4 · PFM-10 · PFM-11'de aktif</div>
+      <div><strong>Konu</strong>Fabrika geneline yaygınlaştırma önerisi</div>
+    </div>
+  </div>
+  <span class="sayfa-no">01</span>
+</section>
+
+<!-- 2 — DAĞINIK VERİ -->
+<section class="slayt">
+  <div class="bant bant--kirmizi"></div>
+  <div class="govde">
+    <div class="ustbaslik">Mevcut durum</div>
+    <h1>Üretim verisi bugün altı ayrı yerde duruyor</h1>
+    <p class="spot">Her biri kendi içinde doğru. Aralarındaki bağı her seferinde bir insan
+      kuruyor — hatırlayarak, arayarak, yeniden yazarak.</p>
+    <div class="dagitim">
+      <div class="kutu-veri"><div class="yer">Sipariş</div><div class="nerede">Sipariş defteri</div><div class="nasil">Telefon, e-posta, not kağıdı</div></div>
+      <div class="kutu-veri"><div class="yer">Planlama</div><div class="nerede">Vardiya çizelgesi</div><div class="nasil">Ayrı bir dosyada</div></div>
+      <div class="kutu-veri"><div class="yer">Üretim</div><div class="nerede">Vardiya formu</div><div class="nasil">Kağıt, el yazısı</div></div>
+      <div class="kutu-veri"><div class="yer">Kalite</div><div class="nerede">Fire formu</div><div class="nasil">Ayrı kağıt, ayrı klasör</div></div>
+      <div class="kutu-veri"><div class="yer">Depo</div><div class="nerede">Palet listesi</div><div class="nasil">Elle sayım</div></div>
+      <div class="kutu-veri"><div class="yer">Sevkiyat</div><div class="nerede">İrsaliye</div><div class="nasil">Üretimle bağı yok</div></div>
+    </div>
+    <div class="vurgu-kutu" style="margin-top:26px">
+      Bir sorunun cevabı iki ayrı kağıtta duruyorsa, o soru pratikte
+      <strong>cevapsızdır</strong> — kimse her seferinde ikisini yan yana koymaz.
+    </div>
+  </div>
+  <span class="sayfa-no">02</span>
+</section>
+
+<!-- 3 — ANGARYA MERDİVENİ -->
+<section class="slayt">
+  <div class="bant bant--kirmizi"></div>
+  <div class="govde">
+    <div class="ustbaslik">Maliyetin yapısı</div>
+    <h1>Fotokopi, merdivenin en alt basamağı</h1>
+    <p class="spot">Doğru bir kazanç — ama en küçüğü. Asıl para, bugün hiç ölçülmeyen üçüncü basamakta.</p>
+    <div class="merdiven">
+      <div class="basamak basamak--1">
+        <div class="basamak-no">1</div>
+        <div class="basamak-cubuk"><span class="ad">Kağıt, toner, arşiv</span><span class="alt">Form basımı ve fiziksel saklama</span></div>
+        <div class="basamak-durum"><strong>Görünüyor</strong>Herkes farkında, faturası ortada</div>
+      </div>
+      <div class="basamak basamak--2">
+        <div class="basamak-no">2</div>
+        <div class="basamak-cubuk"><span class="ad">Veri girişi ve rapor derleme</span><span class="alt">Kağıttan Excel'e aktarma, kayıt arama, vardiya devri</span></div>
+        <div class="basamak-durum"><strong>Ölçülebilir</strong>Ama bugün kimse ölçmüyor</div>
+      </div>
+      <div class="basamak basamak--3">
+        <div class="basamak-no">3</div>
+        <div class="basamak-cubuk"><span class="ad">Görünmeyen üretim kaybı</span><span class="alt">Geç fark edilen duruş, hız düşüşü, ambalaj firesi</span></div>
+        <div class="basamak-durum"><strong>Ölçülemiyor</strong>Kayıt olmadığı için desen de görülmüyor</div>
+      </div>
+    </div>
+    <div class="vurgu-kutu" style="margin-top:24px">
+      Basamak 1'in faturası ortada. Sistemin asıl getirisi
+      <strong>2 ve 3'ü ilk kez ölçülebilir kılması</strong>.
+    </div>
+  </div>
+  <span class="sayfa-no">03</span>
+</section>
+
+<!-- 4 — KATMAN 1+2 HESAP -->
+<section class="slayt">
+  <div class="bant bant--amber"></div>
+  <div class="govde">
+    <div class="ustbaslik">Basamak 1 ve 2</div>
+    <h1>Kağıt ve zaman: ikisi de basit çarpma</h1>
+    <div class="hesaplar">
+      <div>
+        <div class="hesap-baslik">Kağıt</div>
+        <div class="formul"><strong>3 hat × 3 vardiya × 3 form türü</strong><br />
+          (üretim formu, duruş kaydı, fire formu)</div>
+        <div class="sonuc sonuc--amber"><span class="sonuc-sayi">27</span><span class="sonuc-birim">sayfa / gün</span></div>
+        <div class="sonuc sonuc--amber"><span class="sonuc-sayi">9.855</span><span class="sonuc-birim">sayfa / yıl</span></div>
+        <p style="font-size:15.5px;line-height:1.5;color:var(--soluk);margin:10px 0 0">
+          Üstüne toner, klasör, dolap ve arşiv alanı. Ayrıca kaybolan form ve
+          okunmayan el yazısının maliyeti bu tabloya hiç girmiyor.</p>
+      </div>
+      <div>
+        <div class="hesap-baslik">Zaman</div>
+        <div class="formul"><strong>Kağıttan Excel'e aktarım + haftalık rapor derleme</strong><br />
+          günde 45 dk · haftada 2 saat</div>
+        <div class="sonuc sonuc--kirmizi"><span class="sonuc-sayi">30</span><span class="sonuc-birim">saat / ay</span></div>
+        <div class="sonuc sonuc--kirmizi"><span class="sonuc-sayi">4</span><span class="sonuc-birim">tam iş günü / ay</span></div>
+        <p style="font-size:15.5px;line-height:1.5;color:var(--soluk);margin:10px 0 0">
+          Bu, zaten var olan bir veriyi ikinci kez yazmak için harcanıyor.
+          Sistem kurulduğunda bu iş sıfırlanır, silinmez — yorumlamaya kayar.</p>
+      </div>
+    </div>
+    <div class="vurgu-kutu" style="margin-top:26px">
+      Bu iki kalem sistem kurulduğunda <strong>tamamen ortadan kalkar</strong>:
+      form basılmaz, veri ikinci kez yazılmaz. Basamak 3 ise kalkmaz — görünür olur.
+    </div>
+    <p class="dipnot">Rakamlar örnek varsayımlarla hesaplanmıştır; formül sizin gerçek değerlerinizle çalışır.</p>
+  </div>
+  <span class="sayfa-no">04</span>
+</section>
+
+<!-- 5 — KATMAN 3 -->
+<section class="slayt">
+  <div class="bant bant--kirmizi"></div>
+  <div class="govde">
+    <div class="ustbaslik">Basamak 3 — asıl kalem</div>
+    <h1>Ölçülmeyen kayıp, olmayan kayıp değildir</h1>
+    <p class="spot">Üçü de bugün sahada yaşanıyor. Hiçbiri bugün bir yere yazılmıyor —
+      dolayısıyla hiçbiri bir karara dönüşmüyor.</p>
+    <div class="kayiplar">
+      <div class="kayip">
+        <h3>Geç fark edilen duruş</h3>
+        <div class="form">gecikme (dk) × hat hızı (pkt/dk)</div>
+        <p><strong style="color:var(--murekkep)">20 dk × 70 pkt/dk = 1.400 paket.</strong>
+          Tek vardiya, tek hat. Bugün duruşun ne zaman başladığı vardiya sonunda,
+          hatırlanarak yazılıyor.</p>
+      </div>
+      <div class="kayip">
+        <h3>Hız düşüşü</h3>
+        <div class="form">üretilen paket ÷ hıza göre beklenen</div>
+        <p>Makine çalışıyor ama yavaş. Örnek bir vardiyada hız verimi
+          <strong style="color:var(--murekkep)">%67</strong> — açık kalan sürenin üçte biri
+          ürüne dönüşmüyor. Bu kalem bugün hiçbir yerde görünmüyor.</p>
+      </div>
+      <div class="kayip">
+        <h3>Ambalaj firesi</h3>
+        <div class="form">numaratör farkı × boş paket ağırlığı</div>
+        <p>Bugün tahminle konuşuluyor. Sistemde her ürün bitiminde
+          otomatik hesaplanıyor — hangi üründe, hangi vardiyada, ne kadar.</p>
+      </div>
+    </div>
+    <div class="vurgu-kutu">
+      Bu üç kalem bugün <strong>faturalanmıyor</strong>, çünkü ölçülmüyor.
+      Sistemin ilk işi kazanç yaratmak değil — kaybı görünür kılmak.
+    </div>
+  </div>
+  <span class="sayfa-no">05</span>
+</section>
+
+<!-- 6 — ÇÖZÜM -->
+<section class="slayt">
+  <div class="bant"></div>
+  <div class="govde">
+    <div class="ustbaslik">Çözüm</div>
+    <h1>Veri kağıda değil, oluştuğu anda sisteme giriyor</h1>
+    <p class="spot">Operatörün asli işi makine. Sistem ondan iki tuş istiyor;
+      süreyi, hızı, verimi, fireyi kendisi hesaplıyor.</p>
+    <div class="uclu">
+      <div class="kart kart--yesil">
+        <h3>Operatör</h3>
+        <p>Telefondan BAŞLAT / DURDUR ve palet girişi. Saati sonradan
+          düzeltebiliyor — sahada olay ile kayıt arasında hep birkaç dakika var.</p>
+      </div>
+      <div class="kart kart--yesil">
+        <h3>Müdür</h3>
+        <p>Duvar panosunda canlı durum: hangi hat çalışıyor, hangi duruşta,
+          hedefin neresinde. Vardiya sonunu beklemek yok.</p>
+      </div>
+      <div class="kart kart--yesil">
+        <h3>Kayıt</h3>
+        <p>Hiçbir şey silinmiyor, hiçbir şey sıfırlanmıyor. Geçmiş her vardiya
+          olduğu gibi geri açılabiliyor.</p>
+      </div>
+    </div>
+    <div class="vurgu-kutu">
+      Sistem <strong>PFM-4, PFM-10 ve PFM-11</strong> hatlarında kurulu ve kullanımda.
+      Hesap katmanı <strong>54 otomatik testle</strong> doğrulanıyor.
+    </div>
+  </div>
+  <span class="sayfa-no">06</span>
+</section>
+
+<!-- 7 — OPERATÖR EKRANI -->
+<section class="slayt">
+  <div class="bant"></div>
+  <div class="govde">
+    <div class="ustbaslik">Kanıt — saha</div>
+    <h1>Operatör ekranı</h1>
+    <div class="ikili ikili--metin-sol">
+      <ul class="madde">
+        <li><strong>Tek bakışta durum.</strong> Ekranın rengi hattın durumu — yeşil üretim, kırmızı duruş, amber mola.</li>
+        <li><strong>İki büyük tuş.</strong> Eldivenle, hattın yanında kullanılmak üzere tasarlandı.</li>
+        <li><strong>Geriye dönük düzeltme.</strong> "7:30'da durdu, 7:35'te girdim" sahada kural — sistem bunu kabul ediyor.</li>
+        <li><strong>Serbest metin duruş sebebi.</strong> Kod ezberletmiyor; tekrarlayan sebepler kendiliğinden öne çıkıyor.</li>
+      </ul>
+      <div class="telefonlar">
+        <img class="gorsel tek-telefon" src="gorseller/operator-ust.png" alt="Operatör ekranı" />
+      </div>
+    </div>
+  </div>
+  <span class="sayfa-no">07</span>
+</section>
+
+<!-- 8 — MÜDÜR PANOSU -->
+<section class="slayt">
+  <div class="bant"></div>
+  <div class="govde">
+    <div class="ustbaslik">Kanıt — saha</div>
+    <h1>Müdür panosu</h1>
+    <p class="spot">Duvara asılan tek ekran: üç hattın canlı durumu, vardiya zaman şeridi,
+      duruş sebepleri ve her ürünün kendi performansı.</p>
+    <div class="tam-gorsel" style="margin-top:20px">
+      <img class="gorsel" src="gorseller/mudur.png" alt="Müdür panosu" style="max-height:392px" />
+    </div>
+  </div>
+  <span class="sayfa-no">08</span>
+</section>
+
+<!-- 9 — İKİ ORAN -->
+<section class="slayt">
+  <div class="bant bant--amber"></div>
+  <div class="govde">
+    <div class="ustbaslik">Kilit ayrım</div>
+    <h1>Makinenin çalışması ile verimli çalışması aynı şey değil</h1>
+    <div class="oranlar">
+      <div class="oran oran--kirmizi">
+        <div class="oran-sayi">%55</div>
+        <div class="oran-ad">Açık kalma</div>
+        <p>Vardiyanın ne kadarında makine gerçekten üretimdeydi.
+          Bu oran çoğu fabrikada bilinir — duruşlar sayılır.</p>
+      </div>
+      <div class="oran oran--amber">
+        <div class="oran-sayi">%67</div>
+        <div class="oran-ad">Hız verimi</div>
+        <p>Makine açıkken hızına göre ne kadar ürettiği. Mikro duruşları ve
+          yavaşlamayı yakalar. Bu oran çoğu fabrikada <em>bilinmez</em>.</p>
+      </div>
+    </div>
+    <div class="vurgu-kutu">
+      İkisi ayrı ölçülmezse "bugün az ürettik" cümlesinin arkasında
+      <strong>arıza mı, yavaşlama mı</strong> olduğu hiçbir zaman anlaşılmaz —
+      ve ikisinin çözümü tamamen farklıdır.
+    </div>
+    <p class="dipnot">Oranlar örnek bir vardiyadan; sistemin kendi hesapladığı gerçek değerlerdir.</p>
+  </div>
+  <span class="sayfa-no">09</span>
+</section>
+
+<!-- 10 — KOMUTA MERKEZİ ZİNCİRİ -->
+<section class="slayt">
+  <div class="bant"></div>
+  <div class="govde">
+    <div class="ustbaslik">Vizyon</div>
+    <h1>Siparişten sevkiyata tek zincir</h1>
+    <p class="spot">En zor ve en veri yoğun halka zaten kuruldu. Diğerleri buna bağlanacak —
+      sıfırdan değil, üstüne.</p>
+    <div class="zincir">
+      <div class="halka halka--yok"><span class="halka-no">01</span><span class="halka-ad">Sipariş</span><span class="halka-durum">Sırada</span></div>
+      <div class="ok">›</div>
+      <div class="halka halka--kismen"><span class="halka-no">02</span><span class="halka-ad">Üretim planı &amp; vardiya</span><span class="halka-durum">Kısmen</span></div>
+      <div class="ok">›</div>
+      <div class="halka halka--yok"><span class="halka-no">03</span><span class="halka-ad">Hammadde &amp; ambalaj</span><span class="halka-durum">Sırada</span></div>
+      <div class="ok">›</div>
+      <div class="halka halka--var"><span class="halka-no">04</span><span class="halka-ad">Üretim</span><span class="halka-durum">Çalışıyor</span></div>
+      <div class="ok">›</div>
+      <div class="halka halka--kismen"><span class="halka-no">05</span><span class="halka-ad">Kalite &amp; fire</span><span class="halka-durum">Kısmen</span></div>
+      <div class="ok">›</div>
+      <div class="halka halka--kismen"><span class="halka-no">06</span><span class="halka-ad">Palet &amp; depo</span><span class="halka-durum">Kısmen</span></div>
+      <div class="ok">›</div>
+      <div class="halka halka--yok"><span class="halka-no">07</span><span class="halka-ad">Sevkiyat &amp; izlenebilirlik</span><span class="halka-durum">Sırada</span></div>
+    </div>
+    <div class="lejant">
+      <span><i style="background:var(--yesil)"></i> Çalışıyor — sahada aktif</span>
+      <span><i style="background:#fdf4de;border:1.5px solid var(--sinyal-amber)"></i> Kısmen — verisi var, ekranı eksik</span>
+      <span><i style="border:1.5px dashed var(--soluk)"></i> Sırada</span>
+    </div>
+    <div class="vurgu-kutu" style="margin-top:30px">
+      Halkaların hepsi <strong>aynı veriyi</strong> paylaşır. Üretim halkasında bugün biriken
+      kayıt — ürün, parti, saat, palet — sipariş ve sevkiyat bağlandığında
+      yeniden girilmeden kullanılır. Zincirin değeri halkalarda değil, aralarındaki bağda.
+    </div>
+  </div>
+  <span class="sayfa-no">10</span>
+</section>
+
+<!-- 11 — İZLENEBİLİRLİK -->
+<section class="slayt">
+  <div class="bant bant--amber"></div>
+  <div class="govde">
+    <div class="ustbaslik">Neden bu zincir önemli</div>
+    <h1>Bir parti geri çağrılsa, cevabı kaç saatte verirsiniz?</h1>
+    <p class="spot">Şikayet, kalite sorunu ya da denetim. Soru şu: bu parti hangi paletlerde,
+      hangi saatte, hangi vardiyada üretildi?</p>
+    <div class="senaryo">
+      <div class="senaryo-yan senaryo--bugun">
+        <div class="senaryo-etiket">Bugün</div>
+        <div class="senaryo-sure">Saatler</div>
+        <p>Kağıt arşivi taranır. Formlar bulunur, el yazıları okunur, depo listesiyle
+          eşleştirilir. Sonuç kişiye ve hafızaya bağlıdır.</p>
+      </div>
+      <div class="senaryo-yan senaryo--sistem">
+        <div class="senaryo-etiket">Sistem tamamlandığında</div>
+        <div class="senaryo-sure">Saniyeler</div>
+        <p>Parti numarası <strong>bugün zaten</strong> her palet kaydında duruyor —
+          saatiyle, ürünüyle, vardiyasıyla. Eksik olan tek şey sevkiyat bağlantısı ve bir ekran.</p>
+      </div>
+    </div>
+    <div class="vurgu-kutu">
+      Bu bir hayal değil, <strong>bir ekran uzaklıkta</strong>. Veri modeli izlenebilirliği
+      şu an bile taşıyor; gıda üretiminde bu yalnızca kolaylık değil, denetim gerekliliğidir.
+    </div>
+  </div>
+  <span class="sayfa-no">11</span>
+</section>
+
+<!-- 12 — YOL HARİTASI -->
+<section class="slayt">
+  <div class="bant"></div>
+  <div class="govde">
+    <div class="ustbaslik">Yol haritası</div>
+    <h1>Üç aşama, her biri kendi başına işe yarar</h1>
+    <p class="spot">Hiçbir aşama diğerini beklemiyor; her biri tamamlandığında
+      kendi başına bir kazanç bırakıyor.</p>
+    <div class="fazlar">
+      <div class="faz faz--1">
+        <div class="faz-no">Faz 1</div>
+        <h3>Yaygınlaştırma</h3>
+        <ul>
+          <li>Kullanıcı girişi ve yetkilendirme</li>
+          <li>Rapor ve dışa aktarma (Excel / PDF)</li>
+          <li>Kalan hatların devreye alınması</li>
+        </ul>
+      </div>
+      <div class="faz faz--2">
+        <div class="faz-no">Faz 2</div>
+        <h3>Birleştirme</h3>
+        <ul>
+          <li>Sipariş ve üretim planının sisteme taşınması</li>
+          <li>Vardiya planlamasıyla tam entegrasyon</li>
+          <li>Palet → sevkiyat bağı: izlenebilirlik</li>
+        </ul>
+      </div>
+      <div class="faz faz--3">
+        <div class="faz-no">Faz 3</div>
+        <h3>Otomasyon</h3>
+        <ul>
+          <li>Makine kontrolcüsünden doğrudan sayaç</li>
+          <li>Operatör girişine gerek kalmadan veri</li>
+          <li>Eşik aşıldığında otomatik uyarı</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <span class="sayfa-no">12</span>
+</section>
+
+<!-- 13 — RİSK VE ŞEFFAFLIK -->
+<section class="slayt">
+  <div class="bant bant--amber"></div>
+  <div class="govde">
+    <div class="ustbaslik">Şeffaflık</div>
+    <h1>Sormadan söylediklerimiz</h1>
+    <p class="spot">Bir sistemin zayıf tarafını en iyi onu kuran bilir.
+      Kararı verirken bunları da bilmelisiniz.</p>
+    <div class="riskler">
+      <div class="risk">
+        <div class="risk-ad">Yetkilendirme pilotta basit tutuldu</div>
+        <p>Sahada hızlı denemek için bilinçli bir tercihti — şu an ekranlara kullanıcı girişi yok.
+          Yaygınlaştırma kararı çıkarsa <strong>ilk yapılacak iş budur</strong>, Faz 1'in başında duruyor.</p>
+      </div>
+      <div class="risk">
+        <div class="risk-ad">Altyapı maliyeti</div>
+        <p>Sistem bugün ücretsiz katmanda çalışıyor ve bu ölçekte maliyet riski yok.
+          Kullanım büyüdüğünde maliyet öngörülebilir ve kademelidir — sürpriz kalem içermez.</p>
+      </div>
+      <div class="risk">
+        <div class="risk-ad">Tek kişiye bağımlılık</div>
+        <p>Gerçek bir risk. Bu yüzden kod sürüm kontrolünde tutuluyor ve alınan her karar
+          gerekçesiyle birlikte dokümante ediliyor — devir gerekirse yazılı bir zemin var.</p>
+      </div>
+    </div>
+    <div class="vurgu-kutu" style="margin-top:28px">
+      Bu üç maddeyi kendimiz açıyoruz, çünkü karar bunlara <strong>rağmen</strong> değil,
+      bunlarla <strong>birlikte</strong> verilmeli.
+    </div>
+  </div>
+  <span class="sayfa-no">13</span>
+</section>
+
+<!-- 14 — TALEP -->
+<section class="slayt slayt--koyu">
+  <div class="bant"></div>
+  <div class="govde">
+    <div class="ustbaslik">Öneri</div>
+    <h1 style="font-size:40px">Sistem çalışıyor. Sıradaki adım bir karar.</h1>
+    <div class="talep-kutu">
+      Üretim takip sisteminin <strong>fabrika geneline yaygınlaştırılmasını</strong> ve
+      Faz 1'in başlatılmasını öneriyoruz.
+    </div>
+    <ul class="gerekli">
+      <li><strong>Onay</strong>Yaygınlaştırma kararı ve Faz 1 kapsamının onaylanması</li>
+      <li><strong>Donanım</strong>Hat başına bir telefon/tablet, müdür ofisine bir ekran</li>
+      <li><strong>Ritim</strong>Ayda bir kısa değerlendirme — rakamlar üzerinden</li>
+    </ul>
+    <div class="kapanis-not">
+      Sistem bugün üç hatta çalışıyor ve hiçbir ek maliyet üretmiyor.
+      Karar gecikirse kaybedilen şey yazılım değil — <strong>ölçülmeyen her vardiyanın verisi</strong>.
+    </div>
+  </div>
+  <span class="sayfa-no">14</span>
+</section>
+
+</body>
+</html>

@@ -1,18 +1,31 @@
-/* sunum/sunum.html → sunum/gold-harvest-mes-sunum.pdf
- * Ayrıca her slaydın PNG önizlemesini üretir (görsel kontrol için). */
+/* sunum/<kaynak>.html → sunum/<kaynak>.pdf (ada göre)
+ * Ayrıca her slaydın PNG önizlemesini üretir (görsel kontrol için).
+ *
+ * Kaynak dosya argümanla verilir, verilmezse hat müdürü sürümü:
+ *   node sunum/uretim/pdf.cjs                          → sunum.html
+ *   node sunum/uretim/pdf.cjs sunum-komuta-merkezi.html → o dosya
+ * İki sunum iki ayrı seviye için (hat müdürü / genel müdür), ikisi de
+ * elde çalışır kalmalı — bu yüzden tek betik, parametreli. */
 const { chromium } = require('playwright')
 const path = require('path')
 const fs = require('fs')
 
 const SUNUM = path.join(__dirname, '..')
-const KONTROL = path.join(__dirname, 'kontrol')
+
+/* Hangi sunum? Argümansız çağrı eski davranışı birebir korur. */
+const KAYNAK = process.argv[2] || 'sunum.html'
+const CIKTI = KAYNAK === 'sunum.html'
+  ? 'gold-harvest-mes-sunum.pdf'
+  : KAYNAK.replace(/\.html$/, '') + '.pdf'
+/* Önizlemeler sunum başına ayrı klasöre — biri diğerinin karelerini ezmesin. */
+const KONTROL = path.join(__dirname, 'kontrol', KAYNAK.replace(/\.html$/, ''))
 
 async function main() {
   fs.mkdirSync(KONTROL, { recursive: true })
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
 
-  await page.goto('file://' + path.join(SUNUM, 'sunum.html'))
+  await page.goto('file://' + path.join(SUNUM, KAYNAK))
   await page.waitForLoadState('networkidle')
   await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(700)
@@ -66,13 +79,13 @@ async function main() {
   console.log(`✓ ${slaytlar.length} slayt önizlemesi`)
 
   await page.pdf({
-    path: path.join(SUNUM, 'gold-harvest-mes-sunum.pdf'),
+    path: path.join(SUNUM, CIKTI),
     width: '1280px',
     height: '720px',
     printBackground: true,
     pageRanges: `1-${slaytlar.length}`,
   })
-  console.log('✓ gold-harvest-mes-sunum.pdf')
+  console.log('✓ ' + CIKTI)
 
   await browser.close()
 }
