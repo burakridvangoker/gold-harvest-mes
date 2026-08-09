@@ -105,6 +105,32 @@ async function main() {
     console.log('✓ urun-plani.png')
   }
 
+  /* 6) Palet çıkış listesi — TEK ürünün kendi palet/saat listesi, kırpma.
+   * urun-plani.png'nin aksine oran/ilerleme çubuğu taşımaz — genel müdür
+   * sunumunun izlenebilirlik iddiası SADECE bu listeye odaklanmalı.
+   * .plan-row-pallets-row'un fontu clamp(0.8rem,0.9vw,1.2rem) — duvar
+   * ekranı için tasarlanmış, sunum sayfasının dar sütununa (~700px)
+   * gömülünce vw tavanı bile yetmiyor (kaynak doğal genişliği ~2000px
+   * CSS px, 700px'e sıkışınca metin küçülüyor). vw ile uğraşmak yerine
+   * yakalama anında fontu doğrudan büyütüyoruz — sunum bağlamında bu
+   * bir "gerçek ekran" iddiası değil, okunur bir kanıt kırpması. */
+  const wide = await newPage(browser, { width: 950, height: 1100 }, 2, at(14, 52))
+  await wide.goto(`${BASE}/?ekran=mudur&hazir=1`)
+  await wide.waitForSelector('.plan-row-pallets', { timeout: 15000 })
+  await wide.addStyleTag({
+    content: `
+      .plan-row-pallets-label { font-size: 15px !important; }
+      .plan-row-pallets-row { font-size: 19px !important; padding: 8px 14px !important; }
+      .plan-row-pallets-list { gap: 10px !important; }
+    `,
+  })
+  await wide.waitForTimeout(900)
+  const palletBlock = await wide.locator('.plan-row-pallets').first()
+  if (await palletBlock.count()) {
+    await palletBlock.screenshot({ path: path.join(OUT, 'palet-cikis-listesi.png') })
+    console.log('✓ palet-cikis-listesi.png')
+  }
+
   await browser.close()
 }
 

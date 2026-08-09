@@ -1,0 +1,364 @@
+<title>Gold Harvest MES — Genel Müdür Sunumu</title>
+<style>
+/*FONTS*/
+
+/*
+ * Aynı Porselen Andon kimliği (sunum/hikaye/ ile ortak): porselen beyazı,
+ * çeliğin yeşilimsi karası, andon sinyalleri. Bu sayfanın koyu/açık ritmi
+ * farklı bir eksene oturuyor: KOYU = henüz kanıtlanmamış (çerçeve/gelecek
+ * vizyonu), AÇIK = ölçülmüş/kanıtlanmış gerçek. prefers-color-scheme hiç
+ * dinlenmez — ritim içeriğin kendisi.
+ */
+:root{
+  --ink:#131916;
+  --paper:#f8faf7;
+  --paper-dim:#eef1ee;
+  --ink-soft:rgba(248,250,247,.66);
+  --paper-soft:#566059;
+  --green:#009440;
+  --amber:#ffb000;
+  --red:#e02718;
+  --data:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --plate:'Saira Condensed','Arial Narrow',sans-serif;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--ink);color:var(--paper);
+  font-family:var(--data);line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+.scene{
+  min-height:100svh;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  padding:clamp(56px,9vh,104px) clamp(22px,5vw,64px);
+  position:relative;
+}
+.scene--dark{background:var(--ink);color:var(--paper)}
+.scene--light{background:var(--paper);color:var(--ink)}
+
+.inner{width:100%;max-width:940px;display:flex;flex-direction:column;align-items:center;gap:clamp(24px,3.6vh,40px)}
+
+.fx{opacity:0;transform:translateY(22px);transition:opacity .85s cubic-bezier(.22,.7,.3,1),transform .85s cubic-bezier(.22,.7,.3,1)}
+.in .fx{opacity:1;transform:none}
+.in .fx:nth-child(2){transition-delay:.14s}
+.in .fx:nth-child(3){transition-delay:.26s}
+.in .fx:nth-child(4){transition-delay:.38s}
+
+/* ---- tipografi ---- */
+.line{
+  margin:0;text-align:center;text-wrap:balance;
+  font-size:clamp(24px,3.2vw,38px);line-height:1.36;font-weight:400;
+  letter-spacing:-.01em;max-width:26ch;
+}
+.line--big{
+  font-size:clamp(32px,5.6vw,64px);line-height:1.14;font-weight:700;
+  letter-spacing:-.026em;max-width:18ch;
+}
+.line b{font-weight:600}
+.dim{color:var(--ink-soft)}
+.scene--light .dim{color:var(--paper-soft)}
+
+.stamp{
+  font-family:var(--plate);font-weight:700;
+  font-size:clamp(13px,1.5vw,17px);letter-spacing:.2em;text-transform:uppercase;
+  color:var(--paper-soft);margin:0;
+}
+.scene--dark .stamp{color:var(--ink-soft)}
+
+/* ---- zincir (sayfa 2) ---- */
+.chain{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;max-width:640px}
+.chain-node{
+  font-family:var(--plate);font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  font-size:clamp(12px,1.5vw,15px);padding:11px 18px;border-radius:999px;
+  border:1px solid var(--ink-soft);color:var(--ink-soft);
+}
+.chain-node--active{border-color:var(--green);color:var(--paper);background:rgba(0,148,64,.18)}
+.chain-arrow{color:var(--ink-soft);font-size:16px}
+
+/* ---- şimdi/büyürse/hedefliyoruz blokları ---- */
+.blocks{display:flex;flex-direction:column;gap:22px;width:100%;max-width:700px;text-align:left}
+.block{display:flex;flex-direction:column;gap:8px}
+.block-label{
+  font-family:var(--plate);font-weight:700;font-size:13px;
+  letter-spacing:.14em;text-transform:uppercase;
+}
+.block-label--now{color:var(--green)}
+.block-label--grow{color:var(--paper-soft)}
+.block-label--target{color:var(--amber)}
+.block-text{font-size:clamp(16px,1.9vw,21px);line-height:1.56;margin:0;max-width:62ch}
+.block--target{border-left:2px dashed var(--amber);padding-left:18px}
+
+/* ---- örnek hesap kutusu (sayfa 4) ---- */
+.example{
+  background:var(--paper-dim);border-radius:12px;padding:16px 20px;
+  font-size:clamp(14px,1.6vw,16px);line-height:1.62;color:var(--paper-soft);
+  max-width:640px;
+}
+.example b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* ---- görseller ---- */
+.shot{
+  display:block;max-width:100%;width:auto;height:auto;
+  border-radius:14px;border:1px solid rgba(18,24,21,.14);
+  box-shadow:0 2px 4px rgba(18,24,21,.06),0 26px 54px -30px rgba(18,24,21,.5);
+  background:#fff;
+}
+.shot--wide{max-height:52svh}
+
+/* ---- yol haritası (sayfa 8, koyu) ---- */
+.roadmap{display:flex;flex-direction:column;gap:clamp(24px,3.4vh,36px);width:100%;max-width:660px;text-align:left}
+.roadmap-item{display:flex;gap:18px;align-items:flex-start}
+.roadmap-num{
+  flex:0 0 auto;font-family:var(--plate);font-weight:700;color:var(--amber);
+  font-size:15px;letter-spacing:.06em;min-width:1.6em;padding-top:.2em;
+}
+.roadmap-body h3{margin:0 0 5px;font-size:clamp(17px,2.1vw,22px);font-weight:600;color:var(--paper)}
+.roadmap-body p{margin:0;color:var(--ink-soft);font-size:clamp(15px,1.7vw,18px);line-height:1.55}
+
+/* ---- sinyal vurguları ---- */
+.signal{position:absolute;left:0;right:0;top:0;height:4px}
+.signal--green{background:var(--green)}
+.signal--amber{background:var(--amber)}
+
+/* ---- kaydırma ipucu ---- */
+.hint{
+  position:absolute;bottom:clamp(24px,4vh,40px);left:50%;transform:translateX(-50%);
+  font-family:var(--plate);font-weight:700;font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:rgba(248,250,247,.42);
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+}
+.hint span{display:block;width:1px;height:26px;background:rgba(248,250,247,.32);animation:drop 2.1s ease-in-out infinite}
+@keyframes drop{0%,100%{opacity:.25;transform:scaleY(.55);transform-origin:top}50%{opacity:1;transform:scaleY(1);transform-origin:top}}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .fx{opacity:1;transform:none;transition:none}
+  .hint span{animation:none;opacity:.6}
+}
+</style>
+
+<!-- 1: Açılış — çerçeve -->
+<section class="scene scene--dark" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Gold Harvest MES</p>
+    <p class="line line--big fx">Bu sunum, üretim sürecinin tek bir
+      katmanında elde edilen somut bir sonucu anlatıyor —
+      <span class="dim">her şeyin çözüldüğünü değil.</span></p>
+  </div>
+  <div class="hint">Kaydır<span></span></div>
+</section>
+
+<!-- 2: Zincirdeki yerimiz -->
+<section class="scene scene--dark" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Zincirdeki yerimiz</p>
+    <div class="chain fx">
+      <span class="chain-node">Sipariş</span>
+      <span class="chain-arrow">→</span>
+      <span class="chain-node">Planlama</span>
+      <span class="chain-arrow">→</span>
+      <span class="chain-node chain-node--active">Üretim</span>
+      <span class="chain-arrow">→</span>
+      <span class="chain-node">Lojistik</span>
+    </div>
+    <p class="line dim fx">Bugün yalnızca Üretim halkasının bir katmanındayız.
+      Planlama ve lojistikte ne kullanıldığını henüz bilmiyoruz —
+      bunu gizlemiyoruz, açıkça söylüyoruz.</p>
+  </div>
+</section>
+
+<!-- 3: Ne yaptık -->
+<section class="scene scene--dark" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Ne yaptık</p>
+    <p class="line fx">Makineden ve operatörden çıkan veri artık kağıtta
+      değil, <b>canlı ve yapılandırılmış.</b></p>
+    <p class="line dim fx">PFM-4, PFM-10, PFM-11 hatlarında, şu anda,
+      gerçek verilerle çalışıyor.</p>
+  </div>
+</section>
+
+<!-- 4: Fayda 1 — Arıza/yavaşlama ayrımı -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Fayda 1 — Arıza/yavaşlama ayrımı</p>
+    <div class="blocks fx">
+      <div class="block">
+        <span class="block-label block-label--now">Şimdi (3 hat)</span>
+        <p class="block-text">3 hatta her duruş iki ayrı oranla görülüyor:
+          arızadan mı durdu, yavaşlamadan mı kaybetti. Bu ayrım daha önce
+          yoktu.</p>
+      </div>
+      <p class="example">Örnek: 8 saatlik vardiyada makine 6 saat açık
+        kaldıysa (<b>%75 açık kalma</b>), ama o 6 saatte hıza göre yalnızca
+        5 saatlik iş üretildiyse (<b>%83 hız verimi</b>) — aradaki fark,
+        gözden kaçan küçük duruşlar ve fireye giden süre demektir.</p>
+      <img class="shot shot--wide" src="/*GORSEL:durus-sebepleri*/" alt="Duruş sebepleri listesi — sebep, tekrar sayısı ve toplam süre" />
+      <div class="block">
+        <span class="block-label block-label--grow">Büyürse (fabrika geneli)</span>
+        <p class="block-text">Aynı ayrım tüm hatlarda yapılırsa, bakım ve
+          eğitim kararları "nerede en çok kaybediyoruz" verisiyle
+          önceliklendirilir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5: Fayda 2 — İzlenebilirlik -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Fayda 2 — İzlenebilirlik</p>
+    <div class="blocks fx">
+      <div class="block">
+        <span class="block-label block-label--now">Şimdi (3 hat)</span>
+        <p class="block-text">3 hatta her palet hangi vardiya/ürün/saatle
+          üretildiği kayıtlı — geriye dönük aranabiliyor.</p>
+      </div>
+      <img class="shot" src="/*GORSEL:palet-cikis-listesi*/" alt="Bir ürünün palet çıkış listesi — saat ve koli sayısı" />
+      <div class="block">
+        <span class="block-label block-label--grow">Büyürse (fabrika geneli)</span>
+        <p class="block-text">Fabrika genelinde bir denetimde ya da müşteri
+          şikayetinde "bu ürün nasıl üretildi" sorusu saniyeler içinde
+          cevaplanır.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6: Vardiya başlangıcı -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Vardiya başlangıcı — sahada kaybolan zaman</p>
+    <div class="blocks fx">
+      <div class="block">
+        <span class="block-label block-label--grow">Önce</span>
+        <p class="block-text">Vardiya başında planlar amirin odasında,
+          kağıt yoluyla dağıtılır. Operatör makineye gidene kadar personel
+          ya da malzeme eksikliğini göremez — fark ettiğinde amire gidip
+          çözüm aramak zaman kaybettirir.</p>
+      </div>
+      <div class="block">
+        <span class="block-label block-label--now">Şimdi</span>
+        <p class="block-text">Operatör doğrudan makineye gider, üretime
+          başlar. Bir eksiklik/aksaklık görürse anında sisteme girer,
+          çözüm hızlanır.</p>
+      </div>
+      <div class="block block--target">
+        <span class="block-label block-label--target">Hedefliyoruz</span>
+        <p class="block-text">Kart okuma sistemiyle personel devamsızlığı
+          otomatik görünsün — amirin içeri girmesine bile gerek kalmadan.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7: Karar hızı -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Karar hızı</p>
+    <div class="blocks fx">
+      <div class="block">
+        <span class="block-label block-label--grow">Önce</span>
+        <p class="block-text">Duruş 07:30'da başlar. Kağıt, müdürün
+          masasına 15:20'de ulaşır.</p>
+      </div>
+      <div class="block">
+        <span class="block-label block-label--now">Şimdi</span>
+        <p class="block-text">Duruş 07:30'da başlar. Panoda 07:30'da
+          görülür — amir ya da yönetici, fabrikada olsun olmasın, anında
+          müdahale edebilir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8: Hedefliyoruz — sıradaki adımlar -->
+<section class="scene scene--dark" data-scene>
+  <div class="signal signal--amber"></div>
+  <div class="inner">
+    <p class="stamp fx">Hedefliyoruz — sıradaki adımlar</p>
+    <div class="roadmap fx">
+      <div class="roadmap-item">
+        <span class="roadmap-num">1</span>
+        <div class="roadmap-body">
+          <h3>Planlama entegrasyonu</h3>
+          <p>Üretim planları sistem üzerinden tanımlansın, planlama birimi
+            üretimi anlık izleyip revizeyi dinamik şekillendirsin.</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-num">2</span>
+        <div class="roadmap-body">
+          <h3>Doğrudan makine verisi</h3>
+          <p>Veri girişi operatörünün elle aktardığı veriler, makineden
+            doğrudan ve otomatik gelsin.</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <span class="roadmap-num">3</span>
+        <div class="roadmap-body">
+          <h3>Personel/devamsızlık entegrasyonu</h3>
+          <p>Kart okuma verisiyle devamsızlık kaynaklı eksik personel
+            doğrudan sistemde görünsün.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9: Maliyet/risk -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Maliyet ve risk</p>
+    <p class="line fx">Mevcut altyapı (Supabase/Vercel) sıfıra yakın ek
+      maliyetle çalışıyor — büyütmek yeni bir yatırım riski açmıyor.</p>
+    <p class="line dim fx">Ayrıca kağıt/kara düzen sisteminden çıkılıyor:
+      elle yazılan formlar, fotokopiler ortadan kalkıyor — kağıt masrafı da.</p>
+  </div>
+</section>
+
+<!-- 10: Güvenlik/şeffaflık -->
+<section class="scene scene--light" data-scene>
+  <div class="inner">
+    <p class="stamp fx">Güvenlik ve şeffaflık</p>
+    <p class="line fx">Pilot aşamada kullanıcı girişi ve yetkilendirme
+      bilerek basit tutuldu — hız kazanmak için.</p>
+    <p class="line dim fx">Yaygınlaştırma kararıyla birlikte ilk yapılacak
+      iş bu olacak; bunu biz açıyoruz, sorulmadan.</p>
+  </div>
+</section>
+
+<!-- 11: Kapanış -->
+<section class="scene scene--dark" data-scene>
+  <div class="signal signal--green"></div>
+  <div class="inner">
+    <p class="line line--big fx">Bu katmanda kanıtlanan modelin, fabrika
+      geneline yaygınlaştırılmasını öneriyoruz.</p>
+  </div>
+</section>
+
+<script>
+(function(){
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.26 });
+  document.querySelectorAll('[data-scene]').forEach(function(s){ io.observe(s); });
+
+  requestAnimationFrame(function(){
+    var ilk = document.querySelector('[data-scene]');
+    if(ilk) ilk.classList.add('in');
+  });
+
+  var hint = document.querySelector('.hint');
+  if(hint){
+    addEventListener('scroll', function(){
+      if(scrollY > 40){ hint.style.transition='opacity .4s ease'; hint.style.opacity='0'; }
+    }, { passive:true, once:true });
+  }
+})();
+</script>

@@ -988,6 +988,28 @@ Kalıcı kurallar (hepsi yaşanmış hatadan):
 dosya olarak duruyor ama üreticisi kaldırıldı; öğretici sürüm onu
 kapsıyor.
 
+**Genel müdür videosu (`gold-harvest-mes-genel-mudur.mp4`, `sunum/video/`):**
+~2:52'lik, 9 sahnelik anlatı videosu — Remotion (React ile kare kare
+render). `tanitim.cjs`'in AKSİNE uygulamaya hiç tıklanmaz; sahneler
+çizilir, içlerine `gorseller/`'deki **gerçek** ekran görüntüleri
+yerleştirilir. Sıra: kimlik → kağıt düzeninin maliyeti (07:30 duruş /
+15:20 kağıt) → dürüst kapsam (Sipariş→Planlama→**Üretim**→Lojistik) →
+operatör ekranı → müdür panosu → iki oran (%75 açık kalma / %83 hız
+verimi) → izlenebilirlik → hedefler → öneri. İki video birbirinin yerine
+geçmez: öğretici olan kullanımı gösterir, bu karar ister.
+
+Kalıcı kurallar (ayrıntısı `sunum/README.md`'de, hepsi yaşanmış hatadan):
+- **`text-transform: uppercase` KULLANILMAZ** — Türkçe "i" → "İ"
+  dönüşümü tarayıcıda gerçekleşmedi (`lang="tr"` de çözmedi); ilk
+  render'da "ZİNCİRDEKİ YERİMİZ" yerine "ZINCIRDEKI YERIMIZ" çıktı.
+  Büyük harf etiketler kaynakta DOĞRUDAN büyük harf yazılır.
+- **Fontlar CSS'ten değil `src/fonts.ts`'ten yüklenir** — bir `.css`
+  içindeki `url('/fonts/...')` ifadesini webpack modül sanıp paketlemeyi
+  kırıyor. latin + latin-ext ikisi de şart (ğ/ı/ş latin-ext'te).
+- **Remotion kendi Chrome'unu indiremiyor** (`remotion.media` ağ izin
+  listesinde değil); `remotion.config.ts` Playwright'ın
+  `chrome-headless-shell`'ine düşer, o yol yoksa satırı atlar.
+
 `playwright` ve `ffmpeg-static` bilinçli olarak `package.json`'a
 eklenmedi (uygulamayla ilgileri yok, sadece bu klasör için):
 `npm install --no-save playwright ffmpeg-static`. **Dikkat:** `--no-save`

@@ -8,8 +8,10 @@ Gönderilebilir dosyalar: iki ayrı seviyeye yazılmış tanıtım PDF'i ve
 | Sunum | Kime | Çerçeve |
 |---|---|---|
 | `gold-harvest-mes-sunum.pdf` (10 sayfa) | **Hat müdürü** | "Şu an göremediğin ne varmış" — sistemin kendisi |
-| `sunum-komuta-merkezi.pdf` (14 sayfa) | **Genel müdür** | "Bu bize ne kazandırıyor" — maliyet, vizyon, karar |
-| `hikaye/` (14 bölüm, web) | **Genel müdür** | "Aynı sabah, farklı bir şekilde" — anlatı, kaydırmalı sayfa |
+| `sunum-komuta-merkezi.pdf` (11 sayfa) | **Genel müdür** | "Bu bize ne kazandırıyor" — maliyet, vizyon, karar |
+| `gold-harvest-mes-genel-mudur.mp4` (~2:52) | **Genel müdür** | Aynı içeriğin video hâli — baştan sona anlatı |
+| `genel-mudur/` (11 bölüm, web) | **Genel müdür** | Aynı içeriğin kaydırmalı sayfa hâli |
+| `hikaye/` (14 bölüm, web) | **Genel müdür** | "Aynı sabah, farklı bir şekilde" — daha erken bir anlatı denemesi |
 
 Genel müdür sürümü yüz yüze anlatım OLMADAN gönderilmek üzere yazıldı;
 dosya kendi başına tüm soruları cevaplamalı. Üç kalıcı kuralı var:
@@ -30,15 +32,28 @@ dosya kendi başına tüm soruları cevaplamalı. Üç kalıcı kuralı var:
 
 | Dosya | Ne |
 |---|---|
-| `sunum-komuta-merkezi.pdf` | **Gönderilecek — 14 sayfalık genel müdür sunumu** |
+| `gold-harvest-mes-genel-mudur.mp4` | **Gönderilecek — ~2:52'lik genel müdür videosu** |
+| `sunum-komuta-merkezi.pdf` | **Gönderilecek — 11 sayfalık genel müdür sunumu** |
 | `gold-harvest-mes-sunum.pdf` | **Gönderilecek — 10 sayfalık hat müdürü sunumu** |
-| `gold-harvest-mes-tanitim.mp4` | **Gönderilecek — 2:47'lik öğretici video** |
+| `gold-harvest-mes-tanitim.mp4` | **Gönderilecek — 2:47'lik öğretici video** (uygulamayı kullanarak) |
 | `gold-harvest-mes-vardiya.mp4` | Önceki 34 sn'lik hızlandırılmış sürüm (üreticisi kaldırıldı) |
 | `sunum.html` | Hat müdürü sunumunun kaynağı (tarayıcıda da açılır) |
 | `sunum-komuta-merkezi.html` | Genel müdür sunumunun kaynağı |
+| `video/` | Genel müdür videosunun kaynağı (Remotion projesi) |
+| `genel-mudur/` | Genel müdür sayfasının kaynağı (kaydırmalı web) |
 | `gorseller/` | Uygulamadan alınan ekran görüntüleri |
 | `fonts/` | IBM Plex Sans + Saira Condensed (uygulamayla aynı) |
-| `uretim/` | Görselleri, PDF'i ve videoyu üreten düzenek |
+| `uretim/` | Görselleri, PDF'i ve öğretici videoyu üreten düzenek |
+
+## İki video var — karıştırmayın
+
+| Video | Nasıl üretiliyor | Ne anlatıyor |
+|---|---|---|
+| `gold-harvest-mes-tanitim.mp4` | `uretim/tanitim.cjs` — Playwright gerçek arayüze **tıklıyor** | Uygulama nasıl kullanılır (öğretici) |
+| `gold-harvest-mes-genel-mudur.mp4` | `video/` — Remotion, React ile **çizilen** hareketli grafik | Ne yaptık, ne kazandırıyor, ne yapacağız (anlatı) |
+
+Biri diğerinin yerine geçmez: öğretici video kullanımı gösterir, genel
+müdür videosu kararı ister. Ekran görüntüleri ikisinde de gerçek.
 
 ## Kaydırmalı hikaye sayfası (`hikaye/`)
 
@@ -167,6 +182,60 @@ bilgisayarından aldığın görüntüleri aynı adlarla `gorseller/` içine koy
 sadece 4. adımı çalıştır. O zaman `sunum.html`'deki
 _"Ekran görüntüleri örnek vardiya verisiyle alınmıştır"_ dipnotunu da sil
 (slayt 4).
+
+## Genel müdür videosunu yeniden üretmek (`video/`)
+
+Remotion projesi — React ile yazılmış, kare kare render edilen bir video.
+`uretim/tanitim.cjs`'in aksine burada uygulamaya HİÇ tıklanmıyor; sahneler
+çiziliyor, içlerine `gorseller/`'deki **gerçek** ekran görüntüleri
+yerleştiriliyor.
+
+```bash
+cd sunum/video
+npm i                                  # ilk kurulum
+npm run varliklar                      # fonts/ + gorseller/ → public/ eşitle
+npx remotion studio --no-open          # önizleme (sahneleri sürükleyerek düzenle)
+npx remotion render GoldHarvestMES ../gold-harvest-mes-genel-mudur.mp4
+```
+
+**`npm run varliklar` atlanırsa video BAYAT görsel gösterir.** Remotion
+yalnızca kendi `public/` klasöründen okuyabildiği için ekran görüntüleri
+oraya kopyalanmak zorunda; `shots.cjs` yeniden çalıştırıldığında bu
+kopyalar sessizce eskir. Arayüze dokunan her değişiklikten sonra:
+`node sunum/uretim/shots.cjs` → `npm run varliklar` → render.
+
+Tek tek sahneye bakmak için (render'ı beklemeden):
+
+```bash
+npx remotion still 6-Oranlar /tmp/x.png --frame=300 --scale=0.5
+```
+
+Kalıcı kararlar (hepsi yaşanmış bir hatanın sonucu):
+
+- **`text-transform: uppercase` KULLANILMAZ.** Türkçede "i" → "İ" olmalı;
+  tarayıcı bunu bu ortamda uygulamadı, `lang="tr"` de çözmedi. İlk
+  render'da "ZİNCİRDEKİ YERİMİZ" yerine "ZINCIRDEKI YERIMIZ" çıktı.
+  Büyük harf etiketler kaynakta **doğrudan büyük harf yazılır**.
+- **Yazı tipleri CSS dosyasından değil `src/fonts.ts`'ten yüklenir.** Bir
+  `.css` içindeki `url('/fonts/...')` ifadesini webpack derleme anında
+  modül olarak çözmeye çalışıp paketlemeyi kırıyor. `staticFile()` ile
+  üretilen yol çalışma anında `<style>` olarak enjekte ediliyor.
+  latin + latin-ext ikisi de şart (ğ/ı/ş latin-ext'te).
+- **Ekran görüntüsü yaklaşması küçük tutulur** (`Ortak.tsx`, 1 → 1.03).
+  Büyük bir yaklaşma görseli kadraj dışına taşırıyor; müdür panosunun
+  altı ilk render'da kesilmişti.
+- **Kadraja sığmayan görsel küçültülmez, sahne yeniden dengelenir.**
+  6. sahneye konan duruş sebepleri karesi okunamayacak kadar küçük
+  kalıp dokuya dönüştüğü için tamamen kaldırıldı — o ekran zaten 5.
+  sahnedeki müdür panosunun içinde tam boy görünüyor.
+- **Bu ortam Remotion'ın kendi Chrome'unu indiremiyor** (`remotion.media`
+  ağ izin listesinde değil). `remotion.config.ts` varsa Playwright'ın
+  `chrome-headless-shell`'ini kullanıyor; başka makinede o yol yoksa
+  satır kendiliğinden atlanır ve Remotion kendi tarayıcısını indirir.
+
+Sahne süreleri `src/Video.tsx` içinde satır içi yazılı (Studio'da
+sürüklenerek değiştirilebilsin diye). Değiştirirsen `src/Root.tsx`'teki
+`TOPLAM` da güncellenmeli.
 
 ## Metni değiştirmek
 

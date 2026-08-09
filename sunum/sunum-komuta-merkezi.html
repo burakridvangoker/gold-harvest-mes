@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8" />
-<title>Gold Harvest — Üretim Komuta Merkezi</title>
+<title>Gold Harvest MES — Genel Müdür Sunumu</title>
 <style>
 /* Yazı tipleri — uygulamanın kendisiyle aynı (IBM Plex Sans + Saira Condensed).
    Türkçe ğ/ı/ş karakterleri latin-ext alt kümesinde, ikisi de yüklenmeli. */
@@ -486,418 +486,239 @@ h1 {
 .gerekli li { font-size: 16.5px; line-height: 1.45; color: rgba(248,250,247,0.78); padding-top: 15px; border-top: 2px solid rgba(248,250,247,0.24); }
 .gerekli strong { display: block; color: var(--kagit); font-weight: 600; font-size: 17.5px; margin-bottom: 5px; }
 
+/* ============ v3 — 11 sayfalık içerik planına özel tek ek ============ */
+.vurgu-kutu--hedef { border-left-color: var(--sinyal-amber); background: #fdf4de; }
+
 @page { size: 1280px 720px; margin: 0; }
 </style>
 </head>
 <body>
-<!-- 1 — KAPAK -->
+<!-- 1 — AÇILIŞ ÇERÇEVE -->
 <section class="slayt slayt--koyu">
   <div class="bant"></div>
   <div class="govde kapak-govde">
-    <span class="plaka">GOLD HARVEST</span>
-    <h1 class="kapak-baslik">Üretim Komuta Merkezi</h1>
-    <p class="spot">Siparişten sevkiyata kadar tek bir yerde ölçülen üretim.<br />
-      İlk halka kuruldu ve sahada çalışıyor.</p>
-    <div class="kapak-alt">
-      <div><strong>Durum</strong>PFM-4 · PFM-10 · PFM-11'de aktif</div>
-      <div><strong>Konu</strong>Fabrika geneline yaygınlaştırma önerisi</div>
-    </div>
+    <span class="plaka">GOLD HARVEST MES</span>
+    <h1 class="kapak-baslik" style="font-size:44px">Bu sunum, üretim sürecinin tek bir
+      katmanında elde edilen somut bir sonucu anlatıyor.</h1>
+    <p class="spot" style="color:rgba(248,250,247,0.72)">Her şeyin çözüldüğünü değil.</p>
   </div>
   <span class="sayfa-no">01</span>
 </section>
 
-<!-- 2 — DAĞINIK VERİ -->
+<!-- 2 — ZİNCİRDEKİ YERİMİZ -->
 <section class="slayt">
-  <div class="bant bant--kirmizi"></div>
+  <div class="bant bant--amber"></div>
   <div class="govde">
-    <div class="ustbaslik">Mevcut durum</div>
-    <h1>Üretim verisi bugün altı ayrı yerde duruyor</h1>
-    <p class="spot">Her biri kendi içinde doğru. Aralarındaki bağı her seferinde bir insan
-      kuruyor — hatırlayarak, arayarak, yeniden yazarak.</p>
-    <div class="dagitim">
-      <div class="kutu-veri"><div class="yer">Sipariş</div><div class="nerede">Sipariş defteri</div><div class="nasil">Telefon, e-posta, not kağıdı</div></div>
-      <div class="kutu-veri"><div class="yer">Planlama</div><div class="nerede">Vardiya çizelgesi</div><div class="nasil">Ayrı bir dosyada</div></div>
-      <div class="kutu-veri"><div class="yer">Üretim</div><div class="nerede">Vardiya formu</div><div class="nasil">Kağıt, el yazısı</div></div>
-      <div class="kutu-veri"><div class="yer">Kalite</div><div class="nerede">Fire formu</div><div class="nasil">Ayrı kağıt, ayrı klasör</div></div>
-      <div class="kutu-veri"><div class="yer">Depo</div><div class="nerede">Palet listesi</div><div class="nasil">Elle sayım</div></div>
-      <div class="kutu-veri"><div class="yer">Sevkiyat</div><div class="nerede">İrsaliye</div><div class="nasil">Üretimle bağı yok</div></div>
+    <div class="ustbaslik">Zincirdeki yerimiz</div>
+    <h1>Bugün yalnızca Üretim halkasının bir katmanındayız</h1>
+    <div class="zincir" style="margin-top:44px">
+      <div class="halka halka--yok"><span class="halka-no">01</span><span class="halka-ad">Sipariş</span><span class="halka-durum">Bilmiyoruz</span></div>
+      <div class="ok">›</div>
+      <div class="halka halka--yok"><span class="halka-no">02</span><span class="halka-ad">Planlama</span><span class="halka-durum">Bilmiyoruz</span></div>
+      <div class="ok">›</div>
+      <div class="halka halka--var"><span class="halka-no">03</span><span class="halka-ad">Üretim</span><span class="halka-durum">Çalışıyor</span></div>
+      <div class="ok">›</div>
+      <div class="halka halka--yok"><span class="halka-no">04</span><span class="halka-ad">Lojistik</span><span class="halka-durum">Bilmiyoruz</span></div>
     </div>
-    <div class="vurgu-kutu" style="margin-top:26px">
-      Bir sorunun cevabı iki ayrı kağıtta duruyorsa, o soru pratikte
-      <strong>cevapsızdır</strong> — kimse her seferinde ikisini yan yana koymaz.
+    <div class="vurgu-kutu" style="margin-top:38px">
+      Planlama ve lojistikte ne kullanıldığını henüz bilmiyoruz —
+      bunu gizlemiyoruz, açıkça söylüyoruz.
     </div>
   </div>
   <span class="sayfa-no">02</span>
 </section>
 
-<!-- 3 — ANGARYA MERDİVENİ -->
+<!-- 3 — NE YAPTIK -->
 <section class="slayt">
-  <div class="bant bant--kirmizi"></div>
+  <div class="bant"></div>
   <div class="govde">
-    <div class="ustbaslik">Maliyetin yapısı</div>
-    <h1>Fotokopi, merdivenin en alt basamağı</h1>
-    <p class="spot">Doğru bir kazanç — ama en küçüğü. Asıl para, bugün hiç ölçülmeyen üçüncü basamakta.</p>
-    <div class="merdiven">
-      <div class="basamak basamak--1">
-        <div class="basamak-no">1</div>
-        <div class="basamak-cubuk"><span class="ad">Kağıt, toner, arşiv</span><span class="alt">Form basımı ve fiziksel saklama</span></div>
-        <div class="basamak-durum"><strong>Görünüyor</strong>Herkes farkında, faturası ortada</div>
-      </div>
-      <div class="basamak basamak--2">
-        <div class="basamak-no">2</div>
-        <div class="basamak-cubuk"><span class="ad">Veri girişi ve rapor derleme</span><span class="alt">Kağıttan Excel'e aktarma, kayıt arama, vardiya devri</span></div>
-        <div class="basamak-durum"><strong>Ölçülebilir</strong>Ama bugün kimse ölçmüyor</div>
-      </div>
-      <div class="basamak basamak--3">
-        <div class="basamak-no">3</div>
-        <div class="basamak-cubuk"><span class="ad">Görünmeyen üretim kaybı</span><span class="alt">Geç fark edilen duruş, hız düşüşü, ambalaj firesi</span></div>
-        <div class="basamak-durum"><strong>Ölçülemiyor</strong>Kayıt olmadığı için desen de görülmüyor</div>
-      </div>
-    </div>
-    <div class="vurgu-kutu" style="margin-top:24px">
-      Basamak 1'in faturası ortada. Sistemin asıl getirisi
-      <strong>2 ve 3'ü ilk kez ölçülebilir kılması</strong>.
+    <div class="ustbaslik">Ne yaptık</div>
+    <h1>Makineden ve operatörden çıkan veri artık canlı ve yapılandırılmış</h1>
+    <p class="spot">Kağıtta değil. Şu anda, gerçek verilerle çalışıyor.</p>
+    <div class="uclu" style="margin-top:38px">
+      <div class="kart kart--yesil"><h3>PFM-4</h3><p>Aktif, gerçek verilerle çalışıyor.</p></div>
+      <div class="kart kart--yesil"><h3>PFM-10</h3><p>Aktif, gerçek verilerle çalışıyor.</p></div>
+      <div class="kart kart--yesil"><h3>PFM-11</h3><p>Aktif, gerçek verilerle çalışıyor.</p></div>
     </div>
   </div>
   <span class="sayfa-no">03</span>
 </section>
 
-<!-- 4 — KATMAN 1+2 HESAP -->
+<!-- 4 — FAYDA 1: ARIZA/YAVAŞLAMA AYRIMI -->
 <section class="slayt">
   <div class="bant bant--amber"></div>
   <div class="govde">
-    <div class="ustbaslik">Basamak 1 ve 2</div>
-    <h1>Kağıt ve zaman: ikisi de basit çarpma</h1>
-    <div class="hesaplar">
+    <div class="ustbaslik">Fayda 1</div>
+    <h1>Arıza mı, yavaşlama mı — artık ayrışıyor</h1>
+    <div class="ikili ikili--metin-sol" style="margin-top:26px">
       <div>
-        <div class="hesap-baslik">Kağıt</div>
-        <div class="formul"><strong>3 hat × 3 vardiya × 3 form türü</strong><br />
-          (üretim formu, duruş kaydı, fire formu)</div>
-        <div class="sonuc sonuc--amber"><span class="sonuc-sayi">27</span><span class="sonuc-birim">sayfa / gün</span></div>
-        <div class="sonuc sonuc--amber"><span class="sonuc-sayi">9.855</span><span class="sonuc-birim">sayfa / yıl</span></div>
-        <p style="font-size:15.5px;line-height:1.5;color:var(--soluk);margin:10px 0 0">
-          Üstüne toner, klasör, dolap ve arşiv alanı. Ayrıca kaybolan form ve
-          okunmayan el yazısının maliyeti bu tabloya hiç girmiyor.</p>
+        <p class="spot" style="margin-bottom:16px;font-size:18px">
+          <strong style="color:var(--murekkep)">Şimdi (3 hat):</strong> 3 hatta her duruş
+          iki ayrı oranla görülüyor — arızadan mı durdu, yavaşlamadan mı kaybetti.
+          Bu ayrım daha önce yoktu.
+        </p>
+        <div class="formul">
+          <strong>Örnek:</strong> 8 saatlik vardiyada makine 6 saat açık kaldıysa
+          (<strong>%75 açık kalma</strong>), ama o 6 saatte hıza göre yalnızca 5 saatlik
+          iş üretildiyse (<strong>%83 hız verimi</strong>) — aradaki fark, gözden kaçan
+          küçük duruşlar ve fireye giden süre demektir.
+        </div>
       </div>
-      <div>
-        <div class="hesap-baslik">Zaman</div>
-        <div class="formul"><strong>Kağıttan Excel'e aktarım + haftalık rapor derleme</strong><br />
-          günde 45 dk · haftada 2 saat</div>
-        <div class="sonuc sonuc--kirmizi"><span class="sonuc-sayi">30</span><span class="sonuc-birim">saat / ay</span></div>
-        <div class="sonuc sonuc--kirmizi"><span class="sonuc-sayi">4</span><span class="sonuc-birim">tam iş günü / ay</span></div>
-        <p style="font-size:15.5px;line-height:1.5;color:var(--soluk);margin:10px 0 0">
-          Bu, zaten var olan bir veriyi ikinci kez yazmak için harcanıyor.
-          Sistem kurulduğunda bu iş sıfırlanır, silinmez — yorumlamaya kayar.</p>
+      <div class="tam-gorsel">
+        <img class="gorsel" src="gorseller/durus-sebepleri.png" alt="Duruş sebepleri listesi" style="max-height:320px" />
       </div>
     </div>
-    <div class="vurgu-kutu" style="margin-top:26px">
-      Bu iki kalem sistem kurulduğunda <strong>tamamen ortadan kalkar</strong>:
-      form basılmaz, veri ikinci kez yazılmaz. Basamak 3 ise kalkmaz — görünür olur.
+    <div class="vurgu-kutu" style="margin-top:20px">
+      <strong>Büyürse (fabrika geneli):</strong> Aynı ayrım tüm hatlarda yapılırsa,
+      bakım ve eğitim kararları "nerede en çok kaybediyoruz" verisiyle önceliklendirilir.
     </div>
-    <p class="dipnot">Rakamlar örnek varsayımlarla hesaplanmıştır; formül sizin gerçek değerlerinizle çalışır.</p>
   </div>
   <span class="sayfa-no">04</span>
 </section>
 
-<!-- 5 — KATMAN 3 -->
+<!-- 5 — FAYDA 2: İZLENEBİLİRLİK -->
 <section class="slayt">
-  <div class="bant bant--kirmizi"></div>
+  <div class="bant"></div>
   <div class="govde">
-    <div class="ustbaslik">Basamak 3 — asıl kalem</div>
-    <h1>Ölçülmeyen kayıp, olmayan kayıp değildir</h1>
-    <p class="spot">Üçü de bugün sahada yaşanıyor. Hiçbiri bugün bir yere yazılmıyor —
-      dolayısıyla hiçbiri bir karara dönüşmüyor.</p>
-    <div class="kayiplar">
-      <div class="kayip">
-        <h3>Geç fark edilen duruş</h3>
-        <div class="form">gecikme (dk) × hat hızı (pkt/dk)</div>
-        <p><strong style="color:var(--murekkep)">20 dk × 70 pkt/dk = 1.400 paket.</strong>
-          Tek vardiya, tek hat. Bugün duruşun ne zaman başladığı vardiya sonunda,
-          hatırlanarak yazılıyor.</p>
-      </div>
-      <div class="kayip">
-        <h3>Hız düşüşü</h3>
-        <div class="form">üretilen paket ÷ hıza göre beklenen</div>
-        <p>Makine çalışıyor ama yavaş. Örnek bir vardiyada hız verimi
-          <strong style="color:var(--murekkep)">%67</strong> — açık kalan sürenin üçte biri
-          ürüne dönüşmüyor. Bu kalem bugün hiçbir yerde görünmüyor.</p>
-      </div>
-      <div class="kayip">
-        <h3>Ambalaj firesi</h3>
-        <div class="form">numaratör farkı × boş paket ağırlığı</div>
-        <p>Bugün tahminle konuşuluyor. Sistemde her ürün bitiminde
-          otomatik hesaplanıyor — hangi üründe, hangi vardiyada, ne kadar.</p>
-      </div>
+    <div class="ustbaslik">Fayda 2</div>
+    <h1>Her palet, hangi vardiya/ürün/saatle üretildiği kayıtlı</h1>
+    <p class="spot">
+      <strong style="color:var(--murekkep)">Şimdi (3 hat):</strong> 3 hatta her palet
+      hangi vardiya/ürün/saatle üretildiği kayıtlı — geriye dönük aranabiliyor.
+    </p>
+    <div class="tam-gorsel" style="margin-top:24px">
+      <img class="gorsel" src="gorseller/palet-cikis-listesi.png" alt="Bir ürünün palet çıkış listesi" style="max-width:100%" />
     </div>
-    <div class="vurgu-kutu">
-      Bu üç kalem bugün <strong>faturalanmıyor</strong>, çünkü ölçülmüyor.
-      Sistemin ilk işi kazanç yaratmak değil — kaybı görünür kılmak.
+    <div class="vurgu-kutu" style="margin-top:30px">
+      <strong>Büyürse (fabrika geneli):</strong> Fabrika genelinde bir denetimde ya da
+      müşteri şikayetinde "bu ürün nasıl üretildi" sorusu saniyeler içinde cevaplanır.
     </div>
   </div>
   <span class="sayfa-no">05</span>
 </section>
 
-<!-- 6 — ÇÖZÜM -->
+<!-- 6 — VARDİYA BAŞLANGICI -->
 <section class="slayt">
-  <div class="bant"></div>
+  <div class="bant bant--amber"></div>
   <div class="govde">
-    <div class="ustbaslik">Çözüm</div>
-    <h1>Veri kağıda değil, oluştuğu anda sisteme giriyor</h1>
-    <p class="spot">Operatörün asli işi makine. Sistem ondan iki tuş istiyor;
-      süreyi, hızı, verimi, fireyi kendisi hesaplıyor.</p>
-    <div class="uclu">
-      <div class="kart kart--yesil">
-        <h3>Operatör</h3>
-        <p>Telefondan BAŞLAT / DURDUR ve palet girişi. Saati sonradan
-          düzeltebiliyor — sahada olay ile kayıt arasında hep birkaç dakika var.</p>
+    <div class="ustbaslik">Vardiya başlangıcı</div>
+    <h1>Sahada kaybolan zaman</h1>
+    <div class="senaryo" style="margin-top:28px">
+      <div class="senaryo-yan senaryo--bugun">
+        <div class="senaryo-etiket">Önce</div>
+        <p>Vardiya başında planlar amirin odasında, kağıt yoluyla dağıtılır. Operatör
+          makineye gidene kadar personel ya da malzeme eksikliğini göremez — fark
+          ettiğinde amire gidip çözüm aramak zaman kaybettirir.</p>
       </div>
-      <div class="kart kart--yesil">
-        <h3>Müdür</h3>
-        <p>Duvar panosunda canlı durum: hangi hat çalışıyor, hangi duruşta,
-          hedefin neresinde. Vardiya sonunu beklemek yok.</p>
-      </div>
-      <div class="kart kart--yesil">
-        <h3>Kayıt</h3>
-        <p>Hiçbir şey silinmiyor, hiçbir şey sıfırlanmıyor. Geçmiş her vardiya
-          olduğu gibi geri açılabiliyor.</p>
+      <div class="senaryo-yan senaryo--sistem">
+        <div class="senaryo-etiket">Şimdi</div>
+        <p>Operatör doğrudan makineye gider, üretime başlar. Bir eksiklik/aksaklık
+          görürse anında sisteme girer, çözüm hızlanır.</p>
       </div>
     </div>
-    <div class="vurgu-kutu">
-      Sistem <strong>PFM-4, PFM-10 ve PFM-11</strong> hatlarında kurulu ve kullanımda.
-      Hesap katmanı <strong>54 otomatik testle</strong> doğrulanıyor.
+    <div class="vurgu-kutu vurgu-kutu--hedef" style="margin-top:20px">
+      <strong>Hedefliyoruz:</strong> Kart okuma sistemiyle personel devamsızlığı
+      otomatik görünsün — amirin içeri girmesine bile gerek kalmadan.
     </div>
   </div>
   <span class="sayfa-no">06</span>
 </section>
 
-<!-- 7 — OPERATÖR EKRANI -->
+<!-- 7 — KARAR HIZI -->
 <section class="slayt">
   <div class="bant"></div>
   <div class="govde">
-    <div class="ustbaslik">Kanıt — saha</div>
-    <h1>Operatör ekranı</h1>
-    <div class="ikili ikili--metin-sol">
-      <ul class="madde">
-        <li><strong>Tek bakışta durum.</strong> Ekranın rengi hattın durumu — yeşil üretim, kırmızı duruş, amber mola.</li>
-        <li><strong>İki büyük tuş.</strong> Eldivenle, hattın yanında kullanılmak üzere tasarlandı.</li>
-        <li><strong>Geriye dönük düzeltme.</strong> "7:30'da durdu, 7:35'te girdim" sahada kural — sistem bunu kabul ediyor.</li>
-        <li><strong>Serbest metin duruş sebebi.</strong> Kod ezberletmiyor; tekrarlayan sebepler kendiliğinden öne çıkıyor.</li>
-      </ul>
-      <div class="telefonlar">
-        <img class="gorsel tek-telefon" src="gorseller/operator-ust.png" alt="Operatör ekranı" />
+    <div class="ustbaslik">Karar hızı</div>
+    <h1>Duruş 07:30'da başlar — bilgi ne zaman ulaşır?</h1>
+    <div class="senaryo" style="margin-top:34px">
+      <div class="senaryo-yan senaryo--bugun">
+        <div class="senaryo-etiket">Önce</div>
+        <div class="senaryo-sure">15:20</div>
+        <p>Kağıt, müdürün masasına vardiya bitiminde ulaşır.</p>
+      </div>
+      <div class="senaryo-yan senaryo--sistem">
+        <div class="senaryo-etiket">Şimdi</div>
+        <div class="senaryo-sure">07:30</div>
+        <p>Panoda anında görülür — amir ya da yönetici, fabrikada olsun olmasın,
+          anında müdahale edebilir.</p>
       </div>
     </div>
   </div>
   <span class="sayfa-no">07</span>
 </section>
 
-<!-- 8 — MÜDÜR PANOSU -->
+<!-- 8 — HEDEFLİYORUZ: SIRADAKİ ADIMLAR -->
 <section class="slayt">
-  <div class="bant"></div>
+  <div class="bant bant--amber"></div>
   <div class="govde">
-    <div class="ustbaslik">Kanıt — saha</div>
-    <h1>Müdür panosu</h1>
-    <p class="spot">Duvara asılan tek ekran: üç hattın canlı durumu, vardiya zaman şeridi,
-      duruş sebepleri ve her ürünün kendi performansı.</p>
-    <div class="tam-gorsel" style="margin-top:20px">
-      <img class="gorsel" src="gorseller/mudur.png" alt="Müdür panosu" style="max-height:392px" />
+    <div class="ustbaslik">Hedefliyoruz</div>
+    <h1>Sıradaki adımlar</h1>
+    <div class="fazlar" style="margin-top:36px">
+      <div class="faz faz--1">
+        <div class="faz-no">1</div>
+        <h3>Planlama entegrasyonu</h3>
+        <p style="font-size:15.5px;line-height:1.5;color:var(--soluk);margin:0">
+          Üretim planları sistem üzerinden tanımlansın, planlama birimi üretimi
+          anlık izleyip revizeyi dinamik şekillendirsin.</p>
+      </div>
+      <div class="faz faz--2">
+        <div class="faz-no">2</div>
+        <h3>Doğrudan makine verisi</h3>
+        <p style="font-size:15.5px;line-height:1.5;color:var(--soluk);margin:0">
+          Veri girişi operatörünün elle aktardığı veriler, makineden doğrudan ve
+          otomatik gelsin.</p>
+      </div>
+      <div class="faz faz--3">
+        <div class="faz-no">3</div>
+        <h3>Personel/devamsızlık entegrasyonu</h3>
+        <p style="font-size:15.5px;line-height:1.5;color:var(--soluk);margin:0">
+          Kart okuma verisiyle devamsızlık kaynaklı eksik personel doğrudan
+          sistemde görünsün.</p>
+      </div>
     </div>
   </div>
   <span class="sayfa-no">08</span>
 </section>
 
-<!-- 9 — İKİ ORAN -->
+<!-- 9 — MALİYET VE RİSK -->
 <section class="slayt">
-  <div class="bant bant--amber"></div>
+  <div class="bant"></div>
   <div class="govde">
-    <div class="ustbaslik">Kilit ayrım</div>
-    <h1>Makinenin çalışması ile verimli çalışması aynı şey değil</h1>
-    <div class="oranlar">
-      <div class="oran oran--kirmizi">
-        <div class="oran-sayi">%55</div>
-        <div class="oran-ad">Açık kalma</div>
-        <p>Vardiyanın ne kadarında makine gerçekten üretimdeydi.
-          Bu oran çoğu fabrikada bilinir — duruşlar sayılır.</p>
-      </div>
-      <div class="oran oran--amber">
-        <div class="oran-sayi">%67</div>
-        <div class="oran-ad">Hız verimi</div>
-        <p>Makine açıkken hızına göre ne kadar ürettiği. Mikro duruşları ve
-          yavaşlamayı yakalar. Bu oran çoğu fabrikada <em>bilinmez</em>.</p>
-      </div>
+    <div class="ustbaslik">Maliyet ve risk</div>
+    <h1>Büyütmek, yeni bir yatırım riski açmıyor</h1>
+    <p class="spot">Mevcut altyapı (Supabase/Vercel) sıfıra yakın ek maliyetle çalışıyor.</p>
+    <div class="vurgu-kutu" style="margin-top:28px">
+      Ayrıca kağıt/kara düzen sisteminden çıkılıyor: elle yazılan formlar,
+      fotokopiler ortadan kalkıyor — kağıt masrafı da.
     </div>
-    <div class="vurgu-kutu">
-      İkisi ayrı ölçülmezse "bugün az ürettik" cümlesinin arkasında
-      <strong>arıza mı, yavaşlama mı</strong> olduğu hiçbir zaman anlaşılmaz —
-      ve ikisinin çözümü tamamen farklıdır.
-    </div>
-    <p class="dipnot">Oranlar örnek bir vardiyadan; sistemin kendi hesapladığı gerçek değerlerdir.</p>
   </div>
   <span class="sayfa-no">09</span>
 </section>
 
-<!-- 10 — KOMUTA MERKEZİ ZİNCİRİ -->
+<!-- 10 — GÜVENLİK VE ŞEFFAFLIK -->
 <section class="slayt">
-  <div class="bant"></div>
+  <div class="bant bant--amber"></div>
   <div class="govde">
-    <div class="ustbaslik">Vizyon</div>
-    <h1>Siparişten sevkiyata tek zincir</h1>
-    <p class="spot">En zor ve en veri yoğun halka zaten kuruldu. Diğerleri buna bağlanacak —
-      sıfırdan değil, üstüne.</p>
-    <div class="zincir">
-      <div class="halka halka--yok"><span class="halka-no">01</span><span class="halka-ad">Sipariş</span><span class="halka-durum">Sırada</span></div>
-      <div class="ok">›</div>
-      <div class="halka halka--kismen"><span class="halka-no">02</span><span class="halka-ad">Üretim planı &amp; vardiya</span><span class="halka-durum">Kısmen</span></div>
-      <div class="ok">›</div>
-      <div class="halka halka--yok"><span class="halka-no">03</span><span class="halka-ad">Hammadde &amp; ambalaj</span><span class="halka-durum">Sırada</span></div>
-      <div class="ok">›</div>
-      <div class="halka halka--var"><span class="halka-no">04</span><span class="halka-ad">Üretim</span><span class="halka-durum">Çalışıyor</span></div>
-      <div class="ok">›</div>
-      <div class="halka halka--kismen"><span class="halka-no">05</span><span class="halka-ad">Kalite &amp; fire</span><span class="halka-durum">Kısmen</span></div>
-      <div class="ok">›</div>
-      <div class="halka halka--kismen"><span class="halka-no">06</span><span class="halka-ad">Palet &amp; depo</span><span class="halka-durum">Kısmen</span></div>
-      <div class="ok">›</div>
-      <div class="halka halka--yok"><span class="halka-no">07</span><span class="halka-ad">Sevkiyat &amp; izlenebilirlik</span><span class="halka-durum">Sırada</span></div>
-    </div>
-    <div class="lejant">
-      <span><i style="background:var(--yesil)"></i> Çalışıyor — sahada aktif</span>
-      <span><i style="background:#fdf4de;border:1.5px solid var(--sinyal-amber)"></i> Kısmen — verisi var, ekranı eksik</span>
-      <span><i style="border:1.5px dashed var(--soluk)"></i> Sırada</span>
-    </div>
-    <div class="vurgu-kutu" style="margin-top:30px">
-      Halkaların hepsi <strong>aynı veriyi</strong> paylaşır. Üretim halkasında bugün biriken
-      kayıt — ürün, parti, saat, palet — sipariş ve sevkiyat bağlandığında
-      yeniden girilmeden kullanılır. Zincirin değeri halkalarda değil, aralarındaki bağda.
+    <div class="ustbaslik">Güvenlik ve şeffaflık</div>
+    <h1>Sormadan söylediğimiz bir nokta</h1>
+    <p class="spot">Pilot aşamada kullanıcı girişi ve yetkilendirme bilerek basit
+      tutuldu — hız kazanmak için.</p>
+    <div class="vurgu-kutu" style="margin-top:28px">
+      Yaygınlaştırma kararıyla birlikte ilk yapılacak iş bu olacak; bunu biz
+      açıyoruz, sorulmadan.
     </div>
   </div>
   <span class="sayfa-no">10</span>
 </section>
 
-<!-- 11 — İZLENEBİLİRLİK -->
-<section class="slayt">
-  <div class="bant bant--amber"></div>
-  <div class="govde">
-    <div class="ustbaslik">Neden bu zincir önemli</div>
-    <h1>Bir parti geri çağrılsa, cevabı kaç saatte verirsiniz?</h1>
-    <p class="spot">Şikayet, kalite sorunu ya da denetim. Soru şu: bu parti hangi paletlerde,
-      hangi saatte, hangi vardiyada üretildi?</p>
-    <div class="senaryo">
-      <div class="senaryo-yan senaryo--bugun">
-        <div class="senaryo-etiket">Bugün</div>
-        <div class="senaryo-sure">Saatler</div>
-        <p>Kağıt arşivi taranır. Formlar bulunur, el yazıları okunur, depo listesiyle
-          eşleştirilir. Sonuç kişiye ve hafızaya bağlıdır.</p>
-      </div>
-      <div class="senaryo-yan senaryo--sistem">
-        <div class="senaryo-etiket">Sistem tamamlandığında</div>
-        <div class="senaryo-sure">Saniyeler</div>
-        <p>Parti numarası <strong>bugün zaten</strong> her palet kaydında duruyor —
-          saatiyle, ürünüyle, vardiyasıyla. Eksik olan tek şey sevkiyat bağlantısı ve bir ekran.</p>
-      </div>
-    </div>
-    <div class="vurgu-kutu">
-      Bu bir hayal değil, <strong>bir ekran uzaklıkta</strong>. Veri modeli izlenebilirliği
-      şu an bile taşıyor; gıda üretiminde bu yalnızca kolaylık değil, denetim gerekliliğidir.
-    </div>
-  </div>
-  <span class="sayfa-no">11</span>
-</section>
-
-<!-- 12 — YOL HARİTASI -->
-<section class="slayt">
-  <div class="bant"></div>
-  <div class="govde">
-    <div class="ustbaslik">Yol haritası</div>
-    <h1>Üç aşama, her biri kendi başına işe yarar</h1>
-    <p class="spot">Hiçbir aşama diğerini beklemiyor; her biri tamamlandığında
-      kendi başına bir kazanç bırakıyor.</p>
-    <div class="fazlar">
-      <div class="faz faz--1">
-        <div class="faz-no">Faz 1</div>
-        <h3>Yaygınlaştırma</h3>
-        <ul>
-          <li>Kullanıcı girişi ve yetkilendirme</li>
-          <li>Rapor ve dışa aktarma (Excel / PDF)</li>
-          <li>Kalan hatların devreye alınması</li>
-        </ul>
-      </div>
-      <div class="faz faz--2">
-        <div class="faz-no">Faz 2</div>
-        <h3>Birleştirme</h3>
-        <ul>
-          <li>Sipariş ve üretim planının sisteme taşınması</li>
-          <li>Vardiya planlamasıyla tam entegrasyon</li>
-          <li>Palet → sevkiyat bağı: izlenebilirlik</li>
-        </ul>
-      </div>
-      <div class="faz faz--3">
-        <div class="faz-no">Faz 3</div>
-        <h3>Otomasyon</h3>
-        <ul>
-          <li>Makine kontrolcüsünden doğrudan sayaç</li>
-          <li>Operatör girişine gerek kalmadan veri</li>
-          <li>Eşik aşıldığında otomatik uyarı</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <span class="sayfa-no">12</span>
-</section>
-
-<!-- 13 — RİSK VE ŞEFFAFLIK -->
-<section class="slayt">
-  <div class="bant bant--amber"></div>
-  <div class="govde">
-    <div class="ustbaslik">Şeffaflık</div>
-    <h1>Sormadan söylediklerimiz</h1>
-    <p class="spot">Bir sistemin zayıf tarafını en iyi onu kuran bilir.
-      Kararı verirken bunları da bilmelisiniz.</p>
-    <div class="riskler">
-      <div class="risk">
-        <div class="risk-ad">Yetkilendirme pilotta basit tutuldu</div>
-        <p>Sahada hızlı denemek için bilinçli bir tercihti — şu an ekranlara kullanıcı girişi yok.
-          Yaygınlaştırma kararı çıkarsa <strong>ilk yapılacak iş budur</strong>, Faz 1'in başında duruyor.</p>
-      </div>
-      <div class="risk">
-        <div class="risk-ad">Altyapı maliyeti</div>
-        <p>Sistem bugün ücretsiz katmanda çalışıyor ve bu ölçekte maliyet riski yok.
-          Kullanım büyüdüğünde maliyet öngörülebilir ve kademelidir — sürpriz kalem içermez.</p>
-      </div>
-      <div class="risk">
-        <div class="risk-ad">Tek kişiye bağımlılık</div>
-        <p>Gerçek bir risk. Bu yüzden kod sürüm kontrolünde tutuluyor ve alınan her karar
-          gerekçesiyle birlikte dokümante ediliyor — devir gerekirse yazılı bir zemin var.</p>
-      </div>
-    </div>
-    <div class="vurgu-kutu" style="margin-top:28px">
-      Bu üç maddeyi kendimiz açıyoruz, çünkü karar bunlara <strong>rağmen</strong> değil,
-      bunlarla <strong>birlikte</strong> verilmeli.
-    </div>
-  </div>
-  <span class="sayfa-no">13</span>
-</section>
-
-<!-- 14 — TALEP -->
+<!-- 11 — KAPANIŞ -->
 <section class="slayt slayt--koyu">
   <div class="bant"></div>
-  <div class="govde">
-    <div class="ustbaslik">Öneri</div>
-    <h1 style="font-size:40px">Sistem çalışıyor. Sıradaki adım bir karar.</h1>
-    <div class="talep-kutu">
-      Üretim takip sisteminin <strong>fabrika geneline yaygınlaştırılmasını</strong> ve
-      Faz 1'in başlatılmasını öneriyoruz.
-    </div>
-    <ul class="gerekli">
-      <li><strong>Onay</strong>Yaygınlaştırma kararı ve Faz 1 kapsamının onaylanması</li>
-      <li><strong>Donanım</strong>Hat başına bir telefon/tablet, müdür ofisine bir ekran</li>
-      <li><strong>Ritim</strong>Ayda bir kısa değerlendirme — rakamlar üzerinden</li>
-    </ul>
-    <div class="kapanis-not">
-      Sistem bugün üç hatta çalışıyor ve hiçbir ek maliyet üretmiyor.
-      Karar gecikirse kaybedilen şey yazılım değil — <strong>ölçülmeyen her vardiyanın verisi</strong>.
-    </div>
+  <div class="govde kapak-govde" style="justify-content:center;align-items:center;text-align:center">
+    <h1 style="font-size:46px;max-width:16ch;text-align:center">Bu katmanda kanıtlanan
+      modelin, fabrika geneline yaygınlaştırılmasını öneriyoruz.</h1>
   </div>
-  <span class="sayfa-no">14</span>
+  <span class="sayfa-no">11</span>
 </section>
 
 </body>

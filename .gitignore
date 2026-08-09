@@ -31,3 +31,9 @@ dist-ssr
 # Sunum üretim çıktıları (pdf.cjs'in slayt önizlemeleri, video kareleri)
 sunum/uretim/kontrol/
 sunum/uretim/kareler/
+
+# npx skills add ile kurulan harici skill ağacı (1.7 MB, 12 alt skill).
+# Kaynağı ve sürümü skills-lock.json'da kayıtlı — gerekince yeniden kurulur:
+#   npx skills add https://github.com/remotion-dev/skills --skill remotion-best-practices
+.agents/
+.claude/skills/remotion-best-practices
