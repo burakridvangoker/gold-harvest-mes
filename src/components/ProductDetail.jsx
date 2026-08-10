@@ -2,8 +2,8 @@ import { formatDuration } from '../lib/duration'
 import { formatShortTime } from '../lib/time'
 
 /*
- * Bir ürünün salt-okunur detay gövdesi: süre/miktar/verim satırları,
- * ambalaj firesi ve o ürüne ait palet çıkış saatleri.
+ * Bir ürünün detay gövdesi: süre/miktar/verim satırları, ambalaj firesi
+ * ve o ürüne ait palet çıkış saatleri.
  *
  * BİLEREK sadece "gövde" — kendi sheet-overlay/panel kabuğunu taşımıyor.
  * İki yerden kullanılıyor ve kabukları farklı:
@@ -12,8 +12,14 @@ import { formatShortTime } from '../lib/time'
  *  - `ManagerDashboard`: salt-okunur, sadece "Kapat".
  * Rakamlar `timeline.js#runSummaries`'ten gelir — burada hesap yok, aynı
  * sayı iki ekranda ayrışmasın diye.
+ *
+ * Palet listesi VARSAYILAN OLARAK salt-okunur. `onPalletTap`/`onPalletAdd`
+ * verilirse satırlar dokunulabilir hâle gelir ve "+ Palet ekle" çıkar —
+ * müdür panosu bu prop'ları hiç geçirmez, tek yazma çağrısı bile
+ * içermemeli (bkz. CLAUDE.md, "Geçmiş vardiyalar" bölümündeki readOnly
+ * ayrımı).
  */
-function ProductDetail({ ozet }) {
+function ProductDetail({ ozet, onPalletTap, onPalletAdd }) {
   const { run, zaman, palet, paket, gercekPktDk, acikKalmaOran, performans, waste, paletKayitlari } =
     ozet
 
@@ -113,17 +119,45 @@ function ProductDetail({ ozet }) {
         </div>
       ) : null}
 
-      {paletKayitlari.length > 0 ? (
+      {/*
+        * Düzenlenebilir modda liste boşken de görünür: ürün bitirildikten
+        * sonra "son paleti girememiştim" durumunda eklemenin tek yolu bu
+        * bölüm (ana ekrandaki +1 PALET aktif ürün ister). Salt-okunur
+        * modda boş liste hiç render edilmez, eskisi gibi.
+        */}
+      {paletKayitlari.length > 0 || onPalletAdd ? (
         <div className="history-pallets">
           <span className="history-pallets-label plate">Palet çıkış saatleri</span>
-          <ul className="history-pallets-list">
-            {paletKayitlari.map((pallet) => (
-              <li key={pallet.id} className="history-pallets-row tnum">
-                <span>{formatShortTime(new Date(pallet.completed_at))}</span>
-                <span>{pallet.koli_count} koli</span>
-              </li>
-            ))}
-          </ul>
+          {paletKayitlari.length > 0 ? (
+            <ul className="history-pallets-list">
+              {paletKayitlari.map((pallet) =>
+                onPalletTap ? (
+                  <li key={pallet.id}>
+                    <button
+                      type="button"
+                      className="history-pallets-row history-pallets-row--tap tnum"
+                      onClick={() => onPalletTap(pallet)}
+                    >
+                      <span>{formatShortTime(new Date(pallet.completed_at))}</span>
+                      <span>{pallet.koli_count} koli</span>
+                    </button>
+                  </li>
+                ) : (
+                  <li key={pallet.id} className="history-pallets-row tnum">
+                    <span>{formatShortTime(new Date(pallet.completed_at))}</span>
+                    <span>{pallet.koli_count} koli</span>
+                  </li>
+                ),
+              )}
+            </ul>
+          ) : (
+            <p className="history-pallets-empty">Bu üründe palet kaydı yok</p>
+          )}
+          {onPalletAdd ? (
+            <button type="button" className="history-pallets-add plate" onClick={onPalletAdd}>
+              + Palet ekle
+            </button>
+          ) : null}
         </div>
       ) : null}
     </>

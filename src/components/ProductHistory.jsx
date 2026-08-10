@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { runSummaries } from '../lib/timeline'
 import { formatShortTime } from '../lib/time'
 import ProductDetail from './ProductDetail'
+import TimeSheet from './TimeSheet'
 import './Sheet.css'
 import './ProductHistory.css'
 
@@ -38,15 +39,42 @@ const runToForm = (run) => ({
  * "Düzenle" ile kurulumda eksik/yanlış girilen ürün bilgileri (parti no,
  * gramaj, hedef koli, numaratör başlangıcı...) sonradan düzeltilebilir —
  * sahada bu bilgiler genelde eksik girilip sonra hatırlanıyor.
+ *
+ * PALET EKLEME/DÜZELTME de buradan yapılır (yaşanmış hata): ana ekrandaki
+ * "+1 PALET" aktif ürüne bağlı, ürün bitirilince kayboluyor. Sahada "son
+ * paleti girmeden ürünü bitirdim" çok oluyor ve o palet hiçbir yerden
+ * girilemiyordu. Bitmiş bir ürünün kartı kendi `run.id`'sini bildiği için
+ * palet oraya sonradan da yazılabilir.
  */
-function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun, frozen = false }) {
+function ProductHistory({
+  runs,
+  events,
+  pallets,
+  nowMs,
+  shiftStartMs,
+  onUpdateRun,
+  onAddPallet,
+  onSavePallet,
+  onDeletePallet,
+  frozen = false,
+}) {
   const [openId, setOpenId] = useState(null)
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState(null)
+  /* null | { mode: 'add' | 'edit', pallet? } */
+  const [paletDuzen, setPaletDuzen] = useState(null)
+  const [draftKoli, setDraftKoli] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const closeSheet = () => {
     setOpenId(null)
     setEditing(false)
+    setPaletDuzen(null)
+  }
+
+  const closePaletDuzen = () => {
+    setPaletDuzen(null)
+    setConfirmDelete(false)
   }
 
   /* Hesap timeline.js'te — aynı rakamları müdür panosundaki ürün detayı da
@@ -81,6 +109,53 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun, frozen = fa
       ortalama_gramaj_g: toNum(form.ortalamaGramaj),
     })
     setEditing(false)
+  }
+
+  /*
+   * Palet kaydı bir durum geçişi DEĞİL, o yüzden komşu olaylara göre
+   * kısıtlanmaz (EventLog'daki palet düzenlemesiyle aynı gerekçe).
+   * Aralık vardiyanın kendisi: başlangıcından şu ana kadar.
+   */
+  const paletAraligi = { minMs: shiftStartMs, maxMs: nowMs }
+
+  const startPaletEkle = () => {
+    setPaletDuzen({ mode: 'add' })
+    setDraftKoli(String(open?.run.koli_per_palet ?? ''))
+    setConfirmDelete(false)
+  }
+
+  const startPaletDuzelt = (pallet) => {
+    setPaletDuzen({ mode: 'edit', pallet })
+    setDraftKoli(String(pallet.koli_count ?? ''))
+    setConfirmDelete(false)
+  }
+
+  const savePalet = (valueMs) => {
+    const koli = parseInt(draftKoli, 10)
+    const gecerliKoli = Number.isFinite(koli) && koli > 0 ? koli : null
+
+    if (paletDuzen.mode === 'add') {
+      onAddPallet(open.run.id, {
+        completed_at: new Date(valueMs).toISOString(),
+        koli_count: gecerliKoli ?? open.run.koli_per_palet,
+      })
+    } else {
+      onSavePallet(paletDuzen.pallet.id, {
+        completed_at: new Date(valueMs).toISOString(),
+        koli_count: gecerliKoli ?? paletDuzen.pallet.koli_count,
+      })
+    }
+
+    closePaletDuzen()
+  }
+
+  const deletePalet = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true)
+      return
+    }
+    onDeletePallet(paletDuzen.pallet.id)
+    closePaletDuzen()
   }
 
   return (
@@ -277,7 +352,11 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun, frozen = fa
               </>
             ) : (
               <>
-                <ProductDetail ozet={open} />
+                <ProductDetail
+                  ozet={open}
+                  onPalletTap={onSavePallet ? startPaletDuzelt : undefined}
+                  onPalletAdd={onAddPallet ? startPaletEkle : undefined}
+                />
 
                 <div className="sheet-actions">
                   {onUpdateRun && (
@@ -294,6 +373,44 @@ function ProductHistory({ runs, events, pallets, nowMs, onUpdateRun, frozen = fa
           </div>
         </div>
       ) : null}
+
+      {/* Palet ekleme/düzeltme — saat hep TimeSheet'in çarkıyla girilir,
+        * uygulamanın her yerindeki desenle aynı. */}
+      <TimeSheet
+        open={paletDuzen !== null}
+        title={paletDuzen?.mode === 'add' ? 'Palet ne zaman çıktı?' : 'Palet kaydını düzelt'}
+        confirmLabel={paletDuzen?.mode === 'add' ? 'Paleti ekle' : 'Kaydet'}
+        initialMs={
+          paletDuzen?.mode === 'edit'
+            ? new Date(paletDuzen.pallet.completed_at).getTime()
+            : (open?.span?.endMs ?? nowMs)
+        }
+        range={paletAraligi}
+        onConfirm={savePalet}
+        onCancel={closePaletDuzen}
+      >
+        <label className="history-pallet-field">
+          <span className="history-pallet-field-label plate">Bu paletteki koli</span>
+          <input
+            className="history-pallet-field-input tnum"
+            type="number"
+            inputMode="numeric"
+            min="1"
+            value={draftKoli}
+            onChange={(event) => setDraftKoli(event.target.value)}
+          />
+        </label>
+
+        {paletDuzen?.mode === 'edit' && onDeletePallet ? (
+          <button
+            type="button"
+            className={`history-pallets-delete${confirmDelete ? ' history-pallets-delete--armed' : ''}`}
+            onClick={deletePalet}
+          >
+            {confirmDelete ? 'Emin misin? Dokun, silinsin' : 'Bu paleti sil'}
+          </button>
+        ) : null}
+      </TimeSheet>
     </div>
   )
 }

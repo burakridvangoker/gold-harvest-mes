@@ -468,6 +468,29 @@ function OperatorPanel() {
     [guard],
   )
 
+  /*
+   * Palet ekleme — BELİRLİ bir ürüne, aktif olmasına bakmadan.
+   *
+   * Ana ekrandaki "+1 PALET" aktif ürün ister (`pallet_records.product_run_id`
+   * not null). Sahada "son paleti girmeden ürünü bitirdim" çok oluyor ve o
+   * palet hiçbir yerden girilemiyordu — yaşanmış hata. Ürün geçmişindeki
+   * kart kendi run.id'sini bildiği için bitmiş bir ürüne de yazılabiliyor.
+   */
+  const addPalletToRun = useCallback(
+    (runId, patch) =>
+      guard(
+        () =>
+          supabase.from('pallet_records').insert({
+            line_code: lineCode,
+            shift_id: shift.id,
+            product_run_id: runId,
+            ...patch,
+          }),
+        'Palet kaydedilemedi',
+      ),
+    [guard, lineCode, shift],
+  )
+
   const deletePallet = useCallback(
     (id) => guard(() => supabase.from('pallet_records').delete().eq('id', id), 'Silinemedi'),
     [guard],
@@ -824,7 +847,11 @@ function OperatorPanel() {
               events={events}
               pallets={pallets}
               nowMs={now}
+              shiftStartMs={shiftStartMs}
               onUpdateRun={updateRun}
+              onAddPallet={addPalletToRun}
+              onSavePallet={updatePallet}
+              onDeletePallet={deletePallet}
             />
           </div>
 

@@ -146,6 +146,20 @@ function ShiftHistoryDetail({ shiftId, readOnly, wall, onBack }) {
   const deletePallet = (id) =>
     guard(() => supabase.from('pallet_records').delete().eq('id', id), 'Silinemedi')
 
+  /* Kapanmış vardiyada da eksik palet eklenebilir — vardiyayı bitirmek
+   * veri girişini kapatmaz (bkz. dosya başındaki not). */
+  const addPalletToRun = (runId, patch) =>
+    guard(
+      () =>
+        supabase.from('pallet_records').insert({
+          line_code: shift.line_code,
+          shift_id: shift.id,
+          product_run_id: runId,
+          ...patch,
+        }),
+      'Palet kaydedilemedi',
+    )
+
   const updateRun = (id, patch) =>
     guard(() => supabase.from('product_runs').update(patch).eq('id', id), 'Ürün bilgisi güncellenemedi')
 
@@ -261,7 +275,11 @@ function ShiftHistoryDetail({ shiftId, readOnly, wall, onBack }) {
         events={events}
         pallets={pallets}
         nowMs={nowMs}
+        shiftStartMs={shiftStartMs}
         onUpdateRun={readOnly ? undefined : updateRun}
+        onAddPallet={readOnly ? undefined : addPalletToRun}
+        onSavePallet={readOnly ? undefined : updatePallet}
+        onDeletePallet={readOnly ? undefined : deletePallet}
         frozen
       />
 

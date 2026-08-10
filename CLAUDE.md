@@ -710,6 +710,27 @@ gelen patch'i doğrudan `product_runs` satırına yazar (`SpeedSheet`'in
 (dolu/boş paket bitiş no, ortalama gramaj) sadece üretimi bitmiş bir
 ürün için gösterilir (`!span.ongoing`) — aktif üründe henüz bitiş yok.
 
+**Palet ekleme/düzeltme/silme de ürün detayından yapılır — yaşanmış
+hata.** Ana ekrandaki "+1 PALET" aktif ürüne BAĞLI (`pallet_records.
+product_run_id` not null, bkz. mola bölümü); ürün bitirilince buton
+kayboluyor. Sahada "son paleti girmeden ürünü bitirdim" çok oluyor ve o
+palet hiçbir yerden girilemiyordu (kullanıcı ekran görüntüsüyle bildirdi:
+ürün bitmiş, palet 0, girecek yer yok). Çözüm: `ProductDetail`'in palet
+listesi düzenlenebilir hale geldi — her çip dokununca `TimeSheet` açar
+(saat çarkı + koli + iki dokunuşluk sil), altında "+ Palet ekle" butonu.
+Bitmiş bir ürünün kartı kendi `run.id`'sini bildiği için palet oraya
+sonradan da yazılabiliyor (`OperatorPanel#addPalletToRun`).
+
+- **Salt-okunurluk prop ile ayrılır:** `ProductDetail` `onPalletTap`/
+  `onPalletAdd` almazsa liste eskisi gibi düz `<li>` kalır. Müdür panosu
+  bu prop'ları HİÇ geçirmez — tek yazma çağrısı bile içermemeli.
+  `ShiftHistoryDetail` `readOnly` iken aynı şekilde geçirmez.
+- Düzenlenebilir modda palet listesi BOŞKEN de bölüm görünür — yoksa
+  "hiç paleti olmayan bitmiş ürün"e palet eklemenin yolu kalmazdı.
+- Palet kaydı durum geçişi olmadığı için saat aralığı komşu olaylara
+  göre kısıtlanmaz; aralık vardiya başlangıcı → şimdi (`EventLog`'daki
+  palet düzenlemesiyle aynı gerekçe).
+
 **Operatör adı da sonradan düzeltilebilir:** `OperatorPanel` başlığında
 artık "{vardiya}. vardiya · {operatör}" satırı var (`.operator-shift-info`,
 önceden hiç gösterilmiyordu), dokununca ad-soyad düzenlenebiliyor
