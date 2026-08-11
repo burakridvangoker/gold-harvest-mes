@@ -32,11 +32,22 @@
   color: var(--op-text-muted, #94a3b8);
 }
 
+.operator-panel--center .operator-change-factory {
+  margin-top: 0.75rem;
+  display: inline-block;
+}
+
 .operator-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.25rem 0.1rem;
+}
+
+.operator-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .operator-line-code {
@@ -45,6 +56,22 @@
   letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums;
   color: var(--op-text);
+}
+
+.operator-factory-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--op-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.operator-change-factory {
+  color: var(--op-blue);
+  text-decoration: underline;
+  text-transform: none;
+  font-weight: 500;
+  letter-spacing: normal;
 }
 
 .new-run-button {

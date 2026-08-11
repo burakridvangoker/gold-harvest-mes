@@ -79,6 +79,28 @@
   text-transform: capitalize;
 }
 
+.manager-factory-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--mgr-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.manager-change-factory {
+  color: var(--mgr-accent);
+  text-decoration: underline;
+  text-transform: none;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+
+.manager-dashboard--center .manager-change-factory {
+  margin-top: 0.75rem;
+  display: inline-block;
+  font-size: 1.1rem;
+}
+
 .manager-clock {
   margin-left: auto;
   font-family: ui-monospace, 'SF Mono', Consolas, monospace;

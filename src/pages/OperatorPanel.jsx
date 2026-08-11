@@ -1,16 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useLineStatus } from '../hooks/useLineStatus'
 import { useStopReasons } from '../hooks/useStopReasons'
 import { formatDuration } from '../lib/duration'
+import { getStoredFactory } from '../lib/factory'
 import StatusBadge from '../components/StatusBadge'
 import ReasonPicker from '../components/ReasonPicker'
 import ProductionRunWizard from '../components/ProductionRunWizard'
 import './OperatorPanel.css'
 
-const LINE_CODE = 'PFM-11'
-
 function OperatorPanel() {
+  const factory = getStoredFactory()
+
+  if (!factory) {
+    return <Navigate to="/" replace />
+  }
+
+  return <OperatorPanelContent factory={factory} />
+}
+
+function OperatorPanelContent({ factory }) {
+  const LINE_CODE = factory.lineCode
   const { line, setLine, loading, error, setError } = useLineStatus(LINE_CODE)
   const reasons = useStopReasons()
   const [pending, setPending] = useState(false)
@@ -49,7 +60,7 @@ function OperatorPanel() {
         setError('Kaydedilemedi: ' + error.message)
       }
     },
-    [setLine, setError],
+    [setLine, setError, LINE_CODE],
   )
 
   const handleStartProduction = useCallback(async () => {
@@ -83,7 +94,7 @@ function OperatorPanel() {
     } finally {
       setPending(false)
     }
-  }, [line, pending, setLine])
+  }, [line, pending, setLine, LINE_CODE])
 
   const handleStop = useCallback(async () => {
     if (!line || pending) return
@@ -107,7 +118,7 @@ function OperatorPanel() {
     } finally {
       setPending(false)
     }
-  }, [line, pending, setLine])
+  }, [line, pending, setLine, LINE_CODE])
 
   const handlePalletPlusOne = () => {
     if (!line) return
@@ -144,7 +155,7 @@ function OperatorPanel() {
         setError('Üretim kaydedilemedi: ' + error.message)
       }
     },
-    [setError],
+    [setError, LINE_CODE],
   )
 
   const handleSubmitReasonNote = useCallback(async (note) => {
@@ -175,6 +186,9 @@ function OperatorPanel() {
     return (
       <div className="operator-panel operator-panel--center">
         <p>{LINE_CODE} hattı bulunamadı.</p>
+        <a className="operator-change-factory" href="/">
+          Fabrika değiştir
+        </a>
       </div>
     )
   }
@@ -185,7 +199,12 @@ function OperatorPanel() {
   return (
     <div className="operator-panel">
       <header className="operator-header">
-        <span className="operator-line-code">{LINE_CODE}</span>
+        <div className="operator-header-left">
+          <span className="operator-factory-name">
+            {factory.factoryName} <a href="/" className="operator-change-factory">değiştir</a>
+          </span>
+          <span className="operator-line-code">{LINE_CODE}</span>
+        </div>
         <StatusBadge status={line.status} />
       </header>
 

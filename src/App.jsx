@@ -1,121 +1,154 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { Link } from 'react-router-dom'
+import { supabase } from './lib/supabaseClient'
+import { getStoredFactory, setStoredFactory, clearStoredFactory } from './lib/factory'
 import './App.css'
 
+const QUICK_PICKS = [
+  { factoryName: 'Merkez Fabrika', lineCode: 'PFM-11' },
+  { factoryName: 'Şok Fabrikası', lineCode: '' },
+]
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [factory, setFactory] = useState(() => getStoredFactory())
+  const [factoryName, setFactoryName] = useState('')
+  const [lineCode, setLineCode] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleQuickPick = (pick) => {
+    setFactoryName(pick.factoryName)
+    setLineCode(pick.lineCode)
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+
+    const trimmedName = factoryName.trim()
+    const trimmedCode = lineCode.trim().toUpperCase()
+
+    if (!trimmedName || !trimmedCode) return
+
+    setSaving(true)
+    setError(null)
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('line_status')
+      .select('line_code')
+      .eq('line_code', trimmedCode)
+      .maybeSingle()
+
+    if (fetchError) {
+      setSaving(false)
+      setError('Kontrol edilemedi: ' + fetchError.message)
+      return
+    }
+
+    if (!existing) {
+      const { error: insertError } = await supabase
+        .from('line_status')
+        .insert({ line_code: trimmedCode })
+
+      if (insertError) {
+        setSaving(false)
+        setError('Hat oluşturulamadı: ' + insertError.message)
+        return
+      }
+    }
+
+    const nextFactory = { factoryName: trimmedName, lineCode: trimmedCode }
+    setStoredFactory(nextFactory)
+    setFactory(nextFactory)
+    setSaving(false)
+  }
+
+  const handleChangeFactory = () => {
+    clearStoredFactory()
+    setFactory(null)
+    setFactoryName('')
+    setLineCode('')
+    setError(null)
+  }
+
+  if (factory) {
+    return (
+      <div className="factory-home">
+        <div className="factory-home-card">
+          <span className="factory-home-label">Bağlı fabrika</span>
+          <h1 className="factory-home-name">{factory.factoryName}</h1>
+          <span className="factory-home-code">{factory.lineCode}</span>
+
+          <div className="factory-home-links">
+            <Link to="/operator" className="factory-home-button factory-home-button--primary">
+              Operatör Paneli
+            </Link>
+            <Link to="/mudur" className="factory-home-button">
+              Müdür Panosu
+            </Link>
+          </div>
+
+          <button type="button" className="factory-home-change" onClick={handleChangeFactory}>
+            Fabrika değiştir
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="factory-home">
+      <form className="factory-setup-card" onSubmit={handleSubmit}>
+        <h1 className="factory-setup-title">Fabrika seçimi</h1>
+        <p className="factory-setup-subtitle">
+          Bu cihazın hangi fabrika ve hat için veri gireceğini bir kez ayarlayın.
+        </p>
+
+        <div className="factory-setup-picks">
+          {QUICK_PICKS.map((pick) => (
+            <button
+              key={pick.factoryName}
+              type="button"
+              className="factory-setup-pick"
+              onClick={() => handleQuickPick(pick)}
+            >
+              {pick.factoryName}
+            </button>
+          ))}
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+
+        <label className="factory-setup-field">
+          <span className="factory-setup-label">Fabrika adı</span>
+          <input
+            className="factory-setup-input"
+            type="text"
+            value={factoryName}
+            onChange={(event) => setFactoryName(event.target.value)}
+            placeholder="Örn. Şok Fabrikası"
+          />
+        </label>
+
+        <label className="factory-setup-field">
+          <span className="factory-setup-label">Hat / makine kodu</span>
+          <input
+            className="factory-setup-input"
+            type="text"
+            value={lineCode}
+            onChange={(event) => setLineCode(event.target.value)}
+            placeholder="Örn. PFM-11"
+          />
+        </label>
+
+        {error && <div className="factory-setup-error">{error}</div>}
+
         <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          type="submit"
+          className="factory-setup-submit"
+          disabled={saving || !factoryName.trim() || !lineCode.trim()}
         >
-          Count is {count}
+          {saving ? 'Kaydediliyor...' : 'Devam et'}
         </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      </form>
+    </div>
   )
 }
 
