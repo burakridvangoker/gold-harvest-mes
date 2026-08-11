@@ -29,9 +29,28 @@ hat seçtirir (`LineSelect`, `useLineCode` — cihaz başına `localStorage`'da
 tutulur), seçilen hat plakasına (`.operator-line-code`/`.manager-line-code`)
 dokununca hat değiştirilebilir.
 
-Vercel'e deploy edilirken **Production Branch** çalışan geliştirme
-branch'ine ayarlı olmalı (`main` değil) — bkz. proje geçmişi. `vercel.json`
-SPA rewrite kuralı taşır, olmadan `/operator`/`/mudur` doğrudan girişte 404 verir.
+Vercel'de **Production Branch** (Settings → Environments → Production →
+Branch Tracking) `claude/detailed-spec-questions-b7n4w4`'e ayarlı.
+`vercel.json` SPA rewrite kuralı taşır, olmadan `/operator`/`/mudur`
+doğrudan girişte 404 verir.
+
+**`main` artık geride DEĞİL — yaşanmış kaza.** Uzun süre `main`, projenin
+aylar öncesindeki anlık görüntüsünde (`81e076d`) kalmıştı: vardiya modeli,
+zaman çizelgesi, Porselen Andon teması, hiçbiri yoktu; `vercel.json` de
+yoktu, yani `main`'den yapılan bir deploy SPA rotalarında 404 veriyordu.
+Başka biri iyi niyetle `main` üstünde çalışıp deploy edince canlı sitede
+aylar öncesinin arayüzü çıktı ve "her şey mahvoldu" paniği yaşandı —
+oysa geliştirme dalına hiç dokunulmamıştı. `main` bu yüzden geliştirme
+dalıyla aynı içeriğe getirildi; **ikisi eşit tutulmalı**, yoksa aynı
+karışıklık tekrarlanır.
+
+**İkinci tuzak — elle "Promote to Production":** Branch Tracking doğru
+olsa bile Vercel'de herhangi bir deployment elle production'a terfi
+ettirilebiliyor. Bu olduğunda ayarlar doğru görünür ama yayındaki sürüm
+yanlıştır. Belirtisi: canlı sitenin yüklediği `assets/index-*.js` dosya
+adı, `npm run build` çıktısındaki isimle uyuşmaz. Çözüm: geliştirme
+dalına yeni bir commit atmak (otomatik production deploy'u tetikler) ya
+da Deployments'ta doğru deployment'ı yeniden terfi ettirmek.
 
 ## Veritabanı şeması — sırayla çalıştır
 
