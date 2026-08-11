@@ -126,6 +126,7 @@ if (typeof window !== 'undefined') {
 function query(tablo) {
   let islem = 'select'
   let yuk = null
+  let upsertSecenek = null
   const suzgecler = []
   let siralama = null
   let sinir = null
@@ -152,6 +153,42 @@ function query(tablo) {
         ...satir,
       }))
       kaynak.push(...eklenen)
+      kaydet(depo)
+      yayinla()
+      return { data: eklenen, error: null }
+    }
+
+    /*
+     * upsert — LineSelect Şok fabrikasında elle girilen makineyi
+     * `line_status`'a böyle yazıyor. Çakışma kolonu zaten kayıtlıysa
+     * dokunmaz (ignoreDuplicates): var olan bir makineye ikinci kez
+     * girilince durumu sıfırlanmamalı.
+     */
+    if (islem === 'upsert') {
+      const gelen = Array.isArray(yuk) ? yuk : [yuk]
+      const anahtar = upsertSecenek?.onConflict
+      const eklenen = []
+
+      for (const satir of gelen) {
+        const mevcut = anahtar
+          ? kaynak.find((row) => row[anahtar] === satir[anahtar])
+          : null
+
+        if (mevcut) {
+          if (!upsertSecenek?.ignoreDuplicates) Object.assign(mevcut, satir)
+          eklenen.push(mevcut)
+          continue
+        }
+
+        const yeni = {
+          id: `${tablo}-${++depo.__sayac}`,
+          ...VARSAYILAN[tablo]?.(),
+          ...satir,
+        }
+        kaynak.push(yeni)
+        eklenen.push(yeni)
+      }
+
       kaydet(depo)
       yayinla()
       return { data: eklenen, error: null }
@@ -207,6 +244,12 @@ function query(tablo) {
     insert: (satirlar) => {
       islem = 'insert'
       yuk = satirlar
+      return builder
+    },
+    upsert: (satirlar, secenek) => {
+      islem = 'upsert'
+      yuk = satirlar
+      upsertSecenek = secenek ?? null
       return builder
     },
     update: (yama) => {
