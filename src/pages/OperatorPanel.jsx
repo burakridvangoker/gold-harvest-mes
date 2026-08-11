@@ -1,25 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useLineStatus } from '../hooks/useLineStatus'
 import { useStopReasons } from '../hooks/useStopReasons'
 import { formatDuration } from '../lib/duration'
-import { getStoredFactory } from '../lib/factoryStorage'
 import StatusBadge from '../components/StatusBadge'
 import ReasonPicker from '../components/ReasonPicker'
 import ProductionRunWizard from '../components/ProductionRunWizard'
 import './OperatorPanel.css'
 
+const LINE_CODE = 'PFM-11'
+
 function OperatorPanel() {
-  const navigate = useNavigate()
-  const factory = useMemo(() => getStoredFactory(), [])
-  const lineCode = factory?.lineCode
-
-  useEffect(() => {
-    if (!factory) navigate('/', { replace: true })
-  }, [factory, navigate])
-
-  const { line, setLine, loading, error, setError } = useLineStatus(lineCode)
+  const { line, setLine, loading, error, setError } = useLineStatus(LINE_CODE)
   const reasons = useStopReasons()
   const [pending, setPending] = useState(false)
   const [now, setNow] = useState(() => Date.now())
@@ -49,7 +41,7 @@ function OperatorPanel() {
       const { error } = await supabase
         .from('line_status')
         .update(dbPatch)
-        .eq('line_code', lineCode)
+        .eq('line_code', LINE_CODE)
 
       setPending(false)
 
@@ -57,7 +49,7 @@ function OperatorPanel() {
         setError('Kaydedilemedi: ' + error.message)
       }
     },
-    [lineCode, setLine, setError],
+    [setLine, setError],
   )
 
   const handleStartProduction = useCallback(async () => {
@@ -72,11 +64,11 @@ function OperatorPanel() {
 
     try {
       const [lineResult, stopEventResult] = await Promise.all([
-        supabase.from('line_status').update({ status: 'uretimde' }).eq('line_code', lineCode),
+        supabase.from('line_status').update({ status: 'uretimde' }).eq('line_code', LINE_CODE),
         supabase
           .from('stop_events')
           .update({ ended_at: timestamp })
-          .eq('line_code', lineCode)
+          .eq('line_code', LINE_CODE)
           .is('ended_at', null)
           .select('id'),
       ])
@@ -91,7 +83,7 @@ function OperatorPanel() {
     } finally {
       setPending(false)
     }
-  }, [line, pending, lineCode, setLine])
+  }, [line, pending, setLine])
 
   const handleStop = useCallback(async () => {
     if (!line || pending) return
@@ -103,8 +95,8 @@ function OperatorPanel() {
 
     try {
       const [lineResult, stopEventResult] = await Promise.all([
-        supabase.from('line_status').update({ status: 'durdu' }).eq('line_code', lineCode),
-        supabase.from('stop_events').insert({ line_code: lineCode, started_at: timestamp }),
+        supabase.from('line_status').update({ status: 'durdu' }).eq('line_code', LINE_CODE),
+        supabase.from('stop_events').insert({ line_code: LINE_CODE, started_at: timestamp }),
       ])
 
       if (lineResult.error || stopEventResult.error) {
@@ -115,7 +107,7 @@ function OperatorPanel() {
     } finally {
       setPending(false)
     }
-  }, [line, pending, lineCode, setLine])
+  }, [line, pending, setLine])
 
   const handlePalletPlusOne = () => {
     if (!line) return
@@ -146,13 +138,13 @@ function OperatorPanel() {
 
       const { error } = await supabase
         .from('production_runs')
-        .insert({ line_code: lineCode, ...payload })
+        .insert({ line_code: LINE_CODE, ...payload })
 
       if (error) {
         setError('Üretim kaydedilemedi: ' + error.message)
       }
     },
-    [lineCode, setError],
+    [setError],
   )
 
   const handleSubmitReasonNote = useCallback(async (note) => {
@@ -182,7 +174,7 @@ function OperatorPanel() {
   if (!line) {
     return (
       <div className="operator-panel operator-panel--center">
-        <p>{lineCode} hattı bulunamadı.</p>
+        <p>{LINE_CODE} hattı bulunamadı.</p>
       </div>
     )
   }
@@ -193,7 +185,7 @@ function OperatorPanel() {
   return (
     <div className="operator-panel">
       <header className="operator-header">
-        <span className="operator-line-code">{lineCode}</span>
+        <span className="operator-line-code">{LINE_CODE}</span>
         <StatusBadge status={line.status} />
       </header>
 
