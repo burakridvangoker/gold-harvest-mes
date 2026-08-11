@@ -47,6 +47,11 @@
 
 .line-select-button {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
   min-height: clamp(4.5rem, 12vh, 6rem);
   border: 2px solid var(--steel-600);
   border-radius: 1rem;
@@ -87,4 +92,96 @@
   .line-select-button:hover {
     border-color: var(--film-dim);
   }
+}
+
+/* Fabrika butonundaki küçük alt satır ("PFM hatları" / "Deneme").
+ * Plaka fontunun rakamları orantılı olduğu için burada veri fontu. */
+.line-select-sub {
+  font-family: var(--data);
+  font-size: clamp(0.8rem, 3vw, 0.95rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--film-dim);
+  text-transform: none;
+}
+
+/* "+ Yeni makine" — sessiz ikincil aksiyon, dolgusuz. */
+.line-select-button--ghost {
+  background: transparent;
+  font-size: clamp(1.1rem, 4.5vw, 1.4rem);
+  color: var(--film-dim);
+}
+
+.line-select-button--confirm {
+  background: var(--film);
+  border-color: var(--film);
+  color: var(--steel-900);
+  font-size: clamp(1.25rem, 5vw, 1.6rem);
+}
+
+.line-select-button--confirm:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.line-select-new {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 2px solid var(--steel-600);
+  border-radius: 1rem;
+  background: var(--steel-800);
+}
+
+.line-select-new-label {
+  font-size: clamp(0.85rem, 3.2vw, 1rem);
+  color: var(--film-dim);
+}
+
+.line-select-new-input {
+  min-height: 3.75rem;
+  padding: 0 1rem;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.6rem;
+  background: #ffffff;
+  color: var(--film);
+  font-family: var(--data);
+  font-size: 1.35rem;
+  box-sizing: border-box;
+}
+
+.line-select-new-input:focus {
+  outline: 3px solid var(--film);
+  outline-offset: 2px;
+}
+
+.line-select-new-hint {
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+  color: var(--film-dim);
+  line-height: 1.4;
+}
+
+.line-select-error {
+  font-size: clamp(0.85rem, 3.2vw, 0.95rem);
+  color: var(--signal-stop-text);
+  line-height: 1.4;
+}
+
+/* Geri dönüş — akışı kesmesin diye sade bir metin bağlantısı. */
+.line-select-back {
+  min-height: 3rem;
+  padding: 0 1rem;
+  border: none;
+  background: transparent;
+  color: var(--film-dim);
+  font-size: clamp(0.95rem, 3.6vw, 1.1rem);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.line-select-back:active {
+  color: var(--film);
 }

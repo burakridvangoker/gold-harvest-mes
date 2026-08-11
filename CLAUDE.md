@@ -1,7 +1,9 @@
 # Gold Harvest MES
 
-Gıda paketleme hatları (`PFM-4`, `PFM-10`, `PFM-11` — `src/lib/lines.js`)
-için üretim takip sistemi. Türkçe UI, Supabase realtime, React + Vite.
+Gıda paketleme hatları için üretim takip sistemi. Merkez fabrikada
+`PFM-4`, `PFM-10`, `PFM-11` (`src/lib/lines.js`); Şok fabrikasında
+sahada elle girilen deneme makineleri (bkz. "İki fabrika" bölümü).
+Türkçe UI, Supabase realtime, React + Vite.
 Bu dosya projenin kalıcı hafızasıdır — bir sohbet oturumu bitse de burada
 yazan kararlar geçerlidir.
 
@@ -29,9 +31,28 @@ hat seçtirir (`LineSelect`, `useLineCode` — cihaz başına `localStorage`'da
 tutulur), seçilen hat plakasına (`.operator-line-code`/`.manager-line-code`)
 dokununca hat değiştirilebilir.
 
-Vercel'e deploy edilirken **Production Branch** çalışan geliştirme
-branch'ine ayarlı olmalı (`main` değil) — bkz. proje geçmişi. `vercel.json`
-SPA rewrite kuralı taşır, olmadan `/operator`/`/mudur` doğrudan girişte 404 verir.
+Vercel'de **Production Branch** (Settings → Environments → Production →
+Branch Tracking) `claude/detailed-spec-questions-b7n4w4`'e ayarlı.
+`vercel.json` SPA rewrite kuralı taşır, olmadan `/operator`/`/mudur`
+doğrudan girişte 404 verir.
+
+**`main` artık geride DEĞİL — yaşanmış kaza.** Uzun süre `main`, projenin
+aylar öncesindeki anlık görüntüsünde (`81e076d`) kalmıştı: vardiya modeli,
+zaman çizelgesi, Porselen Andon teması, hiçbiri yoktu; `vercel.json` de
+yoktu, yani `main`'den yapılan bir deploy SPA rotalarında 404 veriyordu.
+Başka biri iyi niyetle `main` üstünde çalışıp deploy edince canlı sitede
+aylar öncesinin arayüzü çıktı ve "her şey mahvoldu" paniği yaşandı —
+oysa geliştirme dalına hiç dokunulmamıştı. `main` bu yüzden geliştirme
+dalıyla aynı içeriğe getirildi; **ikisi eşit tutulmalı**, yoksa aynı
+karışıklık tekrarlanır.
+
+**İkinci tuzak — elle "Promote to Production":** Branch Tracking doğru
+olsa bile Vercel'de herhangi bir deployment elle production'a terfi
+ettirilebiliyor. Bu olduğunda ayarlar doğru görünür ama yayındaki sürüm
+yanlıştır. Belirtisi: canlı sitenin yüklediği `assets/index-*.js` dosya
+adı, `npm run build` çıktısındaki isimle uyuşmaz. Çözüm: geliştirme
+dalına yeni bir commit atmak (otomatik production deploy'u tetikler) ya
+da Deployments'ta doğru deployment'ı yeniden terfi ettirmek.
 
 ## Veritabanı şeması — sırayla çalıştır
 
@@ -896,6 +917,39 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
   doğal olarak kayar. Bedel: BAŞLAT artık "hiçbir koşulda asla kaymaz"
   değil — ama bu, içeriğin bazen tamamen kaybolmasından kesinlikle iyidir.
 
+## İki fabrika: Merkez sabit, Şok elle
+
+Seçim ekranı iki adımlı: önce **fabrika**, sonra **makine**.
+
+- **Merkez Fabrika** → `LINE_CODES` (PFM-4/10/11). Sahada gerçekten bu üç
+  makine var; yenisi kurulursa `src/lib/lines.js`'e eklenir, başka yer
+  değişmez (eski kural aynen geçerli).
+- **Şok Fabrikası** → sabit liste YOK. Makine kodu sahada elle girilir,
+  `line_status`'a yazılır ve sonraki açılışlarda listeden seçilir
+  (`useSokLines`). Şok şu an deneme aşamasında, hangi makinelerde
+  kullanılacağı belli değil.
+
+**`line_status`'a yazmak isteğe bağlı değil, ZORUNLU.** `shifts.line_code`
+şemada `line_status.line_code`'a foreign key ile bağlı
+(`setup_shifts.sql`). Kayıt önce açılmazsa hata seçim anında değil,
+çok daha geç ve anlamsız bir yerde — vardiya başlatılırken — patlar.
+`LineSelect` bu yüzden `upsert(..., { onConflict: 'line_code',
+ignoreDuplicates: true })` ile önce kaydı açar, sonra devam eder.
+`ignoreDuplicates` şart: var olan bir makineye ikinci kez girilince
+durumu (ve ona bağlı açık vardiyayı) sıfırlamamalı.
+
+**Şema düzeyinde "fabrika" kolonu BİLEREK yok.** `line_status.fabrika`
+eklemek migration gerektirirdi ve Şok tarafı henüz kalıcı değil. Merkez'in
+listesi zaten tek kaynak olduğu için, o listede OLMAYAN her kod tanımı
+gereği Şok/deneme makinesidir. Şok kalıcı hale gelirse doğru hamle
+`line_status`'a `fabrika` kolonu eklemektir — o zaman `useSokLines`'ın
+"çıkarma" mantığı gerçek bir filtreye döner.
+
+**Kod normalleştirme (`normalizeLineCode`):** elle giriş "sok-1",
+"SOK-1 ", "Sok-1" gibi üç ayrı kayıt üretebilirdi. Kod trim'lenip
+Türkçe'ye duyarlı büyütülür — `toLocaleUpperCase('tr')`, çünkü düz
+`toUpperCase()` "i" harfini "İ" değil "I" yapar.
+
 ## Kod konumu haritası
 
 - `src/lib/timeline.js` — tüm süre/verim/plan hesabı, saf fonksiyonlar,
@@ -936,9 +990,13 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
   paylaştığı nötr alttan-açılan sayfa iskeleti (TimeSheet/StopNoteSheet
   kendi tonlarını taşıdığı için ayrı kaldı). Duvar ölçeği varyantları
   (`.history-detail--wall` / `.sheet-overlay--wall`) da burada.
-- `src/components/LineSelect.jsx` + `src/hooks/useLineCode.js` — hat
-  seçimi, cihaz başına `localStorage`'da.
-- `src/lib/lines.js` — sahadaki hatların tek kaynağı (`LINE_CODES`).
+- `src/components/LineSelect.jsx` + `src/hooks/useLineCode.js` — iki
+  adımlı fabrika/hat seçimi, cihaz başına `localStorage`'da (bkz.
+  "İki fabrika" bölümü).
+- `src/lib/lines.js` — Merkez'in hatlarının tek kaynağı (`LINE_CODES`)
+  + fabrika listesi (`FABRIKALAR`) + kod normalleştirme.
+- `src/hooks/useSokLines.js` — Şok fabrikasının elle girilmiş makineleri
+  (`line_status`'ta olup `LINE_CODES`'ta olmayanlar).
 - `src/components/OperatorNameField.jsx` + `src/hooks/usePersonnel.js` —
   operatör adı alanı: serbest metin + personel çipleri (bkz. "Personel
   listesi" bölümü).
