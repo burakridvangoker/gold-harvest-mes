@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLineStatus } from '../hooks/useLineStatus'
 import { useActiveProductionRun } from '../hooks/useActiveProductionRun'
 import { useStopEvents } from '../hooks/useStopEvents'
 import { useStopReasons } from '../hooks/useStopReasons'
 import { formatDuration } from '../lib/duration'
 import { formatClock, formatDateLabel, formatShortTime } from '../lib/time'
+import { getStoredFactory } from '../lib/factoryStorage'
 import StatusBadge from '../components/StatusBadge'
 import './ManagerDashboard.css'
 
-const LINE_CODE = 'PFM-11'
 const RECENT_EVENTS_LIMIT = 8
 const TOP_REASONS_LIMIT = 5
 const NO_REASON_LABEL = 'Sebep girilmemiş'
@@ -20,9 +21,17 @@ function eventDurationMs(event, nowMs) {
 }
 
 function ManagerDashboard() {
-  const { line, loading, error } = useLineStatus(LINE_CODE)
-  const { run } = useActiveProductionRun(LINE_CODE)
-  const { events } = useStopEvents(LINE_CODE)
+  const navigate = useNavigate()
+  const factory = useMemo(() => getStoredFactory(), [])
+  const lineCode = factory?.lineCode
+
+  useEffect(() => {
+    if (!factory) navigate('/', { replace: true })
+  }, [factory, navigate])
+
+  const { line, loading, error } = useLineStatus(lineCode)
+  const { run } = useActiveProductionRun(lineCode)
+  const { events } = useStopEvents(lineCode)
   const reasons = useStopReasons()
   const [now, setNow] = useState(() => Date.now())
 
@@ -72,7 +81,7 @@ function ManagerDashboard() {
   if (!line) {
     return (
       <div className="manager-dashboard manager-dashboard--center">
-        <p>{LINE_CODE} hattı bulunamadı.</p>
+        <p>{lineCode} hattı bulunamadı.</p>
       </div>
     )
   }
@@ -92,7 +101,7 @@ function ManagerDashboard() {
     <div className={`manager-dashboard manager-dashboard--${line.status}`}>
       <header className="manager-header">
         <div className="manager-header-left">
-          <span className="manager-line-code">{LINE_CODE}</span>
+          <span className="manager-line-code">{lineCode}</span>
           <span className="manager-date">{formatDateLabel(nowDate)}</span>
         </div>
         <span className="manager-clock">{formatClock(nowDate)}</span>
