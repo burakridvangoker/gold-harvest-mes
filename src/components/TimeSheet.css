@@ -1,0 +1,270 @@
+/*
+ * Zaman düzeltme sayfası. Operatör paneliyle aynı çelik/sinyal dili.
+ * Ton, onaylanan aksiyonun andon rengini taşır: başlatma yeşil, durdurma
+ * kırmızı — böylece hangi olayı onayladığı saatten önce anlaşılır.
+ */
+
+.timesheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(19, 25, 22, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 70;
+  animation: timesheet-fade 0.18s ease;
+}
+
+.timesheet-sheet {
+  --tone: var(--film);
+  --tone-text: var(--film);
+
+  width: 100%;
+  max-width: 640px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--steel-800);
+  border-top: 3px solid var(--tone);
+  border-radius: 1.25rem 1.25rem 0 0;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem clamp(1.1rem, 4vw, 2rem) calc(1.25rem + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  font-family: var(--data);
+  color: var(--film);
+  animation: timesheet-rise 0.22s ease;
+}
+
+/* --tone yüzeyleri boyar (üst çizgi, onay butonu); --tone-text açık
+ * zeminde METİN olarak kullanılan derin varyanttır. */
+.timesheet-sheet--start {
+  --tone: var(--signal-run);
+  --tone-text: var(--signal-run-text);
+}
+
+.timesheet-sheet--stop {
+  --tone: var(--signal-stop);
+  --tone-text: var(--signal-stop-text);
+}
+
+.timesheet-sheet--mola {
+  --tone: var(--signal-idle);
+  --tone-text: var(--signal-idle-text);
+}
+
+.timesheet-handle {
+  width: 2.75rem;
+  height: 0.25rem;
+  background: var(--steel-600);
+  border-radius: 999px;
+  margin: 0.25rem auto 1rem;
+}
+
+.timesheet-title {
+  margin: 0 0 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--film);
+  text-align: center;
+}
+
+/* Saat: sayfanın en büyük öğesi, doğrudan düzenlenebilir. */
+
+.timesheet-clock-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.timesheet-clock-hint {
+  font-size: 0.85rem;
+}
+
+.timesheet-wheels {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+/*
+ * Kaydırmalı saat/dakika çarkı: native <input type="time"> yerine. Native
+ * denetim 12/24 saat gösterimini tarayıcı/OS yerel ayarına göre seçiyordu ve
+ * lang="tr-TR" bunu değiştirmiyordu — fabrikada cihaz İngilizce ayarlıysa
+ * operatör AM/PM ile karşılaşırdı. Manuel iki haneli yazı alanı da (önceki
+ * sürüm) tuşla girmeyi gerektiriyordu; sahada telefonu tek elle tutan
+ * operatör için kaydırmak yazmaktan daha hızlı ve daha az hataya açık.
+ *
+ * ITEM_HEIGHT (48px) ve VISIBLE_COUNT (5) TimeSheet.jsx'teki sabitlerle
+ * birebir eşleşmeli — viewport yüksekliği ve scroll-snap hesabı JS'te bu
+ * sabitlere göre yapılıyor.
+ */
+.wheel-column {
+  position: relative;
+  width: 3.4ch;
+}
+
+.wheel-viewport {
+  height: 240px;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 48px,
+    black calc(100% - 48px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 48px,
+    black calc(100% - 48px),
+    transparent 100%
+  );
+}
+
+.wheel-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-item {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  scroll-snap-align: center;
+  font-family: var(--data);
+  font-size: 1.5rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--film-dim);
+  opacity: 0.45;
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease, opacity 0.15s ease, font-size 0.15s ease;
+}
+
+.wheel-item--active {
+  color: var(--tone-text);
+  font-size: 1.9rem;
+  font-weight: 700;
+  opacity: 1;
+}
+
+.wheel-highlight {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 48px;
+  transform: translateY(-50%);
+  border-top: 2px solid var(--steel-600);
+  border-bottom: 2px solid var(--steel-600);
+  pointer-events: none;
+}
+
+.timesheet-clock-colon {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--film-dim);
+}
+
+.timesheet-clock-field:focus-within .timesheet-clock-hint {
+  color: var(--tone-text);
+}
+
+.timesheet-relative {
+  margin: 0.6rem 0 1.25rem;
+  text-align: center;
+  font-size: 1.05rem;
+  color: var(--film-dim);
+}
+
+.timesheet-relative--floor {
+  color: var(--signal-idle-text);
+}
+
+.timesheet-extra {
+  margin-top: 1.25rem;
+}
+
+.timesheet-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.timesheet-button {
+  min-height: 4rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-family: var(--plate);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, filter 0.15s ease;
+}
+
+.timesheet-button:active {
+  transform: scale(0.98);
+}
+
+.timesheet-button--cancel {
+  flex: 0.55;
+  background: transparent;
+  border: 1px solid var(--steel-600);
+  color: var(--film-dim);
+}
+
+.timesheet-button--confirm {
+  flex: 1;
+  background: var(--tone);
+  /* Sinyal yüzeyinde koyu mürekkep — güvenlik levhası dili. */
+  color: var(--ink);
+  /* Operatör panelindeki fiziksel bası butonuyla aynı dil. */
+  box-shadow:
+    0 0.25rem 0 0 color-mix(in srgb, var(--tone) 45%, black),
+    inset 0 2px 0 rgba(255, 255, 255, 0.28);
+}
+
+.timesheet-button--confirm:active {
+  transform: translateY(0.2rem);
+  box-shadow:
+    0 0.05rem 0 0 color-mix(in srgb, var(--tone) 45%, black),
+    inset 0 2px 0 rgba(255, 255, 255, 0.28);
+}
+
+@keyframes timesheet-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes timesheet-rise {
+  from {
+    transform: translateY(20px);
+    opacity: 0.7;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

@@ -1,0 +1,7 @@
+/*
+ * Yazı tipleri burada DEĞİL, src/fonts.ts içinde çalışma anında
+ * enjekte ediliyor — sebebi o dosyanın başındaki notta.
+ */
+body {
+  margin: 0;
+}

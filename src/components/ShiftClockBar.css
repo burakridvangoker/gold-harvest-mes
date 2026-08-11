@@ -1,0 +1,284 @@
+/*
+ * Saat eksenli vardiya çubuğu — ManagerDashboard.css'in vw/clamp ölçeğiyle
+ * tutarlı (duvar ekranından okunur olmalı, bkz. ManagerDashboard.css başı).
+ */
+
+.clockbar {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.4rem, 0.8vh, 0.7rem);
+}
+
+.clockbar-nav-row {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(0.4rem, 0.8vw, 0.75rem);
+  /* Balonun (.clockbar-tip) üstte oturacağı boşluk. Burada tanımlanıp
+   * `.clockbar-timeline`'a (padding-top) ve `.clockbar-nav-button`'a
+   * (margin-top) birlikte aktarılıyor — ikisi de aynı yükseklikten
+   * başlasın diye TEK kaynak. NOT: bottom:100% bir absolute elemanın
+   * konumlanma bloğunun ÜST kenarına (padding'den bağımsız, y=0)
+   * sabitlenir; bu yüzden balon bottom değil, bu değişkeni kullanan
+   * top + translateY(-100%) ile konumlanıyor (bkz. .clockbar-tip). */
+  --tip-offset: clamp(3.75rem, 5.6vw, 5rem);
+}
+
+/*
+ * Çok kısa segmentler (birkaç dakikalık duruş/mola) parmakla tam isabet
+ * ettirmesi zor — bu ok çiftler `.clockbar-seg`'in ihtiyaç duyduğu piksel
+ * hassasiyeti olmadan segment listesinde adım adım gezinmeyi sağlıyor.
+ * Kendi rengi yok (andon sinyal paletine ait değil), nötr bir kontrol.
+ *
+ * Yükseklik BİLEREK `.clockbar-track`'inkiyle birebir aynı (aynı clamp)
+ * ve `margin-top` `--tip-offset` ile hizalanıyor — böylece buton sadece
+ * renkli ÇUBUĞUN yanında durur, üstteki boş balon alanını ve alttaki saat
+ * eksenini KAPSAMAZ. Önceki sürümde `align-items: stretch` yüzünden
+ * buton `.clockbar-timeline`'ın TAMAMI kadar (balon boşluğu + çubuk +
+ * eksen) uzuyordu — boş, oransız, "kırık" görünen dikey bir kutu
+ * (yaşanmış şikayet, kullanıcı ekran görüntüsüyle bildirdi).
+ */
+.clockbar-nav-button {
+  flex: 0 0 auto;
+  width: clamp(2.25rem, 3vw, 3rem);
+  height: clamp(2.75rem, 4.6vw, 5rem);
+  margin-top: var(--tip-offset);
+  border: 1px solid var(--steel-line);
+  border-radius: clamp(0.6rem, 0.9vw, 1rem);
+  background: var(--steel-800);
+  box-shadow: var(--shadow-soft);
+  color: var(--film);
+  font-size: clamp(1.1rem, 1.4vw, 1.6rem);
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.clockbar-nav-button:active:not(:disabled) {
+  background: var(--steel-700);
+}
+
+.clockbar-nav-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.clockbar-timeline {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  padding-top: var(--tip-offset);
+}
+
+.clockbar-track {
+  position: relative;
+  height: clamp(2.75rem, 4.6vw, 5rem);
+  border-radius: clamp(0.6rem, 0.9vw, 1rem);
+  background: var(--steel-800);
+  border: 1px solid var(--steel-line);
+  overflow: hidden;
+}
+
+.clockbar-hourgrid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--hours), 1fr);
+}
+
+.clockbar-hourgrid div {
+  border-left: 1px solid var(--steel-line);
+}
+
+.clockbar-hourgrid div:first-child {
+  border-left: none;
+}
+
+.clockbar-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clockbar-seg + .clockbar-seg {
+  border-left: 2px solid #fff;
+}
+
+.clockbar-seg--uretim {
+  background: var(--signal-run);
+}
+
+.clockbar-seg--durus {
+  background: var(--signal-stop);
+}
+
+.clockbar-seg--mola {
+  background: var(--signal-idle);
+}
+
+.clockbar-seg:hover {
+  filter: brightness(1.05);
+}
+
+.clockbar-seg--active {
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.85);
+  filter: brightness(1.05);
+  z-index: 2;
+}
+
+/* Henüz gelmemiş kısım: sade taralı zemin, veri değil. */
+.clockbar-future {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0 6px,
+    rgba(18, 24, 21, 0.05) 6px 12px
+  );
+}
+
+.clockbar-now-label {
+  position: absolute;
+  top: 0.1rem;
+  transform: translateX(-50%);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: clamp(0.9rem, 1vw, 1.3rem);
+  white-space: nowrap;
+}
+
+.clockbar-now-label small {
+  display: block;
+  font-family: var(--plate);
+  font-size: 0.6em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--film-dim);
+}
+
+/* Sebep/ürün adı + dakika süre — sadece dokunulan segmentte belirir. */
+.clockbar-tip {
+  position: absolute;
+  top: calc(var(--tip-offset) - 0.5rem);
+  transform: translate(-50%, -100%);
+  background: var(--film);
+  color: #fff;
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 10px 24px -8px rgba(18, 24, 21, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  white-space: nowrap;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.clockbar-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--film);
+}
+
+.clockbar-tip-reason {
+  font-size: clamp(0.85rem, 0.95vw, 1.3rem);
+  font-weight: 600;
+}
+
+.clockbar-tip-meta {
+  font-size: clamp(0.72rem, 0.8vw, 1.05rem);
+  color: rgba(255, 255, 255, 0.65);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Balon kendisi pointer-events:none (segmentlerin üstüne binmesin diye) —
+ * bu buton tek başına auto ile geri açılır, tıklanabilir kalır. */
+.clockbar-tip-edit {
+  pointer-events: auto;
+  margin-top: 0.3rem;
+  align-self: flex-start;
+  border: none;
+  border-radius: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-family: var(--plate);
+  font-size: clamp(0.7rem, 0.78vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.clockbar-tip-edit:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.clockbar-axis {
+  position: relative;
+  height: 1.3rem;
+  margin-top: 0.65rem;
+}
+
+.clockbar-axis span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(0.75rem, 0.85vw, 1.1rem);
+  color: var(--film-dim);
+}
+
+.clockbar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(1rem, 1.6vw, 2rem);
+  padding-top: clamp(0.6rem, 1vh, 1rem);
+  border-top: 1px solid var(--steel-line);
+  font-size: clamp(0.8rem, 0.9vw, 1.2rem);
+  color: var(--film-dim);
+}
+
+.clockbar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.clockbar-legend-dot {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.clockbar-legend-dot--uretim {
+  background: var(--signal-run);
+}
+
+.clockbar-legend-dot--durus {
+  background: var(--signal-stop);
+}
+
+.clockbar-legend-dot--mola {
+  background: var(--signal-idle);
+}
+
+.clockbar-legend-hint {
+  margin-left: auto;
+}

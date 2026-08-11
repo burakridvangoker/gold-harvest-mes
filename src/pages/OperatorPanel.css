@@ -1,27 +1,66 @@
-.operator-panel {
-  --op-bg: #0f172a;
-  --op-bg-elevated: #182338;
-  --op-card: #1e293b;
-  --op-card-border: rgba(148, 163, 184, 0.12);
-  --op-text: #f8fafc;
-  --op-text-muted: #94a3b8;
-  --op-green: #16a34a;
-  --op-green-soft: rgba(22, 163, 74, 0.16);
-  --op-red: #dc2626;
-  --op-red-soft: rgba(220, 38, 38, 0.16);
-  --op-blue: #2563eb;
+/*
+ * Operatör paneli — makineye monte dokunmatik ekran.
+ * Kol mesafesi (~40 cm), eldivenli el, gürültü, acele.
+ *
+ * Görsel dilbilgisi: dolgulu yüzey = basılabilir, çıplak zemin = okunur.
+ * Bu yüzden sayaçlar ve süre kart içinde değil; sadece aksiyonlar dolgulu.
+ */
 
-  min-height: 100dvh;
-  max-width: 520px;
-  margin: 0 auto;
+.operator-shell {
+  display: flex;
+  /* Lamba bandı üstte, içerik altta — kabuk artık dikey akar. */
+  flex-direction: column;
+  /*
+   * ESKİ TASARIM (kaldırıldı): sabit `height:100svh` + kabuk `overflow-y:
+   * auto` + `.operator-readout` KENDİ İÇİNDE ayrıca `overflow-y:auto` —
+   * iki İÇ İÇE bağımsız kaydırma alanı. Bu, gerçek telefonlarda tutarsız
+   * davrandı: bazen `.operator-readout`'un içeriği (Duruş süresi/sebepleri,
+   * Bu ürün, Vardiya toplamı, Müdür panosu listesi) TAMAMEN KAYBOLUYORDU —
+   * aynı sayfa aynı durumda bir seferinde tam, bir seferinde bomboş
+   * geliyordu (yaşanmış hata, kullanıcı iki ekran görüntüsüyle bildirdi).
+   * İç içe iki bağımsız `overflow-y:auto` konteynerinin flex yükseklik
+   * hesaplaması mobil tarayıcılarda kararsız.
+   *
+   * Şimdiki tasarım: TEK bir kaydırma alanı — sayfanın kendisi. Kabuk
+   * artık sabit yükseklik/kırpma yapmıyor, `min-height` ile en az ekran
+   * kadar, İÇERİK NE KADAR BÜYÜRSE büyüsün. Sığdığında görünüm eskisiyle
+   * birebir aynı (BAŞLAT en altta, hiç kaydırma gerekmez); sığmadığında
+   * sayfa doğal olarak kayar — ManagerDashboard'un aynı sınıf soruna
+   * verdiği çözümle (`min-height:100dvh`, bkz. CLAUDE.md) aynı prensip.
+   * Bedel: BAŞLAT artık "hiçbir koşulda asla kaymaz" değil, sadece içerik
+   * sığdığında sabit görünür — ama bu, içeriğin bazen tamamen
+   * KAYBOLMASINDAN kesinlikle iyidir.
+   */
+  min-height: 100svh;
+  background:
+    linear-gradient(var(--status-wash), var(--status-wash)),
+    var(--steel-900);
+  color: var(--film);
+  font-family: var(--data);
+  box-sizing: border-box;
+  /*
+   * Durum çerçevesi: bandın devamı olarak ekranın üç kenarını sarar —
+   * makinelerin boyalı emniyet kenarı. Üst kenar bandın kendisi.
+   */
+  border: clamp(4px, 1vw, 7px) solid var(--status);
+  border-top: 0;
+  transition: background 0.5s ease, border-color 0.5s ease;
+}
+
+.operator-shell .andon-rail {
+  height: clamp(0.9rem, 2.6vh, 1.5rem);
+}
+
+.operator-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  padding: calc(1.25rem + env(safe-area-inset-top)) 1.1rem
+  gap: clamp(1rem, 3vh, 2rem);
+  /* 520px sınırı kaldırıldı: tablet yatayken iki yanda ölü boşluk kalıyordu. */
+  padding: calc(1.25rem + env(safe-area-inset-top)) clamp(1.1rem, 4vw, 2.5rem)
     calc(1.25rem + env(safe-area-inset-bottom));
-  background: radial-gradient(circle at 50% 0%, var(--op-bg-elevated) 0%, var(--op-bg) 60%);
-  color: var(--op-text);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   box-sizing: border-box;
 }
 
@@ -29,212 +68,626 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: var(--op-text-muted, #94a3b8);
+  /* Geniş ekranda buton duvardan duvara yayılmasın; telefonda etkisiz. */
+  width: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+.operator-panel--center .action-primary {
+  width: 100%;
 }
 
 .operator-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.25rem 0.1rem;
+  gap: 1rem;
+  padding-bottom: clamp(0.75rem, 2vh, 1.25rem);
+  border-bottom: 1px solid var(--steel-line);
+}
+
+.operator-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
 }
 
 .operator-line-code {
-  font-size: 1.35rem;
+  font-family: var(--plate);
+  font-size: clamp(1.5rem, 5vw, 2.1rem);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  font-variant-numeric: tabular-nums;
-  color: var(--op-text);
+  letter-spacing: 0.1em;
+  color: var(--film);
 }
+
+.operator-run-name {
+  font-size: clamp(0.95rem, 3.2vw, 1.15rem);
+  color: var(--film-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Vardiya no + operatör adı — dokununca düzeltilebilir (yanlış yazılan ad). */
+.operator-shift-info {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--data);
+  font-size: clamp(0.8rem, 2.8vw, 0.95rem);
+  color: var(--film-dim);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.operator-idle-date {
+  margin: 0.75rem 0 0;
+  font-size: clamp(0.9rem, 3vw, 1.1rem);
+}
+
+.operator-idle-text {
+  margin: 0.5rem 0 2rem;
+  font-size: clamp(1.15rem, 4.5vw, 1.5rem);
+  color: var(--film-dim);
+}
+
+/* Hat plakası artık dokunulabilir: hat değiştirmek için. */
+button.operator-line-code {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.operator-error {
+  background: rgba(224, 39, 24, 0.08);
+  border-left: 4px solid var(--signal-stop);
+  border-radius: 0 0.6rem 0.6rem 0;
+  color: var(--signal-stop-text);
+  padding: 0.9rem 1.1rem;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.operator-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 3vh, 2rem);
+}
+
+.operator-readout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /*
+   * Kendi başına ARTIK ayrı bir kaydırma alanı değil (bkz. .operator-shell
+   * başındaki uzun yorum — iç içe iki bağımsız overflow-y:auto konteyneri
+   * mobilde içeriği bazen tamamen kayboluyor gösteriyordu). Taşarsa sayfa
+   * (.operator-shell) kayar. `justify-content:flex-start`: flexbox'ta
+   * center taşan içeriğin üstünü kırpar, bu yüzden start kullanılıyor.
+   */
+  justify-content: flex-start;
+  gap: clamp(0.6rem, 2vh, 1.5rem);
+}
+
+/* Kahraman: süre. Ekranın en büyük tek öğesi. */
+
+.duration-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.2rem, 0.8vh, 0.5rem);
+  padding: clamp(0.4rem, 1.75vh, 1.25rem) 0;
+}
+
+.duration-label {
+  font-size: clamp(0.9rem, 3vw, 1.15rem);
+}
+
+.duration-value {
+  font-size: clamp(3.75rem, 19vw, 8rem);
+  font-weight: 600;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  /* Açık zeminde metin derin sinyal tonunu alır (parlak lamba rengi
+   * beyazda okunmaz); parıltı yine lambanın kendi renginden gelir. */
+  color: var(--status-text);
+  text-shadow: 0 0 0.45em color-mix(in srgb, var(--status) 22%, transparent);
+  transition: color 0.5s ease;
+}
+
+/*
+ * Çalışma hızı: kurulumda bir kere sorulan sabit hedef değil, operatörün
+ * istediği zaman dokunup güncelleyebildiği anlık değer. Dolgulu satır =
+ * basılabilir kuralına uyar.
+ */
+.speed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0 0.1rem;
+  border: none;
+  background: transparent;
+  color: var(--film);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.speed-row-label {
+  font-size: clamp(0.8rem, 2.6vw, 1rem);
+  color: var(--film-dim);
+}
+
+.speed-row-value {
+  font-size: clamp(1.1rem, 4vw, 1.4rem);
+  font-weight: 600;
+}
+
+/*
+ * Plan ilerlemesi. Operatörün "hızlanmam gerekiyor mu" sorusuna doğrudan
+ * cevap: kalan koli ve dakika cinsinden geri/ön farkı.
+ */
+
+.plan-block {
+  --plan-color: var(--film-dim);
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: clamp(0.6rem, 1.6vh, 1rem) 0;
+  border-block: 1px solid var(--steel-line);
+}
+
+.plan-block--onde,
+.plan-block--tamam {
+  --plan-color: var(--signal-run-text);
+}
+
+.plan-block--planinda {
+  --plan-color: var(--film);
+}
+
+.plan-block--geride {
+  --plan-color: var(--signal-stop-text);
+}
+
+.plan-head {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+}
+
+.plan-head-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.plan-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.plan-label {
+  font-size: clamp(0.8rem, 2.6vw, 1rem);
+}
+
+.plan-figure {
+  font-size: clamp(1.35rem, 5vw, 1.75rem);
+  font-weight: 600;
+}
+
+.plan-figure small {
+  font-size: 0.6em;
+  color: var(--film-dim);
+  margin-left: 0.2em;
+}
+
+.plan-track {
+  height: clamp(0.7rem, 2.5vw, 1rem);
+  background: rgba(18, 24, 21, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.plan-fill {
+  height: 100%;
+  background: var(--plan-color);
+  border-radius: inherit;
+  transition: width 0.5s ease, background 0.5s ease;
+}
+
+.plan-remaining {
+  font-size: clamp(0.95rem, 3.2vw, 1.1rem);
+  color: var(--film-dim);
+}
+
+.plan-pace {
+  font-family: var(--plate);
+  font-size: clamp(0.95rem, 3.4vw, 1.15rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--plan-color);
+}
+
+/* Sayaçlar: kart değil, saç teli çizgiyle bölünmüş tek satır. */
+
+.operator-counts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-top: clamp(0.4rem, 1.2vh, 0.75rem);
+}
+
+.operator-counts-label {
+  font-size: clamp(0.8rem, 2.6vw, 1rem);
+}
+
+.operator-counts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--steel-line);
+}
+
+.count-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: clamp(0.6rem, 1.6vh, 1.1rem) 0.75rem;
+}
+
+.count-cell + .count-cell {
+  border-left: 1px solid var(--steel-line);
+}
+
+/* Vardiya toplamı — bu üründen ayrı, küçük ve soluk: birden çok ürün
+ * varken hangi sayının hangi ürüne ait olduğu karışmasın. */
+.operator-shift-totals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--steel-line);
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+.operator-shift-totals-value {
+  color: var(--film);
+}
+
+.count-label {
+  font-size: clamp(0.8rem, 2.6vw, 1rem);
+}
+
+.count-value {
+  font-size: clamp(1.75rem, 7vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+/*
+ * Sessiz yardımcı aksiyonlar. Header'ın hemen altında, kaydırılabilir
+ * alanın DIŞINDA sabit bir şerit — küçük telefonlarda bile her zaman
+ * görünür ve erişilebilir kalması gerekiyor.
+ */
+
+.operator-secondary {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--steel-line);
+}
+
+.ghost-button {
+  min-height: 2.75rem;
+  border: 1px solid var(--steel-line);
+  border-radius: 0.6rem;
+  /* Açık temada "dolgulu = basılabilir": beyaz kart + hafif gölge. */
+  background: var(--steel-800);
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.07);
+  color: var(--film-dim);
+  font-family: var(--plate);
+  font-size: clamp(0.8rem, 2.7vw, 0.95rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ghost-button:active {
+  background: var(--steel-700);
+  color: var(--film);
+}
+
+/* Palet koli adedi alanı (TimeSheet içinde) */
+
+.pallet-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pallet-field-label {
+  font-size: 0.85rem;
+}
+
+.pallet-field-input {
+  width: 100%;
+  min-height: 3.75rem;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.6rem;
+  background: #ffffff;
+  color: var(--film);
+  padding: 0 1rem;
+  font-size: 1.35rem;
+  font-family: var(--data);
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+}
+
+.pallet-field-input:focus {
+  outline: 3px solid var(--film);
+  outline-offset: 2px;
+}
+
+.pallet-field-hint {
+  font-size: 0.9rem;
+  color: var(--film-dim);
+}
+
+/*
+ * Yeni üretim: sessiz ikincil aksiyon.
+ * Kesikli çerçeve kaldırıldı — kesikli kenarlık "dosya bırakma alanı"
+ * demektir, kurulum aksiyonu değil.
+ */
 
 .new-run-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   width: 100%;
-  min-height: 3rem;
-  border-radius: 1rem;
-  border: 1.5px dashed rgba(37, 99, 235, 0.5);
-  background: rgba(37, 99, 235, 0.1);
-  color: var(--op-text);
-  font-size: 0.95rem;
+  min-height: 3.5rem;
+  border: 1px solid var(--steel-line);
+  border-radius: 0.75rem;
+  background: var(--steel-800);
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.07);
+  color: var(--film);
+  font-family: var(--plate);
+  font-size: clamp(0.95rem, 3vw, 1.15rem);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s ease, transform 0.12s ease;
+  transition: background 0.15s ease;
 }
 
 .new-run-button:active {
-  transform: scale(0.98);
-  background: rgba(37, 99, 235, 0.18);
+  background: var(--steel-700);
 }
 
 .new-run-icon {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.35em;
   line-height: 1;
-  color: var(--op-blue);
+  font-weight: 400;
+  color: var(--film-dim);
 }
 
-.operator-error {
-  background: var(--op-red-soft);
-  border: 1px solid rgba(220, 38, 38, 0.4);
-  color: #fecaca;
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-.duration-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 1.5rem 1rem;
-  border-radius: 1.25rem;
-  background: var(--op-card);
-  border: 1px solid var(--op-card-border);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 8px 20px -12px rgba(0, 0, 0, 0.6);
-  border-top: 3px solid var(--op-text-muted);
-  transition: border-top-color 0.4s ease, background 0.4s ease;
-}
-
-.duration-card--uretimde {
-  border-top-color: var(--op-green);
-}
-
-.duration-card--durdu {
-  border-top-color: var(--op-red);
-}
-
-.duration-label {
-  font-size: 0.95rem;
-  color: var(--op-text-muted);
-  letter-spacing: 0.02em;
-}
-
-.duration-value {
-  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
-  font-size: clamp(2.5rem, 12vw, 3.25rem);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  color: var(--op-text);
-  transition: color 0.4s ease;
-}
-
-.duration-card--uretimde .duration-value {
-  color: #86efac;
-}
-
-.duration-card--durdu .duration-value {
-  color: #fca5a5;
-}
-
-.operator-counts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.9rem;
-}
-
-.count-card {
-  background: var(--op-card);
-  border: 1px solid var(--op-card-border);
-  border-radius: 1.25rem;
-  padding: 1.35rem 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 8px 20px -12px rgba(0, 0, 0, 0.6);
-}
-
-.count-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--op-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.count-value {
-  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
-  font-size: 2.75rem;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
+/* Aksiyonlar: ekranın altını tutar, başparmağın doğal yeri. */
 
 .operator-actions {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
-  padding-top: 0.5rem;
+  gap: 0.75rem;
+  padding-top: clamp(0.5rem, 2vh, 1.25rem);
 }
 
-.action-button {
-  min-height: 4.5rem;
+.action-primary,
+.action-secondary {
+  width: 100%;
   border: none;
-  border-radius: 1.1rem;
-  font-size: 1.2rem;
+  font-family: var(--plate);
   font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #fff;
+  text-transform: uppercase;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 10px 20px -8px var(--btn-shadow-color, rgba(0, 0, 0, 0.5));
-  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.15s ease, opacity 0.2s ease;
+  transition: transform 0.1s ease, filter 0.15s ease, opacity 0.2s ease;
+}
+
+.action-primary {
+  --btn-face: var(--signal-idle);
+  --btn-edge: color-mix(in srgb, var(--btn-face) 45%, black);
+
+  /* Eldivenli dokunuş için rahat eşik 88px; burada fazlasıyla üstünde. */
+  min-height: clamp(5.5rem, 15vh, 9rem);
+  font-size: clamp(2rem, 8vw, 3rem);
+  letter-spacing: 0.1em;
+  /* Sinyal renkli yüzeyde her zaman koyu mürekkep: güvenlik levhası dili. */
+  color: var(--ink);
+  background: var(--btn-face);
+  border-radius: 1rem;
+  /*
+   * Fiziksel bası butonu: koyu alt kenar butonun gövdesi, üstteki ince ışık
+   * kubbesi. Basınca buton gerçekten alçalır (aşağıda :active) — makinedeki
+   * start/stop mantar butonlarının dokunmatik karşılığı.
+   */
+  box-shadow:
+    0 0.375rem 0 0 var(--btn-edge),
+    inset 0 2px 0 rgba(255, 255, 255, 0.32);
+}
+
+.action-primary--start {
+  --btn-face: var(--signal-run);
+}
+
+.action-primary--stop {
+  --btn-face: var(--signal-stop);
+}
+
+.action-primary--mola {
+  --btn-face: var(--signal-idle);
+}
+
+/* MOLA ve +1 PALET yan yana — ikisi de DURDUR/BAŞLAT'tan daha seyrek
+ * kullanılıyor (vardiyada 3 mola), o yüzden tek büyük butonun altında
+ * paylaşılan, daha küçük bir satırda. */
+.operator-actions-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.operator-actions-row .action-secondary {
+  flex: 1;
+}
+
+.action-secondary {
+  min-height: 5.5rem;
+  background: var(--steel-800);
+  border: 2px solid var(--steel-600);
+  border-radius: 1rem;
+  box-shadow: 0 2px 4px rgba(18, 24, 21, 0.08);
+  color: var(--film);
+  font-size: clamp(1.25rem, 5vw, 1.6rem);
+  letter-spacing: 0.12em;
+}
+
+.action-primary:not(:disabled):active {
+  transform: translateY(0.3rem);
+  box-shadow:
+    0 0.075rem 0 0 var(--btn-edge),
+    inset 0 2px 0 rgba(255, 255, 255, 0.28);
+  filter: brightness(0.94);
+}
+
+.action-secondary:not(:disabled):active {
+  transform: scale(0.98);
+  filter: brightness(0.94);
+}
+
+.action-primary:disabled,
+.action-secondary:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 @media (hover: hover) {
-  .action-button:not(:disabled):hover {
-    filter: brightness(1.08);
-    box-shadow: 0 12px 24px -8px var(--btn-shadow-color, rgba(0, 0, 0, 0.55));
+  .action-primary:not(:disabled):hover,
+  .action-secondary:not(:disabled):hover {
+    filter: brightness(1.1);
   }
 }
 
-.action-button:not(:disabled):active {
-  transform: scale(0.97);
-  box-shadow: 0 4px 10px -4px var(--btn-shadow-color, rgba(0, 0, 0, 0.5));
-  filter: brightness(0.96);
-}
+/*
+ * Kısa ekran (ör. iPhone SE, 375×667): vardiya planı bloğu eklenince
+ * standart boşluklarla sayaç satırı ekran dışına taşabiliyordu. Burada
+ * hiçbir öğe gizlenmez, sadece her yerin payı küçülür.
+ */
+@media (max-height: 700px) {
+  .operator-panel {
+    gap: 0.6rem;
+    padding-top: calc(0.6rem + env(safe-area-inset-top));
+    padding-bottom: calc(0.6rem + env(safe-area-inset-bottom));
+  }
 
-.action-button:disabled {
-  opacity: 0.45;
-  cursor: default;
-  box-shadow: none;
-}
+  .operator-header {
+    padding-bottom: 0.5rem;
+  }
 
-.action-button--start {
-  background: var(--op-green);
-  --btn-shadow-color: rgba(22, 163, 74, 0.45);
-}
+  .operator-secondary {
+    padding: 0.4rem 0;
+  }
 
-.action-button--stop {
-  background: var(--op-red);
-  --btn-shadow-color: rgba(220, 38, 38, 0.45);
-}
+  .ghost-button {
+    min-height: 2.25rem;
+  }
 
-.action-button--pallet {
-  background: var(--op-blue);
-  --btn-shadow-color: rgba(37, 99, 235, 0.45);
-}
+  .operator-readout {
+    gap: 0.4rem;
+  }
 
-@media (min-width: 400px) {
-  .operator-counts {
-    gap: 1.1rem;
+  .duration-block {
+    padding: 0.2rem 0;
+    gap: 0.1rem;
+  }
+
+  .duration-value {
+    font-size: clamp(2.75rem, 15vw, 6rem);
+  }
+
+  .plan-block {
+    padding: 0.4rem 0;
+    gap: 0.35rem;
+  }
+
+  .count-cell {
+    padding: 0.4rem 0.5rem;
   }
 
   .operator-actions {
-    gap: 1rem;
+    gap: 0.5rem;
+    padding-top: 0.4rem;
+  }
+
+  .action-primary {
+    min-height: 4.5rem;
+  }
+
+  .action-secondary {
+    min-height: 3.75rem;
+  }
+}
+
+/*
+ * Yatay tablet: süre solda, aksiyonlar sağda. Dikeyde alt alta olan yerleşim
+ * yatayda ekranın yarısını boş bırakıyordu.
+ */
+@media (min-width: 700px) and (orientation: landscape) {
+  .operator-body {
+    flex-direction: row;
+    align-items: stretch;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .operator-readout {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .operator-actions {
+    flex: 0 0 clamp(17rem, 34%, 26rem);
+    margin-top: 0;
+    justify-content: flex-end;
+  }
+
+  .duration-value {
+    font-size: clamp(4rem, 11vw, 9rem);
   }
 }

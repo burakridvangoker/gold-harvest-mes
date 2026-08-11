@@ -1,0 +1,190 @@
+.history-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: clamp(0.6rem, 1.6vh, 1rem) 0;
+  border-top: 1px solid var(--steel-line);
+}
+
+.history-strip-label {
+  font-size: clamp(0.8rem, 2.6vw, 1rem);
+}
+
+.history-strip-list {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.history-card {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 9rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--steel-line);
+  border-radius: 0.75rem;
+  background: var(--steel-800);
+  box-shadow: 0 1px 2px rgba(18, 24, 21, 0.07);
+  color: var(--film);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+}
+
+.history-card:active {
+  background: var(--steel-700);
+}
+
+.history-card-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-card-time {
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+/* Ürünün kendi palet çıkışları — detay sayfasında, bu ürüne ait olanlar. */
+.history-pallets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.history-pallets-label {
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+.history-pallets-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 8rem;
+  overflow-y: auto;
+}
+
+.history-pallets-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--steel-700);
+  border: 1px solid var(--steel-600);
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+/*
+ * Dokunulabilir palet çipi — operatör ekranında. Ürün bitmiş olsa bile
+ * paleti düzeltmenin/silmenin yolu bu; müdür panosunda bu sınıf hiç
+ * çıkmaz (ProductDetail onPalletTap almadığı sürece <li> kalır).
+ * Parmakla isabet için satır yüksekliği çipten biraz daha yüksek.
+ */
+.history-pallets-row--tap {
+  min-height: 2.5rem;
+  align-items: center;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.history-pallets-row--tap:active {
+  transform: scale(0.97);
+  background: var(--steel-600);
+}
+
+.history-pallets-empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--film-dim);
+}
+
+.history-pallets-add {
+  align-self: flex-start;
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  background: transparent;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.7rem;
+  color: var(--film);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.history-pallets-add:active {
+  transform: scale(0.98);
+}
+
+/* TimeSheet içindeki koli alanı — OperatorPanel'in .pallet-field'ıyla
+ * aynı ölçüler, o dosyanın CSS'ine bağımlı kalmadan. */
+.history-pallet-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.history-pallet-field-label {
+  font-size: 0.85rem;
+}
+
+.history-pallet-field-input {
+  width: 100%;
+  min-height: 3.75rem;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.6rem;
+  background: #ffffff;
+  color: var(--film);
+  padding: 0 1rem;
+  font-size: 1.35rem;
+  font-family: var(--data);
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+}
+
+.history-pallet-field-input:focus {
+  outline: 3px solid var(--film);
+  outline-offset: 2px;
+}
+
+/* Silme iki dokunuş ister — EventLog'daki desenle birebir aynı. */
+.history-pallets-delete {
+  width: 100%;
+  min-height: 3.5rem;
+  margin-top: 1rem;
+  border: 1px solid var(--signal-stop);
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--signal-stop-text);
+  font-family: var(--plate);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.history-pallets-delete--armed {
+  background: var(--signal-stop);
+  color: #ffffff;
+}

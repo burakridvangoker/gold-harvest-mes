@@ -1,0 +1,274 @@
+/*
+ * Genel alttan açılan sayfa iskeleti — SpeedSheet, RunEndSheet ve ürün
+ * geçmişi detayı bunu paylaşır. TimeSheet/StopNoteSheet kendi tonlarını
+ * taşıdığı için ayrı kaldı; bu üçü nötr, tekrar tekrar kopyalamak yerine
+ * ortak bir taban kullanıyor.
+ */
+
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  /* Mürekkep tülü: açık temada tam karartma yerine yarı saydam perde. */
+  background: rgba(19, 25, 22, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 65;
+  animation: sheet-fade 0.18s ease;
+}
+
+.sheet-panel {
+  width: 100%;
+  max-width: 640px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--steel-800);
+  border-top: 3px solid var(--film-dim);
+  border-radius: 1.25rem 1.25rem 0 0;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem clamp(1.1rem, 4vw, 2rem) calc(1.25rem + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  font-family: var(--data);
+  color: var(--film);
+  animation: sheet-rise 0.22s ease;
+}
+
+.sheet-handle {
+  width: 2.75rem;
+  height: 0.25rem;
+  background: var(--steel-600);
+  border-radius: 999px;
+  margin: 0.25rem auto 1rem;
+}
+
+.sheet-title {
+  margin: 0 0 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sheet-subtitle {
+  margin: -0.75rem 0 1.25rem;
+  font-size: 0.9rem;
+  color: var(--film-dim);
+  text-align: center;
+}
+
+/* Salt okunur referans satırları: "bu üründe üretilen: 360 koli" gibi. */
+.sheet-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.25rem;
+  background: var(--steel-700);
+  border-left: 3px solid var(--steel-600);
+  border-radius: 0 0.6rem 0.6rem 0;
+}
+
+.sheet-stat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sheet-stat-label {
+  font-size: 0.9rem;
+  color: var(--film-dim);
+}
+
+.sheet-stat-value {
+  font-size: 1.15rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.sheet-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sheet-field-label {
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+.sheet-field-hint {
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+.sheet-input {
+  width: 100%;
+  min-height: 3.75rem;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.6rem;
+  background: #ffffff;
+  color: var(--film);
+  padding: 0 1rem;
+  font-size: 1.35rem;
+  font-family: var(--data);
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+}
+
+.sheet-input:focus {
+  outline: 3px solid var(--film);
+  outline-offset: 2px;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.sheet-button {
+  min-height: 4rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-family: var(--plate);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.sheet-button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.sheet-button--secondary {
+  flex: 0.6;
+  background: transparent;
+  border: 1px solid var(--steel-600);
+  color: var(--film-dim);
+}
+
+.sheet-button--primary {
+  flex: 1;
+  background: var(--film);
+  color: var(--steel-900);
+}
+
+.sheet-button--primary:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheet-rise {
+  from {
+    transform: translateY(20px);
+    opacity: 0.7;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/*
+ * Duvar ekranı ölçeği — İKİ yüzey paylaşıyor:
+ *  - `.history-detail--wall` (donmuş vardiya özeti, müdür panosunda)
+ *  - `.sheet-overlay--wall` (müdür panosunun CANLI ürün detayı)
+ * İkisi de aynı 1920px duvar ekranında açılıyor; `Sheet.css`'in temel
+ * rem ölçeği orada devasa rakamların yanında minicik kalıyordu (yaşanmış
+ * şikayet: "yazılar küçük"). Değerler `ManagerDashboard.css`'in vw/clamp
+ * ailesiyle aynı hizada.
+ *
+ * Telefon yüzeyleri (OperatorPanel'in `ProductHistory`'si, `SpeedSheet`,
+ * `RunEndSheet`) bu sınıfların ALTINDA olmadığı için hiç etkilenmiyor.
+ *
+ * `line-height` her büyütülen yerde AÇIKÇA sıkıştırılır: index.css'in
+ * global `145%`'i büyük rakamlarda görünmez satır kutusunu alttaki
+ * etiketin üstüne bindiriyor (yaşanmış hata).
+ */
+.history-detail--wall .sheet-panel,
+.sheet-overlay--wall .sheet-panel {
+  max-width: clamp(640px, 45vw, 900px);
+}
+
+.history-detail--wall .sheet-title,
+.sheet-overlay--wall .sheet-title {
+  font-size: clamp(1.5rem, 2vw, 2.5rem);
+  line-height: 1.2;
+}
+
+.history-detail--wall .sheet-subtitle,
+.sheet-overlay--wall .sheet-subtitle {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+}
+
+.history-detail--wall .sheet-stats,
+.sheet-overlay--wall .sheet-stats {
+  gap: clamp(0.6rem, 0.9vw, 1rem);
+}
+
+.history-detail--wall .sheet-stat-label,
+.sheet-overlay--wall .sheet-stat-label {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+}
+
+.history-detail--wall .sheet-stat-value,
+.sheet-overlay--wall .sheet-stat-value {
+  font-size: clamp(1.3rem, 1.6vw, 2.2rem);
+  line-height: 1.2;
+}
+
+.history-detail--wall .sheet-button,
+.sheet-overlay--wall .sheet-button {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+  padding: clamp(0.9rem, 1.1vw, 1.3rem);
+}
+
+/* `ProductDetail`'in palet listesi de sheet'in İÇİNDE — aynı ölçek. */
+.history-detail--wall .history-pallets-label,
+.sheet-overlay--wall .history-pallets-label {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+}
+
+.history-detail--wall .history-pallets-row,
+.sheet-overlay--wall .history-pallets-row {
+  font-size: clamp(1rem, 1.1vw, 1.5rem);
+  padding: clamp(0.4rem, 0.55vw, 0.6rem) clamp(0.9rem, 1.1vw, 1.3rem);
+}
+
+/*
+ * Duvar ölçeğinde içerik panelin 92dvh'sini aşabiliyor (büyük punto +
+ * uzun palet listesi) — "Kapat" ekranın altında kalıyordu. Panel zaten
+ * kendi içinde kayıyor; buton satırı yapışkan yapılıp her zaman
+ * erişilebilir tutuluyor. Telefon ölçeğinde içerik sığdığı için bu
+ * gerekmiyor, o yüzden sadece duvar sınıflarının altında.
+ */
+.history-detail--wall .sheet-actions,
+.sheet-overlay--wall .sheet-actions {
+  position: sticky;
+  /* Panelin kendi alt dolgusu kadar AŞAĞI çekilir, dolgu kadar da kendi
+   * içine eklenir — yoksa butonun altındaki dolgu boşluğundan kayan
+   * içerik (palet çipleri) sızıp görünüyor. */
+  bottom: calc(-1.25rem - env(safe-area-inset-bottom));
+  padding: 0.75rem 0 calc(1.25rem + env(safe-area-inset-bottom));
+  background: var(--steel-800);
+}

@@ -1,213 +1,736 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLineStatus } from '../hooks/useLineStatus'
-import { useActiveProductionRun } from '../hooks/useActiveProductionRun'
-import { useStopEvents } from '../hooks/useStopEvents'
-import { useStopReasons } from '../hooks/useStopReasons'
-import { formatDuration } from '../lib/duration'
+import { supabase } from '../lib/supabaseClient'
+import { useShift } from '../hooks/useShift'
+import { useLineCode } from '../hooks/useLineCode'
+import LineSelect from '../components/LineSelect'
+import ShiftHistoryPicker from '../components/ShiftHistoryPicker'
+import ShiftHistoryDetail from '../components/ShiftHistoryDetail'
+import {
+  aktifUrun,
+  buildIntervals,
+  currentState,
+  downtimeByNote,
+  hizVerimi,
+  koliToPaket,
+  paceStatus,
+  palletTotals,
+  palletTotalsByRun,
+  runSpans,
+  runSummaries,
+  segmentKind,
+  seviyeDurumu,
+  shiftPaket,
+  shiftSegments,
+  shiftTotals,
+  totalsByRun,
+} from '../lib/timeline'
+import { formatBreakdown, formatDelta, formatDuration } from '../lib/duration'
 import { formatClock, formatDateLabel, formatShortTime } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
+import RadialGauge from '../components/RadialGauge'
+import ShiftClockBar from '../components/ShiftClockBar'
+import ProductDetail from '../components/ProductDetail'
+import '../components/Sheet.css'
 import './ManagerDashboard.css'
 
-const LINE_CODE = 'PFM-11'
-const RECENT_EVENTS_LIMIT = 8
-const TOP_REASONS_LIMIT = 5
 const NO_REASON_LABEL = 'Sebep girilmemiş'
-
-function eventDurationMs(event, nowMs) {
-  const start = new Date(event.started_at).getTime()
-  const end = event.ended_at ? new Date(event.ended_at).getTime() : nowMs
-  return Math.max(0, end - start)
-}
+const TAM_ISRAR_MS = 30 * 60 * 1000
+const VISIT_HEARTBEAT_MS = 20 * 1000
+const VISIT_SESSION_KEY = 'mes_manager_visit'
+const VISIT_RESUME_WINDOW_MS = 30 * 60 * 1000
 
 function ManagerDashboard() {
-  const { line, loading, error } = useLineStatus(LINE_CODE)
-  const { run } = useActiveProductionRun(LINE_CODE)
-  const { events } = useStopEvents(LINE_CODE)
-  const reasons = useStopReasons()
+  const { lineCode, selectLine, clearLine } = useLineCode()
+  const { shift, runs, events, pallets, loading, error } = useShift(lineCode)
   const [now, setNow] = useState(() => Date.now())
+  const [historyPickerOpen, setHistoryPickerOpen] = useState(false)
+  const [historyShiftId, setHistoryShiftId] = useState(null)
+  /* Ürün satırına dokununca açılan detay — salt-okunur, operatördeki
+   * ProductHistory detayının aynısı (ortak `ProductDetail` bileşeni). */
+  const [detayRunId, setDetayRunId] = useState(null)
 
   useEffect(() => {
-    const intervalId = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(intervalId)
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
   }, [])
 
-  const reasonLabelByCode = useMemo(() => {
-    const map = new Map()
-    reasons.forEach((reason) => map.set(reason.code, reason.label))
-    return map
-  }, [reasons])
+  /*
+   * Müdür panosu bu hatta açıldığında anonim bir ziyaret kaydı düşer
+   * (bkz. add_manager_visits.sql) — kimin baktığı tutulmuyor, sadece
+   * ne zaman/ne kadar. Süre `last_seen_at` heartbeat'iyle yaklaşık tutulur:
+   * sekme aniden kapanırsa (beforeunload her zaman güvenilir ateşlenmiyor,
+   * özellikle mobilde) süre son heartbeat'te kalır — tam kapanış anı değil
+   * ama yeterince yakın bir tahmin. Operatör ekranı bu kayıtları listeler.
+   *
+   * Sekme ARKA PLANA düşünce mobil tarayıcılar setInterval'i büyük ölçüde
+   * durdurur/yavaşlatır (pil tasarrufu) — 20 saniyelik heartbeat arka
+   * planda hiç ateşlenmeyebilir, süre olduğu yerde donar. `visibilitychange`/
+   * `focus` ile sekme tekrar öne geldiği ANDA bir ping atılır ama bu tek
+   * başına yetmedi: Android'de arka plana düşen bir sekme genelde SADECE
+   * yavaşlatılmıyor, belleği boşaltmak için tamamen KAPATILIP sekme tekrar
+   * öne gelince SIFIRDAN yeniden yükleniyor — React yeniden mount oluyor,
+   * bu useEffect en baştan çalışıyor, yeni bir INSERT ile alakasız yeni bir
+   * ziyaret satırı açılıyor. Sonuç (yaşanmış durum, kullanıcı ekran
+   * görüntüsüyle bildirdi): birkaç dakika arayla art arda 4-5 satır,
+   * hepsi "1 dk altı" — her biri gerçekten kısa ömürlü ayrı bir yeniden
+   * yükleme, tekilleştirilmiş "sekme açık kaldı" süresi hiç oluşmuyordu.
+   *
+   * Çözüm: `sessionStorage` sayfa yeniden yüklense de AYNI sekme için
+   * kalıcı kalır (gerçek kapatma/yeni sekmede sıfırlanır) — bu yüzden
+   * ziyaret kimliğini oraya yazıyoruz. Mount'ta önce sessionStorage'a
+   * bakılır: aynı hat için yakın zamanda (VISIT_RESUME_WINDOW_MS içinde)
+   * bir ziyaret varsa YENİ satır AÇILMAZ, o satırın last_seen_at'i
+   * güncellenerek "aynı bakışın devamı" sayılır. Yoksa/çok eskiyse yeni
+   * satır açılır. Pencere süresi (30 dk) çok eski/unutulmuş bir kaydın
+   * sonsuza kadar "devam ediyormuş" gibi büyümesini engeller.
+   */
+  useEffect(() => {
+    if (!lineCode) return
 
-  const topReasons = useMemo(() => {
-    const totals = new Map()
+    let visitId = null
+    let cancelled = false
 
-    for (const event of events) {
-      const key = event.reason_code ?? '__none__'
-      const duration = eventDurationMs(event, now)
-      totals.set(key, (totals.get(key) ?? 0) + duration)
+    const readStored = () => {
+      try {
+        const raw = sessionStorage.getItem(VISIT_SESSION_KEY)
+        return raw ? JSON.parse(raw) : null
+      } catch {
+        return null
+      }
     }
 
-    const rows = Array.from(totals.entries()).map(([code, ms]) => ({
-      code,
-      label: code === '__none__' ? NO_REASON_LABEL : reasonLabelByCode.get(code) ?? code,
-      ms,
-    }))
+    const writeStored = (id) => {
+      try {
+        sessionStorage.setItem(
+          VISIT_SESSION_KEY,
+          JSON.stringify({ lineCode, visitId: id, lastPingAt: Date.now() }),
+        )
+      } catch {
+        /* sessionStorage kapalı/dolu olabilir — sessizce vazgeç, sadece
+         * her yeniden yüklemede yeni bir satır açılır, kritik değil. */
+      }
+    }
 
-    rows.sort((a, b) => b.ms - a.ms)
-    return rows.slice(0, TOP_REASONS_LIMIT)
-  }, [events, now, reasonLabelByCode])
+    const ping = () => {
+      if (!visitId) return
+      const now = new Date().toISOString()
+      supabase.from('manager_dashboard_visits').update({ last_seen_at: now }).eq('id', visitId)
+      writeStored(visitId)
+    }
 
-  const maxReasonMs = topReasons[0]?.ms ?? 0
-  const recentEvents = events.slice(0, RECENT_EVENTS_LIMIT)
+    const start = async () => {
+      const stored = readStored()
+      const isFresh = stored && Date.now() - stored.lastPingAt < VISIT_RESUME_WINDOW_MS
+
+      if (isFresh && stored.lineCode === lineCode) {
+        visitId = stored.visitId
+        ping()
+        return
+      }
+
+      const { data } = await supabase
+        .from('manager_dashboard_visits')
+        .insert({ line_code: lineCode })
+        .select('id')
+        .single()
+
+      if (!cancelled && data) {
+        visitId = data.id
+        writeStored(data.id)
+      }
+    }
+
+    start()
+
+    const heartbeat = setInterval(ping, VISIT_HEARTBEAT_MS)
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') ping()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+
+    return () => {
+      cancelled = true
+      clearInterval(heartbeat)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+      ping()
+    }
+  }, [lineCode])
+
+  const runsById = useMemo(() => new Map(runs.map((run) => [run.id, run])), [runs])
+
+  const intervals = useMemo(() => buildIntervals(events, now), [events, now])
+  const totals = useMemo(() => shiftTotals(intervals), [intervals])
+  const paletler = useMemo(() => palletTotals(pallets), [pallets])
+  const state = useMemo(() => currentState(events), [events])
+  /* Limitsiz — sayfa kaydırılabilir, hiçbir duruş sebebi gizlenmesin. */
+  const topReasons = useMemo(() => downtimeByNote(intervals), [intervals])
+
+  const shiftStartMs = shift ? new Date(shift.started_at).getTime() : null
+
+  /*
+   * "Tüm vardiya alt alta" yerine mola başlangıçlarına göre bölümlere
+   * ayrılmış, yan yana bir görünüm — 3 mola varsa 4 bölüm çıkar. Her
+   * bölümün kendi olay listesi kendi içinde alt alta.
+   */
+  const segments = useMemo(
+    () => shiftSegments(events, { shiftStartMs, endMs: now }),
+    [events, shiftStartMs, now],
+  )
+
+  /* Operatör ekranıyla aynı kural: son olay ürünsüzse ("Ürünü bitir" ya da
+   * vardiya açılışı) aktif ürün yoktur — bkz. timeline.js#aktifUrun. */
+  const activeRun = useMemo(() => aktifUrun(events, runs), [events, runs])
+
+  /* Ürün detayı için tam özet — operatör ekranıyla aynı fonksiyon. */
+  const ozetler = useMemo(
+    () => runSummaries(runs, events, pallets, now),
+    [runs, events, pallets, now],
+  )
+  const acikOzet = ozetler.find((ozet) => ozet.run.id === detayRunId) ?? null
 
   const nowDate = new Date(now)
 
+  if (!lineCode) {
+    return <LineSelect onSelect={selectLine} />
+  }
+
+  if (historyShiftId) {
+    return (
+      <div className="manager-shell is-beklemede">
+        <div className="andon-rail" />
+        <div className="manager-dashboard">
+          <button type="button" className="manager-line-code" onClick={clearLine}>
+            {lineCode}
+          </button>
+          <ShiftHistoryDetail
+            shiftId={historyShiftId}
+            readOnly
+            wall
+            onBack={() => setHistoryShiftId(null)}
+          />
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
-      <div className="manager-dashboard manager-dashboard--center">
-        <p>Yükleniyor...</p>
+      <div className="manager-shell is-beklemede">
+        <div className="andon-rail" />
+        <div className="manager-dashboard manager-dashboard--center">
+          <p className="plate">Yükleniyor</p>
+        </div>
       </div>
     )
   }
 
-  if (!line) {
+  if (!shift) {
     return (
-      <div className="manager-dashboard manager-dashboard--center">
-        <p>{LINE_CODE} hattı bulunamadı.</p>
+      <div className="manager-shell is-beklemede">
+        <div className="andon-rail" />
+        <div className="manager-dashboard manager-dashboard--center">
+          <button type="button" className="manager-line-code" onClick={clearLine}>
+            {lineCode}
+          </button>
+          <p className="plate">Açık vardiya yok</p>
+          <button
+            type="button"
+            className="manager-history-button"
+            onClick={() => setHistoryPickerOpen(true)}
+          >
+            Geçmiş vardiyalar
+          </button>
+          <ShiftHistoryPicker
+            open={historyPickerOpen}
+            lineCode={lineCode}
+            onSelect={(id) => {
+              setHistoryPickerOpen(false)
+              setHistoryShiftId(id)
+            }}
+            onClose={() => setHistoryPickerOpen(false)}
+          />
+        </div>
       </div>
     )
   }
 
-  const elapsedInCurrentStatusMs = now - new Date(line.status_changed_at).getTime()
-  const totalProductionMs =
-    line.total_production_seconds * 1000 +
-    (line.status === 'uretimde' ? elapsedInCurrentStatusMs : 0)
-  const totalDowntimeMs =
-    line.total_downtime_seconds * 1000 +
-    (line.status !== 'uretimde' ? elapsedInCurrentStatusMs : 0)
+  const son = intervals[intervals.length - 1] ?? null
+  const urgency = state === 'durdu' && son ? Math.min(1, son.durationMs / TAM_ISRAR_MS) : 0
 
-  const totalTrackedMs = totalProductionMs + totalDowntimeMs
-  const timeUsagePercent = totalTrackedMs > 0 ? (totalProductionMs / totalTrackedMs) * 100 : 0
+  const maxReasonMs = topReasons[0]?.ms ?? 0
+
+  /* Hedef koli ürün bazlı; tempo da her ürünün kendi başlangıcına göre. */
+  const spans = runSpans(events, now)
+  const paletlerByRun = palletTotalsByRun(pallets)
+  const runTotals = totalsByRun(intervals)
+  /*
+   * Tek bir koli_ici_adet (aktif ürününki) ile çarpmak yanlış — vardiyada
+   * birden çok ürün varsa (farklı koli içi adetleri) her ürün kendi
+   * adediyle hesaplanıp toplanmalı (bkz. timeline.js#shiftPaket).
+   */
+  const paket = shiftPaket(runs, paletlerByRun)
+
+  /*
+   * Vardiya toplamı "1+5" gibi ürün bazlı katkılara ayrılabilsin diye —
+   * sadece paleti çıkmış (katkısı 0'dan büyük) ürünler, vardiya sırasıyla.
+   */
+  const contributingRuns = runs.filter((run) => (paletlerByRun.get(run.id)?.paletAdedi ?? 0) > 0)
+  const paletParts = contributingRuns.map((run) => paletlerByRun.get(run.id)?.paletAdedi ?? 0)
+  const koliParts = contributingRuns.map((run) => paletlerByRun.get(run.id)?.koliAdedi ?? 0)
+  const paketParts = contributingRuns.map(
+    (run) => koliToPaket(paletlerByRun.get(run.id)?.koliAdedi ?? 0, run.koli_ici_adet) ?? 0,
+  )
+  const shiftEndMs = shift.planlanan_bitis ? new Date(shift.planlanan_bitis).getTime() : null
+
+  const activeRunKoli = activeRun ? (paletlerByRun.get(activeRun.id)?.koliAdedi ?? 0) : 0
+  const activeRunPaletAdedi = activeRun ? (paletlerByRun.get(activeRun.id)?.paletAdedi ?? 0) : 0
+  const activeRunTotals = activeRun ? runTotals.get(activeRun.id) ?? { uretimMs: 0, durusMs: 0 } : null
+
+  /*
+   * Ürün geçmişi: her ürünün kendi açık kalma / hız verimi / hedef
+   * ilerlemesi ayrı bir satır — üstteki iki oran genel (vardiya/aktif
+   * ürün), bunlar ürün bazlı ek bilgi. Aktif olan canlı sayılır
+   * (nowMs = şimdi); üretimi bitmiş bir ürün için tempo o ürünün son
+   * anına ("span.endMs") göre dondurulur, "sealed" görünümle altta asılı
+   * kalır. Sıra `runs`'ın TERSİ (sira azalan) — aktif/en yeni ürün en
+   * üstte, bitmiş ürünler altında; sayfanın geri kalanının (Son olaylar,
+   * çeyrekler, palet çıkışları) zaten kullandığı yeni-üstte kuralıyla
+   * tutarlı (yaşanmış şikayet: eski üründe kalıp yeni ürünle karışıyordu).
+   */
+  const productRows = [...runs]
+    .reverse()
+    .map((run) => {
+      const span = spans.get(run.id) ?? null
+      if (!span) return null
+
+      const isActive = run.id === activeRun?.id
+      const rt = runTotals.get(run.id) ?? { uretimMs: 0, durusMs: 0 }
+      const rToplamMs = rt.uretimMs + rt.durusMs
+      const acikKalmaOran = rToplamMs > 0 ? rt.uretimMs / rToplamMs : null
+
+      const paletAdedi = paletlerByRun.get(run.id)?.paletAdedi ?? 0
+      const koli = paletlerByRun.get(run.id)?.koliAdedi ?? 0
+      const runPaket = koliToPaket(koli, run.koli_ici_adet)
+      const perf = run.calisma_hizi_pkt_dk
+        ? hizVerimi({ paketAdedi: runPaket ?? 0, uretimMs: rt.uretimMs, hedefHizPktDk: run.calisma_hizi_pkt_dk })
+        : null
+
+      const pace = run.hedef_koli
+        ? paceStatus({
+            hedefKoli: run.hedef_koli,
+            uretilenKoli: koli,
+            shiftStartMs: span.startMs,
+            shiftEndMs,
+            nowMs: isActive ? now : span.endMs,
+          })
+        : null
+
+      /*
+       * Her ürünün kendi palet çıkışları — hangi paletin hangi ürüne ait
+       * olduğu belirsiz kalmasın diye tek, ortak bir liste yerine burada,
+       * ürünün kendi satırında (yaşanmış şikayet: tek ortak liste natura'nın
+       * altında dururken hâlâ kuru üzüm'ün paletlerini gösteriyordu).
+       */
+      const runPallets = [...pallets]
+        .filter((pallet) => pallet.product_run_id === run.id)
+        .reverse()
+
+      return { run, isActive, acikKalmaOran, perf, pace, runPallets, paletAdedi, koli, runPaket }
+    })
+    .filter(Boolean)
+
+  const zamanKullanimi = Math.round(totals.zamanKullanimi * 100)
+  const acikKalmaDurum = seviyeDurumu(totals.zamanKullanimi)
+
+  /*
+   * İkinci oran: aktif ürün açık kaldığı sürede, girilen çalışma hızına
+   * göre ne kadarı gerçekten "net iş"ti. Ör. 6 saat açık kaldı ama
+   * üretilen paket sayısı hıza göre yalnızca 5 saatlik işe karşılık
+   * geliyorsa %83 — duruşlardan bağımsız, hızdaki düşüşü/mikro-duruşları
+   * yakalar. Aktif ürüne göre kapsanır (şimdi'ye göre değil): aksi halde
+   * önceki üründen kalan paletler yeni ürünün birkaç dakikalık çalışma
+   * süresine bölünüp anlamsız yüzdeler (%1000+) üretir.
+   */
+  const activeRunPaket = koliToPaket(activeRunKoli, activeRun?.koli_ici_adet)
+  const performans =
+    activeRun?.calisma_hizi_pkt_dk && activeRunTotals
+      ? hizVerimi({
+          paketAdedi: activeRunPaket ?? 0,
+          uretimMs: activeRunTotals.uretimMs,
+          hedefHizPktDk: activeRun.calisma_hizi_pkt_dk,
+        })
+      : null
+  const performansDurum = performans ? seviyeDurumu(performans.oran) : null
+  const performansYuzde = performans ? Math.round(performans.oran * 100) : null
+
+  /* useMemo değil: bu noktada zaten early return'lerin ardındayız, hook
+   * sırası bozulmasın diye diğer türetilmiş değerler gibi düz const. */
 
   return (
-    <div className={`manager-dashboard manager-dashboard--${line.status}`}>
-      <header className="manager-header">
-        <div className="manager-header-left">
-          <span className="manager-line-code">{LINE_CODE}</span>
-          <span className="manager-date">{formatDateLabel(nowDate)}</span>
-        </div>
-        <span className="manager-clock">{formatClock(nowDate)}</span>
-        <StatusBadge status={line.status} size="xl" />
-      </header>
+    <div className={`manager-shell is-${state}`}>
+      <div
+        className={`andon-rail${state === 'durdu' ? ' andon-rail--pulsing' : ''}`}
+        style={{ '--urgency': urgency }}
+      />
 
-      {error && <div className="manager-error">{error}</div>}
+      <div className="manager-dashboard">
+        <header className="manager-header">
+          <button type="button" className="manager-line-code" onClick={clearLine}>
+            {lineCode}
+          </button>
+          <span className="manager-date plate">
+            {formatDateLabel(nowDate)} · {shift.vardiya}. vardiya
+            {shift.operator ? ` · ${shift.operator}` : ''}
+          </span>
+          <button
+            type="button"
+            className="manager-history-button"
+            onClick={() => setHistoryPickerOpen(true)}
+          >
+            Geçmiş vardiyalar
+          </button>
+          <span className="manager-clock tnum">{formatClock(nowDate)}</span>
+        </header>
 
-      <div className="manager-top-row">
-        <div className="panel active-run-panel">
-          <span className="panel-title">Aktif Üretim</span>
-          {run ? (
-            <div className="active-run-body">
-              <span className="active-run-product">{run.urun_adi}</span>
-              <div className="active-run-meta">
-                <div className="active-run-meta-item">
-                  <span className="active-run-meta-label">Vardiya</span>
-                  <span className="active-run-meta-value">{run.vardiya}</span>
-                </div>
-                <div className="active-run-meta-item">
-                  <span className="active-run-meta-label">Hedef Hız</span>
-                  <span className="active-run-meta-value">
-                    {run.hedef_hiz_pkt_dk} <small>pkt/dk</small>
-                  </span>
-                </div>
+        <ShiftHistoryPicker
+          open={historyPickerOpen}
+          lineCode={lineCode}
+          onSelect={(id) => {
+            setHistoryPickerOpen(false)
+            setHistoryShiftId(id)
+          }}
+          onClose={() => setHistoryPickerOpen(false)}
+        />
+
+        {error && <div className="manager-error">{error}</div>}
+
+        {/* Vardiyanın tamamı, planlanan bitişe (07:00→15:00 gibi) kadar tek
+         * bakışta — henüz gelmemiş kısım taralı, "ŞİMDİ" çizgisi net. */}
+        <ShiftClockBar
+          intervals={intervals}
+          shiftStartMs={shiftStartMs}
+          shiftEndMs={shiftEndMs}
+          runsById={runsById}
+          nowMs={now}
+        />
+
+        {/* ŞİMDİ */}
+        <section className="zone zone--now">
+          <h2 className="zone-title plate">Şimdi</h2>
+          <div className="now-state" aria-live="polite">
+            <StatusBadge status={state} size="xl" />
+            <span className="now-elapsed tnum">{formatDuration(son ? son.durationMs : 0)}</span>
+          </div>
+          {activeRun ? (
+            <div className="now-run">
+              <span className="now-run-product">{activeRun.urun_adi}</span>
+              <span className="now-run-meta plate">
+                {activeRun.parti_no ? `${activeRun.parti_no} · ` : ''}
+                {activeRun.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : ''}
+              </span>
+              {/*
+               * Bu ürünün kendi palet/koli/paketi — aşağıdaki "Vardiya"
+               * bölgesindeki toplamla karıştırılmasın diye burada, ürün
+               * adının hemen altında, ayrı ve net (yaşanmış hata: ürün
+               * değişince eski ürünün toplamı yenisinin altında görünüyordu).
+               */}
+              <div className="now-run-figures">
+                <span className="now-run-figure">
+                  <span className="now-run-figure-value tnum">{activeRunPaletAdedi}</span>
+                  <span className="now-run-figure-label plate">palet</span>
+                </span>
+                <span className="now-run-figure">
+                  <span className="now-run-figure-value tnum">{activeRunKoli}</span>
+                  <span className="now-run-figure-label plate">koli</span>
+                </span>
+                <span className="now-run-figure">
+                  <span className="now-run-figure-value tnum">{activeRunPaket ?? '—'}</span>
+                  <span className="now-run-figure-label plate">paket</span>
+                </span>
               </div>
             </div>
           ) : (
-            <div className="active-run-empty">Üretim yok</div>
+            <div className="now-run-empty plate">Ürün girilmedi</div>
           )}
-        </div>
+        </section>
 
-        <div className="panel usage-panel">
-          <span className="panel-title">Zaman Kullanımı</span>
-          <div className="usage-ring" style={{ '--pct': `${timeUsagePercent}%` }}>
-            <span className="usage-ring-value">
-              {totalTrackedMs > 0 ? `${Math.round(timeUsagePercent)}%` : '—'}
-            </span>
+        {/* BUGÜN */}
+        <section className="zone zone--today">
+          <div className="zone-head">
+            {/*
+             * "Vardiya toplamı" — bilerek TÜM ürünlerin toplamı, aktif
+             * ürünün değil (o "Şimdi" bölgesinde, .now-run-figures'ta).
+             * Sadece "Vardiya" başlığı bunu netleştirmiyordu (yaşanmış
+             * karışıklık: tek ürün varken bu toplam o ürünün rakamlarıyla
+             * birebir aynı görünüyor, "toplamı" ibaresi olmadan aktif
+             * ürüne aitmiş gibi okunuyordu).
+             */}
+            <h2 className="zone-title plate">Vardiya toplamı</h2>
+            <div className="oran-group">
+              <RadialGauge
+                value={totals.zamanKullanimi}
+                seviye={acikKalmaDurum}
+                size={104}
+                valueLabel={`%${zamanKullanimi}`}
+                label="açık kalma"
+              />
+              <RadialGauge
+                value={performans ? performans.oran : null}
+                seviye={performansDurum}
+                size={104}
+                valueLabel={performansYuzde != null ? `%${performansYuzde}` : '—'}
+                label="hız verimi"
+              />
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="manager-metrics">
-        <div className="metric-card">
-          <span className="metric-label">Toplam Çalışma Süresi</span>
-          <span className="metric-value">{formatDuration(totalProductionMs)}</span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Toplam Duruş Süresi</span>
-          <span className="metric-value">{formatDuration(totalDowntimeMs)}</span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Palet</span>
-          <span className="metric-value">{line.pallet_count}</span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Paket</span>
-          <span className="metric-value">{line.package_count}</span>
-        </div>
-      </div>
+          <div
+            className="split-bar"
+            role="img"
+            aria-label={`Açık kalma oranı yüzde ${zamanKullanimi}`}
+          >
+            <div className="split-bar-run" style={{ width: `${totals.zamanKullanimi * 100}%` }} />
+          </div>
 
-      <div className="manager-bottom-row">
-        <div className="panel reasons-panel">
-          <span className="panel-title">En Çok Duruş Sebepleri</span>
+          <dl className="today-figures">
+            <div className="figure figure--run">
+              <dt className="figure-label plate">Çalışma</dt>
+              <dd className="figure-value tnum">{formatDuration(totals.uretimMs)}</dd>
+            </div>
+            <div className="figure figure--stop">
+              <dt className="figure-label plate">Duruş</dt>
+              <dd className="figure-value tnum">{formatDuration(totals.durusMs)}</dd>
+            </div>
+            <div className="figure figure--mola">
+              <dt className="figure-label plate">Mola</dt>
+              <dd className="figure-value tnum">{formatDuration(totals.molaMs)}</dd>
+            </div>
+            <div className="figure">
+              <dt className="figure-label plate">Palet</dt>
+              <dd className="figure-value tnum">{formatBreakdown(paletParts, paletler.paletAdedi)}</dd>
+            </div>
+            <div className="figure">
+              <dt className="figure-label plate">Koli</dt>
+              <dd className="figure-value tnum">{formatBreakdown(koliParts, paletler.koliAdedi)}</dd>
+            </div>
+            <div className="figure">
+              <dt className="figure-label plate">Paket</dt>
+              <dd className="figure-value tnum">{formatBreakdown(paketParts, paket)}</dd>
+            </div>
+          </dl>
+
+          {productRows.length > 0 && (
+            <div className="plan-stack">
+              <span className="plan-stack-hint">Ürün detayı için satıra dokun</span>
+              {productRows.map(
+                ({ run, acikKalmaOran, perf, pace, isActive, runPallets, paletAdedi, koli, runPaket }, index) => {
+                const isFirstFrozen = !isActive && (index === 0 || productRows[index - 1].isActive)
+                return (
+                <div
+                  key={run.id}
+                  className={`plan-row${pace ? ` plan-row--${pace.durum}` : ''}${
+                    isActive ? '' : ' plan-row--frozen'
+                  }${isFirstFrozen ? ' plan-row--frozen-first' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${run.urun_adi} detayı`}
+                  onClick={() => setDetayRunId(run.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      setDetayRunId(run.id)
+                    }
+                  }}
+                >
+                  <div className="plan-row-head">
+                    <span className="plan-row-label plate">{run.urun_adi}</span>
+                    <div className="plan-row-metrics tnum">
+                      <span className="plan-row-metric">
+                        <span className="plan-row-metric-value">
+                          {acikKalmaOran != null ? `%${Math.round(acikKalmaOran * 100)}` : '—'}
+                        </span>
+                        <span className="plan-row-metric-label plate">açık kalma</span>
+                      </span>
+                      <span className="plan-row-metric">
+                        <span className="plan-row-metric-value">
+                          {perf ? `%${Math.round(perf.oran * 100)}` : '—'}
+                        </span>
+                        <span className="plan-row-metric-label plate">hız verimi</span>
+                      </span>
+                    </div>
+                    {pace && (
+                      <>
+                        <span className="plan-row-figure tnum">
+                          {pace.uretilenKoli} / {pace.hedefKoli} koli
+                        </span>
+                        <span className="plan-row-status">
+                          {pace.durum === 'tamam'
+                            ? 'Hedef tamam'
+                            : pace.durum === 'planinda'
+                              ? 'Planında'
+                              : `${formatDelta(pace.farkDk)} ${pace.durum === 'onde' ? 'önde' : 'geride'}`}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {/*
+                   * Bu ürünün kendi palet/koli/paketi — "Vardiya toplamı"
+                   * bölümündeki rakamın hangi üründen geldiği burada net
+                   * görünsün diye (yaşanmış karışıklık: vardiya toplamı tek
+                   * ürünün üretimiyle birebir aynı görününce o rakamın
+                   * nereden geldiği belirsiz kalıyordu).
+                   */}
+                  <div className="plan-row-counts tnum">
+                    {paletAdedi} palet · {koli} koli · {runPaket ?? '—'} paket
+                  </div>
+                  {pace && (
+                    <div className="plan-row-track">
+                      <div className="plan-row-fill" style={{ width: `${pace.ilerleme * 100}%` }} />
+                    </div>
+                  )}
+                  {runPallets.length > 0 && (
+                    <div className="plan-row-pallets">
+                      <span className="plan-row-pallets-label plate">Palet çıkış saatleri</span>
+                      <ul className="plan-row-pallets-list">
+                        {runPallets.map((pallet) => (
+                          <li key={pallet.id} className="plan-row-pallets-row tnum">
+                            <span>{formatShortTime(new Date(pallet.completed_at))}</span>
+                            <span>{pallet.koli_count} koli</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* NEDEN */}
+        <section className="zone zone--why">
+          <h2 className="zone-title plate">Duruş sebepleri</h2>
           {topReasons.length === 0 ? (
-            <div className="panel-empty">Henüz duruş kaydı yok</div>
+            <p className="zone-empty plate">Duruş kaydı yok</p>
           ) : (
             <ul className="reasons-list">
               {topReasons.map((reason) => (
-                <li key={reason.code} className="reasons-row">
+                <li key={reason.note ?? '__yok__'} className="reasons-row">
                   <div className="reasons-row-head">
-                    <span className="reasons-row-label">{reason.label}</span>
-                    <span className="reasons-row-value">{formatDuration(reason.ms)}</span>
+                    <span className="reasons-row-label">{reason.note ?? NO_REASON_LABEL}</span>
+                    <span className="reasons-row-value tnum">
+                      {formatDuration(reason.ms)}
+                      <span className="reasons-row-count"> ×{reason.adet}</span>
+                    </span>
                   </div>
                   <div className="reasons-row-bar-track">
                     <div
                       className="reasons-row-bar-fill"
-                      style={{
-                        width: `${maxReasonMs > 0 ? (reason.ms / maxReasonMs) * 100 : 0}%`,
-                      }}
+                      style={{ width: `${maxReasonMs > 0 ? (reason.ms / maxReasonMs) * 100 : 0}%` }}
                     />
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </section>
 
-        <div className="panel feed-panel">
-          <span className="panel-title">Son Olaylar Akışı</span>
-          {recentEvents.length === 0 ? (
-            <div className="panel-empty">Henüz olay yok</div>
-          ) : (
-            <ul className="feed-list">
-              {recentEvents.map((event) => {
-                const isOngoing = !event.ended_at
-                const label = event.reason_code
-                  ? reasonLabelByCode.get(event.reason_code) ?? event.reason_code
-                  : NO_REASON_LABEL
+        {/* ÇEYREKLER — molalara göre bölünmüş, yan yana */}
+        <section className="zone zone--quarters">
+          <h2 className="zone-title plate">Vardiya bölümleri</h2>
+          <div className="quarters-row">
+            {segments.map((segment) => {
+              const segIntervals = intervals
+                .filter((interval) => interval.startMs >= segment.startMs && interval.startMs < segment.endMs)
+                .reverse()
 
-                return (
-                  <li key={event.id} className={`feed-row${isOngoing ? ' feed-row--ongoing' : ''}`}>
-                    <span className="feed-row-time">{formatShortTime(new Date(event.started_at))}</span>
-                    <span className="feed-row-label">{label}</span>
-                    <span className="feed-row-duration">
-                      {formatDuration(eventDurationMs(event, now))}
-                      {isOngoing && <span className="feed-row-live"> · devam ediyor</span>}
+              return (
+                <div key={segment.index} className="quarter-col">
+                  <div className="quarter-col-head">
+                    <span className="quarter-col-title plate">{segment.index}. Bölüm</span>
+                    <span className="quarter-col-time tnum">
+                      {formatShortTime(new Date(segment.startMs))} –{' '}
+                      {segment.endMs >= now ? 'şimdi' : formatShortTime(new Date(segment.endMs))}
                     </span>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </div>
+                  </div>
+                  {segIntervals.length === 0 ? (
+                    <p className="zone-empty plate">Olay yok</p>
+                  ) : (
+                    <ul className="quarter-col-list">
+                      {segIntervals.map((interval) => (
+                        <li
+                          key={interval.eventId}
+                          className={`quarter-row${interval.ongoing ? ' quarter-row--ongoing' : ''} quarter-row--${segmentKind(interval)}`}
+                        >
+                          <span className="quarter-row-time tnum">
+                            {formatShortTime(new Date(interval.startMs))}
+                          </span>
+                          {/*
+                           * 'uretim' ve 'mola' dışındaki HER kind burada duruş
+                           * gibi ele alınır (tek satır 'durus' kontrolü değil) —
+                           * addToTotals'taki final else ile aynı desen. Kaldırılmış
+                           * özelliklerden (ör. eski 'hazirlik') kalan satırlar bu
+                           * sayede "Üretim" gibi yanlış bir etikete düşmez.
+                           */}
+                          <span className="quarter-row-label">
+                            {interval.kind === 'uretim'
+                              ? runsById.get(interval.productRunId)?.urun_adi || 'Üretim'
+                              : interval.kind === 'mola'
+                                ? 'Mola'
+                                : interval.note || NO_REASON_LABEL}
+                          </span>
+                          <span className="quarter-row-duration tnum">
+                            {formatDuration(interval.durationMs)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </section>
       </div>
+
+      {/*
+        * Ürün detayı — operatördeki `ProductHistory` detayının aynısı,
+        * ortak `ProductDetail` bileşeniyle. Salt-okunur: "Düzenle" yok,
+        * müdür panosu hiçbir yazma çağrısı içermez (bkz. CLAUDE.md).
+        */}
+      {acikOzet && (
+        <div className="sheet-overlay sheet-overlay--wall" onClick={() => setDetayRunId(null)}>
+          <div
+            className="sheet-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label={acikOzet.run.urun_adi}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-handle" />
+            <h2 className="sheet-title plate">{acikOzet.run.urun_adi}</h2>
+            {acikOzet.run.parti_no ? (
+              <p className="sheet-subtitle">{acikOzet.run.parti_no}</p>
+            ) : null}
+
+            <ProductDetail ozet={acikOzet} />
+
+            <div className="sheet-actions">
+              <button
+                type="button"
+                className="sheet-button sheet-button--primary"
+                onClick={() => setDetayRunId(null)}
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

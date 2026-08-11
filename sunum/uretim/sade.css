@@ -1,0 +1,36 @@
+/*
+ * Video sahnesindeki telefon kadrajı için sadeleştirme (?sade=1).
+ * src/ içindeki hiçbir dosya değişmiyor — bu kurallar yalnızca
+ * `body.sade` varken, yani sadece video düzeneğinde geçerli.
+ *
+ * Gizlenenler videonun anlattığı hikâyeye ait değil: ikincil butonlar,
+ * müdür görüntüleme listesi, ürün kartları. Saat çubuğu da gizli — aynı
+ * çubuk müdür panosunda zaten büyük ve okunaklı gösteriliyor, telefonda
+ * tekrar etmesi hem yer yiyor hem eksen etiketleri sıkışık çıkıyor.
+ */
+/*
+ * `.operator-secondary` BİLEREK gizlenmiyor: "Ürün değiştir" akışı
+ * oradan başlıyor ve videoda gösteriliyor (gizlenince senaryo tıklayamaz).
+ */
+body.sade .operator-visits,
+body.sade .history-strip,
+body.sade .operator-shift-totals,
+body.sade .clockbar {
+  display: none;
+}
+
+/*
+ * Video modu (?video=1) — geçiş ve animasyonlar kapalı.
+ *
+ * Uygulamanın renk geçişleri (durum değişince 0.5-0.6 sn) ve andon nabzı
+ * GERÇEK ZAMANLI izlemek için tasarlandı. Videoda zaman ~180× hızlı akıyor;
+ * kareler geçişin ortasına denk gelince "ÜRETİMDE" yazarken sayaç hâlâ
+ * kırmızı çıkıyordu (yaşanmış). Nabız da kareden kareye rastgele opaklık
+ * yakalanmasına yol açıyor. İkisi de kapatılınca renk anında ve doğru.
+ */
+body.video *,
+body.video *::before,
+body.video *::after {
+  transition: none !important;
+  animation: none !important;
+}

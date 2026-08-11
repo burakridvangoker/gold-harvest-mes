@@ -1,4 +1,69 @@
+/*
+ * Karşılama sayfası kabuğu. Bu kurallar eskiden #root üzerindeydi ve
+ * MES ekranlarının tam ekran olmasını engelliyordu.
+ */
+.landing {
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  border-inline: 1px solid var(--border);
+  box-sizing: border-box;
+  font-size: 18px;
+  letter-spacing: 0.18px;
+  color: var(--text);
+  background: var(--bg);
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+
+  h1,
+  h2 {
+    font-family: var(--heading);
+    font-weight: 500;
+    color: var(--text-h);
+  }
+
+  h1 {
+    font-size: 56px;
+    letter-spacing: -1.68px;
+    margin: 32px 0;
+    @media (max-width: 1024px) {
+      font-size: 36px;
+      margin: 20px 0;
+    }
+  }
+
+  h2 {
+    font-size: 24px;
+    line-height: 118%;
+    letter-spacing: -0.24px;
+    margin: 0 0 8px;
+    @media (max-width: 1024px) {
+      font-size: 20px;
+    }
+  }
+
+  code {
+    font-family: var(--mono);
+    display: inline-flex;
+    border-radius: 4px;
+    color: var(--text-h);
+    font-size: 15px;
+    line-height: 135%;
+    padding: 4px 8px;
+    background: var(--code-bg);
+  }
+}
+
 .counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  color: var(--text-h);
   font-size: 16px;
   padding: 5px 10px;
   border-radius: 5px;
