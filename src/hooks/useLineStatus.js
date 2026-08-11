@@ -7,6 +7,11 @@ export function useLineStatus(lineCode) {
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    if (!lineCode) {
+      setLoading(false)
+      return
+    }
+
     let isMounted = true
 
     async function fetchLine() {
