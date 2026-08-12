@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<title>Gold Harvest MES — Arayüz ve Altyapı</title>
+<style>
+/* Yazı tipleri — uygulamanın kendisiyle aynı (IBM Plex Sans + Saira Condensed).
+   Türkçe ğ/ı/ş karakterleri latin-ext alt kümesinde, ikisi de yüklenmeli. */
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 400; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2122,U+2212; }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 400; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-ext-400-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 600; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2122,U+2212; }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 600; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-ext-600-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 700; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2122,U+2212; }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 700; font-display: block;
+  src: url('fonts/ibm-plex-sans-latin-ext-700-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Saira Condensed'; font-weight: 600; font-display: block;
+  src: url('fonts/saira-condensed-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2122,U+2212; }
+@font-face { font-family: 'Saira Condensed'; font-weight: 600; font-display: block;
+  src: url('fonts/saira-condensed-latin-ext-600-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Saira Condensed'; font-weight: 700; font-display: block;
+  src: url('fonts/saira-condensed-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2122,U+2212; }
+@font-face { font-family: 'Saira Condensed'; font-weight: 700; font-display: block;
+  src: url('fonts/saira-condensed-latin-ext-700-normal.woff2') format('woff2');
+  unicode-range: U+0100-024F,U+0259,U+1E00-1EFF,U+2020,U+20A0-20AB,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+
+:root {
+  /* Porselen Andon paleti — uygulamanın styles/andon.css'inden birebir */
+  --kagit: #f8faf7;
+  --kagit-alt: #eef1ee;
+  --murekkep: #131916;
+  --soluk: #566059;
+  --cizgi: rgba(18, 24, 21, 0.14);
+  --yesil: #00722f;
+  --amber: #8a5f00;
+  --kirmizi: #c31f10;
+  --sinyal-yesil: #009440;
+  --sinyal-amber: #ffb000;
+  --sinyal-kirmizi: #e02718;
+  --golge: 0 1px 2px rgba(18, 24, 21, 0.05), 0 12px 28px -18px rgba(18, 24, 21, 0.3);
+  --data: 'IBM Plex Sans', system-ui, sans-serif;
+  --plaka: 'Saira Condensed', 'Arial Narrow', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; background: #d8ded8; }
+
+body {
+  font-family: var(--data);
+  color: var(--murekkep);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.slayt {
+  position: relative;
+  width: 1280px;
+  height: 720px;
+  overflow: hidden;
+  background: var(--kagit);
+  page-break-after: always;
+  break-after: page;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+}
+
+.slayt:last-child { page-break-after: auto; break-after: auto; }
+
+.bant {
+  flex: 0 0 auto;
+  height: 14px;
+  background-color: var(--sinyal-yesil);
+  background-image: repeating-linear-gradient(
+    to right, transparent 0, transparent 54px,
+    rgba(0, 0, 0, 0.22) 54px, rgba(0, 0, 0, 0.22) 57px);
+}
+.bant--kirmizi { background-color: var(--sinyal-kirmizi); }
+.bant--amber { background-color: var(--sinyal-amber); }
+
+.govde {
+  flex: 1;
+  min-height: 0;
+  padding: 52px 64px 60px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ustbaslik {
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--soluk);
+  margin-bottom: 14px;
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.spot {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.45;
+  color: var(--soluk);
+  max-width: 68ch;
+}
+
+.sayfa-no {
+  position: absolute;
+  right: 64px;
+  bottom: 28px;
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: var(--soluk);
+}
+
+/* ---------- Kapak / kapanış: koyu zemin ---------- */
+.slayt--koyu { background: var(--murekkep); color: var(--kagit); }
+.slayt--koyu .spot { color: rgba(248, 250, 247, 0.72); }
+.slayt--koyu .ustbaslik { color: rgba(248, 250, 247, 0.6); }
+.slayt--koyu .sayfa-no { color: rgba(248, 250, 247, 0.5); }
+
+.kapak-govde { justify-content: center; align-items: flex-start; }
+
+.plaka {
+  display: inline-block;
+  padding: 8px 22px 11px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff, var(--kagit-alt));
+  color: var(--murekkep);
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: 0.12em;
+  margin-bottom: 30px;
+}
+
+.kapak-baslik {
+  font-size: 60px;
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  margin: 0 0 16px;
+}
+
+.kapak-alt {
+  margin-top: 42px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(248, 250, 247, 0.2);
+  display: flex;
+  gap: 46px;
+  font-size: 16px;
+  color: rgba(248, 250, 247, 0.72);
+}
+.kapak-alt strong { display: block; font-weight: 600; color: var(--kagit); margin-bottom: 3px; }
+
+/* ---------- Üç sütun ---------- */
+.uclu {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 34px;
+  margin-top: 40px;
+}
+
+.kart {
+  padding-top: 20px;
+  border-top: 3px solid var(--murekkep);
+}
+.kart--kirmizi { border-top-color: var(--sinyal-kirmizi); }
+.kart--yesil { border-top-color: var(--sinyal-yesil); }
+.kart--amber { border-top-color: var(--sinyal-amber); }
+
+.kart h3 {
+  margin: 0 0 10px;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.kart .etiket {
+  display: block;
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--soluk);
+  margin-bottom: 8px;
+}
+.kart p { margin: 0; font-size: 16.5px; line-height: 1.5; color: var(--soluk); }
+
+/* ---------- Görsel + metin yerleşimi ---------- */
+.ikili {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 44px;
+  margin-top: 32px;
+  align-items: center;
+}
+.ikili--metin-sol { grid-template-columns: 400px 1fr; }
+
+.madde { list-style: none; margin: 0; padding: 0; }
+.madde li {
+  position: relative;
+  padding-left: 22px;
+  margin-bottom: 20px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--soluk);
+}
+.madde li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--sinyal-yesil);
+}
+.madde li strong { color: var(--murekkep); font-weight: 600; }
+
+.gorsel {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border: 1px solid var(--cizgi);
+  border-radius: 12px;
+  box-shadow: var(--golge);
+  background: #fff;
+}
+
+.telefonlar { display: flex; gap: 26px; justify-content: center; align-items: flex-start; }
+.telefonlar .gorsel { max-height: 452px; border-radius: 16px; }
+
+.dipnot {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--soluk);
+  font-style: italic;
+}
+
+.vurgu-kutu {
+  margin-top: 30px;
+  padding: 22px 26px;
+  background: var(--kagit-alt);
+  border-left: 4px solid var(--murekkep);
+  border-radius: 0 10px 10px 0;
+  font-size: 17px;
+  line-height: 1.5;
+}
+.vurgu-kutu strong { font-weight: 600; }
+
+/* ---------- Akış / boru hattı diyagramı ---------- */
+.akis-blok { margin-top: 30px; }
+.akis-blok + .akis-blok { margin-top: 34px; }
+.akis-etiket {
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--soluk);
+  margin-bottom: 12px;
+}
+.akis {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.akis-kutu {
+  padding: 13px 20px;
+  border: 1px solid var(--cizgi);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--golge);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.28;
+  max-width: 220px;
+}
+.akis-kutu span {
+  display: block;
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sinyal-yesil);
+  margin-bottom: 5px;
+}
+.akis-ok {
+  font-size: 22px;
+  color: var(--soluk);
+  flex: 0 0 auto;
+}
+
+/* ---------- Kapanış listesi ---------- */
+.durum-liste { list-style: none; margin: 30px 0 0; padding: 0; }
+.durum-liste li {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 15px 0;
+  border-bottom: 1px solid rgba(248, 250, 247, 0.16);
+  font-size: 18.5px;
+  line-height: 1.4;
+}
+.durum-liste li:last-child { border-bottom: none; }
+.durum-etiket {
+  flex: 0 0 auto;
+  font-family: var(--plaka);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sinyal-yesil);
+  width: 96px;
+}
+
+.kapanis-not {
+  margin-top: 30px;
+  padding: 22px 26px;
+  background: rgba(248, 250, 247, 0.07);
+  border-left: 4px solid var(--sinyal-yesil);
+  border-radius: 0 10px 10px 0;
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--kagit);
+}
+
+@page { size: 1280px 720px; margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- 1 — KAPAK -->
+<section class="slayt slayt--koyu">
+  <div class="bant"></div>
+  <div class="govde kapak-govde">
+    <span class="plaka">MES</span>
+    <h1 class="kapak-baslik">Gold Harvest MES<br />Arayüz ve Altyapı</h1>
+    <p class="spot">Operatörün ve müdürün gördüğü ekranlardan, bunları ayakta<br />
+      tutan üç servise: GitHub, Vercel, Supabase.</p>
+    <div class="kapak-alt">
+      <div><strong>Kapsam</strong>Operatör ekranı + müdür panosu</div>
+      <div><strong>Altyapı</strong>GitHub · Vercel · Supabase</div>
+      <div><strong>Hazırlayan</strong>Burak Rıdvan Göker</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 — OPERATÖR EKRANI -->
+<section class="slayt">
+  <div class="bant"></div>
+  <div class="govde">
+    <p class="ustbaslik">Sahadaki ekran</p>
+    <h1>Operatör ekranı</h1>
+    <div class="ikili ikili--metin-sol">
+      <div>
+        <ul class="madde">
+          <li>Ekranın tamamı hattın durumuna göre renk alıyor — uzaktan bakan
+            <strong>tek renkte</strong> durumu okuyor.</li>
+          <li><strong>BAŞLAT · DURDUR · MOLA · +1 PALET</strong> — dört büyük
+            buton, eldivenle kullanılabiliyor.</li>
+          <li>Duruş sebebi için kod ezberlemek yok; operatör ne olduysa
+            yazıyor, sistem tekrarlayanları tek dokunuşluk seçeneğe
+            çeviriyor.</li>
+          <li><strong>Saat sonradan düzeltilebiliyor.</strong> Olay,
+            yaşandıktan dakikalar sonra girilse bile; düzeltince bütün
+            süre hesapları kendiliğinden güncelleniyor.</li>
+        </ul>
+        <p class="dipnot">Ekran görüntüleri örnek vardiya verisiyle alınmıştır.</p>
+      </div>
+      <div class="telefonlar">
+        <img class="gorsel" src="gorseller/operator-ust.png" alt="Operatör ekranı üst" />
+        <img class="gorsel" src="gorseller/operator-alt.png" alt="Operatör ekranı alt" />
+      </div>
+    </div>
+  </div>
+  <span class="sayfa-no">02</span>
+</section>
+
+<!-- 3 — MÜDÜR PANOSU -->
+<section class="slayt">
+  <div class="bant bant--kirmizi"></div>
+  <div class="govde">
+    <p class="ustbaslik">Yönetim görünümü</p>
+    <h1>Müdür panosu</h1>
+    <div class="ikili ikili--metin-sol">
+      <div>
+        <ul class="madde">
+          <li>Hattın o anki durumu ve <strong>ne kadar süredir</strong> o durumda
+            olduğu, ekranın en görünür yerinde.</li>
+          <li>Vardiyanın tamamı <strong>saat ekseninde</strong>: hangi saatte ne
+            olduğu tek bakışta; bir bloğa dokununca sebebi açılıyor.</li>
+          <li><strong>Açık kalma oranı</strong> ve <strong>hız verimi</strong>
+            ayrı ayrı gösteriliyor — biri "durdu mu", diğeri "çalışırken yavaş
+            mıydı" sorusunu cevaplıyor.</li>
+          <li>Telefondan ve bilgisayardan, tarayıcıyla açılıyor; kurulum ya da
+            uygulama indirme gerekmiyor.</li>
+        </ul>
+      </div>
+      <div>
+        <img class="gorsel" src="gorseller/mudur.png" alt="Müdür panosu" />
+      </div>
+    </div>
+  </div>
+  <span class="sayfa-no">03</span>
+</section>
+
+<!-- 4 — ÜÇ SERVİS ÖZETİ -->
+<section class="slayt">
+  <div class="bant bant--amber"></div>
+  <div class="govde">
+    <p class="ustbaslik">Sahne arkası</p>
+    <h1>Sistemi ayakta tutan üç servis</h1>
+    <p class="spot">Üçü de hazır, dışarıdan kullanılan servisler — bu proje için
+      sıfırdan sunucu kurulmadı.</p>
+    <div class="uclu">
+      <div class="kart kart--yesil">
+        <span class="etiket">GitHub</span>
+        <h3>Kod deposu</h3>
+        <p>Uygulamanın tüm kaynak kodu burada tutuluyor, kimin ne zaman
+          değiştirdiğiyle birlikte.</p>
+      </div>
+      <div class="kart kart--kirmizi">
+        <span class="etiket">Vercel</span>
+        <h3>Yayın</h3>
+        <p>GitHub'daki koda her değişiklik geldiğinde, siteyi otomatik olarak
+          yeniden derleyip yayınlıyor.</p>
+      </div>
+      <div class="kart kart--amber">
+        <span class="etiket">Supabase</span>
+        <h3>Veritabanı</h3>
+        <p>Vardiya, ürün, duruş, palet — tüm veri burada; bir değişiklik anında
+          açık olan tüm ekranlara yansıyor.</p>
+      </div>
+    </div>
+    <div class="akis-blok" style="margin-top: 46px">
+      <p class="akis-etiket">Basitçe</p>
+      <div class="akis">
+        <div class="akis-kutu"><span>1. Kod</span>GitHub</div>
+        <div class="akis-ok">→</div>
+        <div class="akis-kutu"><span>2. Yayın</span>Vercel</div>
+        <div class="akis-ok">→</div>
+        <div class="akis-kutu"><span>3. Kullanım</span>Tarayıcı</div>
+        <div class="akis-ok">⇄</div>
+        <div class="akis-kutu"><span>4. Veri</span>Supabase</div>
+      </div>
+    </div>
+  </div>
+  <span class="sayfa-no">04</span>
+</section>
+
+<!-- 5 — GITHUB -->
+<section class="slayt">
+  <div class="bant"></div>
+  <div class="govde">
+    <p class="ustbaslik">Kod deposu</p>
+    <h1>Kod nerede duruyor, nasıl değişiyor</h1>
+    <ul class="madde">
+      <li>Uygulamanın tüm kaynak kodu <strong>tek bir GitHub deposunda</strong>.</li>
+      <li>Değişiklikler doğrudan yayındaki dala değil, ayrı isimli
+        <strong>"dallar"</strong>a yapılıyor; hazır olunca ana dala aktarılıyor.</li>
+      <li>Otomatik test/derleme hattı (CI) henüz kurulu değil; kontrol elle ve
+        Vercel'in kendi derleme adımıyla yapılıyor.</li>
+      <li>Veritabanı değişiklikleri de kodla birlikte, ayrı
+        <strong>".sql" dosyaları</strong> olarak burada saklanıyor — elle,
+        sırayla Supabase'e uygulanıyor.</li>
+    </ul>
+    <div class="vurgu-kutu">
+      <strong>Yaşanmış bir ders:</strong> yayın dalı bir süre ana daldan
+      geride kaldı; farkında olmadan eski koda göre yayın yapılınca site
+      aylar öncesine döndü. İkisi artık kasıtlı olarak eşit tutuluyor.
+    </div>
+  </div>
+  <span class="sayfa-no">05</span>
+</section>
+
+<!-- 6 — VERCEL -->
+<section class="slayt">
+  <div class="bant bant--kirmizi"></div>
+  <div class="govde">
+    <p class="ustbaslik">Yayın</p>
+    <h1>Kod nasıl canlıya çıkıyor</h1>
+    <ul class="madde">
+      <li>Belirlenen dala her değişiklik geldiğinde Vercel siteyi
+        <strong>otomatik olarak</strong> yeniden derleyip yayınlıyor — elle
+        yükleme yok.</li>
+      <li>Uygulama tek sayfalık: bütün ekranlar aynı dosyadan yükleniyor. Bir
+        yönlendirme kuralı olmadan bir ekrana doğrudan girmek hataya düşer.</li>
+      <li>Veritabanı adresi ve erişim anahtarı Vercel'in kendi ayarlarında,
+        koddan ayrı tutuluyor.</li>
+    </ul>
+    <div class="vurgu-kutu">
+      <strong>Yaşanmış bir ders:</strong> bir deployment elle de "canlıya"
+      terfi ettirilebiliyor — bu yapıldığında ayarlar doğru görünse bile
+      yayındaki sürüm yanlış olabiliyor. Kontrolü basit: canlı sitenin
+      yüklediği dosya adı, yerel derleme çıktısındaki adla uyuşmalı.
+    </div>
+  </div>
+  <span class="sayfa-no">06</span>
+</section>
+
+<!-- 7 — SUPABASE -->
+<section class="slayt">
+  <div class="bant bant--amber"></div>
+  <div class="govde">
+    <p class="ustbaslik">Veritabanı</p>
+    <h1>Veri nerede duruyor, nasıl anında yayılıyor</h1>
+    <ul class="madde">
+      <li>Vardiya, ürün, duruş/mola olayları, palet kayıtları — hepsi
+        <strong>tek bir veritabanında</strong>.</li>
+      <li>Bir kayıt değişince açık olan tüm ekranlara <strong>anında</strong>
+        haber veriliyor: operatör bir olay girince müdür panosu sayfa
+        yenilenmeden güncelleniyor.</li>
+      <li>Süreler ve toplamlar hiçbir yerde ayrıca saklanmıyor; hep ham olay
+        kayıtlarından hesaplanıyor — bu, saatin geriye dönük düzeltilebilmesini
+        yapısal olarak mümkün kılıyor.</li>
+      <li>Kimlik doğrulama henüz yok; sahada hızlı iterasyon için bilinçli bir
+        tercih — bir kullanıcı/rol sistemi eklenince erişim sıkılaştırılacak.</li>
+    </ul>
+  </div>
+  <span class="sayfa-no">07</span>
+</section>
+
+<!-- 8 — UÇTAN UCA AKIŞ -->
+<section class="slayt">
+  <div class="bant"></div>
+  <div class="govde">
+    <p class="ustbaslik">Baştan sona</p>
+    <h1>Bir değişiklik ekrana nasıl ulaşıyor</h1>
+    <div class="akis-blok" style="margin-top: 26px">
+      <p class="akis-etiket">Kod tarafı — bir değişiklik yayına çıkarken</p>
+      <div class="akis">
+        <div class="akis-kutu"><span>1</span>GitHub'a değişiklik gönderilir</div>
+        <div class="akis-ok">→</div>
+        <div class="akis-kutu"><span>2</span>Vercel otomatik derler</div>
+        <div class="akis-ok">→</div>
+        <div class="akis-kutu"><span>3</span>Yeni sürüm yayına alınır</div>
+      </div>
+    </div>
+    <div class="akis-blok" style="margin-top: 24px">
+      <p class="akis-etiket">Kullanım tarafı — operatör bir tuşa basınca</p>
+      <div class="akis">
+        <div class="akis-kutu"><span>1</span>Operatör BAŞLAT'a dokunur</div>
+        <div class="akis-ok">→</div>
+        <div class="akis-kutu"><span>2</span>Supabase'e olay yazılır</div>
+        <div class="akis-ok">→</div>
+        <div class="akis-kutu"><span>3</span>Müdür panosu anında güncellenir</div>
+      </div>
+    </div>
+    <div class="vurgu-kutu" style="margin-top: 22px; padding: 16px 26px">
+      Bu iki akış birbirinden bağımsız çalışır: kod tarafı dakikalar süren bir
+      derleme işi, kullanım tarafı ise saniyenin altında bir veri güncellemesi.
+      Biri yavaşlasa da diğeri etkilenmez.
+    </div>
+  </div>
+  <span class="sayfa-no">08</span>
+</section>
+
+<!-- 9 — KAPANIŞ -->
+<section class="slayt slayt--koyu">
+  <div class="bant"></div>
+  <div class="govde">
+    <p class="ustbaslik">Özetle</p>
+    <h1 style="font-size: 40px">Üç servis, tek uygulama</h1>
+    <ul class="durum-liste">
+      <li><span class="durum-etiket">Kod</span>
+        <span>GitHub'da, isimli dallar halinde, tüm değişiklik geçmişiyle
+          birlikte.</span></li>
+      <li><span class="durum-etiket">Yayın</span>
+        <span>Vercel'de; belirlenen dala her değişiklikte otomatik olarak
+          yeniden yayınlanıyor.</span></li>
+      <li><span class="durum-etiket">Veri</span>
+        <span>Supabase'de; gerçek zamanlı ve tek doğru kaynak — hiçbir
+          rakam ayrıca saklanmıyor, hep ham kayıttan hesaplanıyor.</span></li>
+      <li><span class="durum-etiket">Maliyet</span>
+        <span>Üçü de hazır, dışarıdan kiralanan servis; bu proje için sıfırdan
+          sunucu ya da altyapı kurulmadı.</span></li>
+    </ul>
+    <div class="kapanis-not">
+      Sorularını bekliyorum — istersen canlı üzerinde de gösterebilirim.
+    </div>
+  </div>
+  <span class="sayfa-no">09</span>
+</section>
+
+</body>
+</html>
