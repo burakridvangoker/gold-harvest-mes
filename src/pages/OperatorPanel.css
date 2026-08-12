@@ -285,18 +285,17 @@ button.operator-line-code {
  * ALTTAN olur, panel kendi `overflow-y:auto`'suyla erişilebilir kalır.
  */
 /*
- * Ana ekran KESİN olarak kaymaz — diğer iki panelin aksine (onlar taşarsa
- * kendi içlerinde kayabilir) burada `overflow: hidden` ile taşma imkânsız
- * hâle getirildi. Yaşanmış geri bildirim: `overflow-y:auto` + tam
- * sığmayan içerik hâlâ "çok az" bir kayma hissi veriyordu (elastik
- * bounce + birkaç pikselik taşma) — kullanıcı bunu iki kez bildirdi.
- * Riski azaltmak için içerik de sıkılaştırıldı (aşağıdaki gap/padding
- * değerleri, "Olay geçmişi" butonu Genel'e taşındı); yine de aşırı küçük
- * bir ekranda bir satır kırpılabilirse bunun bedeli KAYMADAN iyidir.
+ * YAŞANMIŞ HATA — `overflow: hidden` denendi, GERİ ALINDI. "Kesin
+ * kaymasın" isteğiyle bir ara burada `overflow: hidden` vardı; sonuç
+ * kayma değil, SESSİZ VERİ KAYBI oldu: sığmayan içerik (zaman çubuğunun
+ * "Düzenle" balonu, "Olay geçmişi" butonu) görünmez oldu — kullanıcı
+ * "olay geçmişi butonu yok" diye bildirdi. Bu, dosyanın en başındaki
+ * temel ilkeyi (içerik kaybolmaktansa kaysın) ihlal ediyordu. Taşma hâlâ
+ * mümkünse (küçük ekran/uzun balon metni) panel kendi `overflow-y:auto`'
+ * suyla erişilebilir kalır — az bir kayma, kaybolan bir butondan iyidir.
  */
 .operator-pager-panel--main {
   justify-content: flex-start;
-  overflow: hidden;
 }
 
 .operator-main {
