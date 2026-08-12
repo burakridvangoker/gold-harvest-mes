@@ -175,13 +175,13 @@ function EventLog({
                       : entry.note || 'Sebep girilmemiş'
 
               /*
-               * "Kaçta başlayıp kaçta bitti" tek bakışta görünsün diye —
-               * sadece başlangıcı gösterip bitişi süreden hesaplatmak
-               * operatöre ek bir zihinsel iş yüklüyordu. Palet gibi tek
-               * anlık kayıtların bitişi yok, aralık yalnızca durum
-               * geçişlerinde (uretim/durus/mola) gösterilir. İki satıra
-               * bölünür (başlangıç üstte/bitiş altta) — dar sütunda tek
-               * satıra sıkıştırılan "07:00 – 09:43" okunaksızlaşıyordu.
+               * "Kaçta başlayıp kaçta bitti" YATAY olarak, geniş satırın
+               * TAMAMINI kullanarak — dar bir sütuna sıkıştırılmış dikey
+               * "07:00 / 09:43" okunaksızdı (yaşanmış geri bildirim).
+               * Palet gibi tek anlık kayıtların bitişi yok, aralık
+               * yalnızca durum geçişlerinde (uretim/durus/mola) gösterilir.
+               * Alt kenar rengi (kırmızı/yeşil/sarı) durumu andon diliyle
+               * anlatır; süre (geçen zaman) üstte, sağda ayrıca yazılı.
                */
               const ongoing = !frozen && interval?.ongoing
               const isRange = entry.type === 'event' && interval
@@ -193,28 +193,25 @@ function EventLog({
                     className={`eventlog-row eventlog-row--${displayKind}`}
                     onClick={() => startEdit(entry)}
                   >
-                    <span className="eventlog-row-time tnum">
+                    <div className="eventlog-row-top">
+                      <span className="eventlog-row-kind plate">{KIND_LABELS[displayKind]}</span>
+                      <span className="eventlog-row-meta tnum">
+                        {interval ? formatDuration(interval.durationMs) : ''}
+                        {ongoing ? <span className="eventlog-row-live"> sürüyor</span> : null}
+                      </span>
+                    </div>
+                    <div className="eventlog-row-time tnum">
                       {isRange ? (
                         <>
-                          <span className="eventlog-row-time-start">
-                            {formatShortTime(new Date(interval.startMs))}
-                          </span>
-                          <span className="eventlog-row-time-end">
-                            {ongoing ? 'şimdi' : formatShortTime(new Date(interval.endMs))}
-                          </span>
+                          <span>{formatShortTime(new Date(interval.startMs))}</span>
+                          <span className="eventlog-row-time-arrow">→</span>
+                          <span>{ongoing ? 'şimdi' : formatShortTime(new Date(interval.endMs))}</span>
                         </>
                       ) : (
-                        formatShortTime(new Date(entry.atMs))
+                        <span>{formatShortTime(new Date(entry.atMs))}</span>
                       )}
-                    </span>
-                    <span className="eventlog-row-body">
-                      <span className="eventlog-row-kind plate">{KIND_LABELS[displayKind]}</span>
-                      <span className="eventlog-row-label">{label}</span>
-                    </span>
-                    <span className="eventlog-row-meta tnum">
-                      {interval ? formatDuration(interval.durationMs) : ''}
-                      {ongoing ? <span className="eventlog-row-live"> sürüyor</span> : null}
-                    </span>
+                    </div>
+                    <span className="eventlog-row-label">{label}</span>
                   </button>
                 </li>
               )

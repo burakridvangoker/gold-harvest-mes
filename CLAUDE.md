@@ -1032,6 +1032,36 @@ altında kendi satırında kalıyor. Sağ üstte artık gerçek saat de var
 (`formatClock`, `now` state'inden — zaten saniyede bir tikliyor), durum
 rozetinin üstünde, dikey istiflenmiş.
 
+**İkinci tur — artık dolu/gerçek veriyle test edilince** (kullanıcı
+gerçek cihaz emülasyonunda denedi) üç şey daha çıktı:
+- Hâlâ ÇOK AZ bir kayma hissi vardı — flex-start düzeltmesi kırpmayı
+  çözdü ama içerik viewport'u birkaç piksel aşınca panel yine de
+  kayabiliyordu, bu da tarayıcının elastik "bounce"uyla birleşince
+  "ekran kımıldıyor" hissi veriyordu. Çözüm iki parçalı: `.operator-panel`/
+  `.operator-pager-panel`'in dikey boşlukları biraz daha sıkıldı (her
+  ekran, özellikle Ana ekran, daha kolay tam sığsın diye) VE
+  `overscroll-behavior: contain` (panel) / `none` (kabuk) eklendi —
+  içerik tam sığdığında bile "bounce" hissi kalmasın diye.
+- Fiş no ve ürün adı çok soluktu (`--film-dim`), oysa ikisi de operatörün
+  en sık baktığı bilgilerden — `--film`'e ve kalın ağırlığa çevrildi.
+- Olay geçmişinde başlangıç-bitiş DİKEY gösterimi ("07:00 / 09:43", bir
+  önceki turda eklenmişti) okunaksız bulundu — "yatay yönde çok daha
+  güzel olsun" istendi. `EventLog.jsx` satırları kart düzenine geçti:
+  üstte tür + süre, ortada YATAY "07:00 → 09:43", altta not/etiket. Durum
+  rengi (üretim yeşil/duruş kırmızı/mola sarı) artık satırın ALT
+  kenarında kalın bir şerit — önceki sürümde ince bir SOL kenardı,
+  "alttan o renk olsun" isteğiyle taşındı.
+
+**Saat çarkında (`TimeSheet.jsx`) iki ek geri bildirim:** aktif rakamın
+(1.9rem, kalın) kenarları kırpılmış görünüyordu — kök sebep `.wheel-column`
+genişliğinin `ch` biriminde olması, ki `ch` bu elemente MİRAS KALAN küçük
+gövde font-size'ına göre hesaplanıyordu, aktif rakamın gerçek (büyük,
+kalın) genişliğine göre değil. Sabit `rem` genişliğe (`3.75rem`) çevrildi.
+Ayrıca "seçerken zorlanabiliyorum" geri bildirimiyle her sütunun
+üstüne/altına ▲/▼ "bir adım artır/azalt" butonu eklendi (`wheel-step`) —
+kaydırma ve satıra dokunma (mevcut davranış) hâlâ çalışıyor, bu üçüncü bir
+yol, uzak bir değere hızlı gitmek için.
+
 ## İki fabrika: Merkez sabit, Şok elle
 
 Seçim ekranı iki adımlı: önce **fabrika**, sonra **makine**.

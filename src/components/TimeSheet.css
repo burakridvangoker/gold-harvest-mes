@@ -102,9 +102,49 @@
  * birebir eşleşmeli — viewport yüksekliği ve scroll-snap hesabı JS'te bu
  * sabitlere göre yapılıyor.
  */
+/*
+ * Her sütun kaydırma çarkı + üstünde/altında bir adım artır/azalt butonu
+ * (bkz. TimeSheet.jsx — "seçerken zorlanabiliyorum" geri bildirimi,
+ * kaydırma dışında ikinci bir yol).
+ */
+.wheel-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.wheel-step {
+  width: 2.5rem;
+  height: 2.25rem;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.5rem;
+  background: var(--steel-800);
+  color: var(--film-dim);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.wheel-step:active {
+  background: var(--steel-700);
+  color: var(--film);
+}
+
+/*
+ * Yaşanmış hata: genişlik `ch` ile ölçülüyordu ve `ch`, bu elemente
+ * MİRAS KALAN küçük gövde font-size'ına göre hesaplanıyordu — ama aktif
+ * rakam (`.wheel-item--active`) 1.9rem kalın ve tabular, o küçük referans
+ * genişliğe SIĞMIYORDU; kenarları kırpılmış/üst üste binmiş görünüyordu
+ * (ekran görüntüsüyle bildirildi). Sabit `rem` genişliğe geçildi — en
+ * büyük (aktif, kalın) hâle göre bolca pay bırakır.
+ */
 .wheel-column {
   position: relative;
-  width: 3.4ch;
+  width: 3.75rem;
 }
 
 .wheel-viewport {
