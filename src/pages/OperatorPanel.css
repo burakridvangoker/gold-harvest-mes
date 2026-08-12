@@ -88,15 +88,27 @@
 .operator-header-left {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.3rem;
   min-width: 0;
+}
+
+/*
+ * Makine + vardiya/operatör + fiş no yan yana tek satırda — üçü de kendi
+ * satırında dikey yer yiyip Ana ekran'ı taşırıyordu (yaşanmış şikayet).
+ * Sığmazsa doğal sarar (`flex-wrap`), hiçbir parça kesilmez.
+ */
+.operator-header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.7rem;
 }
 
 .operator-line-code {
   font-family: var(--plate);
-  font-size: clamp(1.5rem, 5vw, 2.1rem);
+  font-size: clamp(1.15rem, 4.2vw, 1.5rem);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   color: var(--film);
 }
 
@@ -110,7 +122,6 @@
 
 /* Vardiya no + operatör adı — dokununca düzeltilebilir (yanlış yazılan ad). */
 .operator-shift-info {
-  align-self: flex-start;
   border: none;
   background: none;
   padding: 0;
@@ -122,11 +133,10 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Fiş no — vardiya bilgisinin hemen altında, aynı düzenlenebilir buton
- * deseni (.operator-shift-info). Boşken sessizce "Fiş no gir" davet eder,
- * andon sinyal renklerinden bağımsız (durum değil, veri alanı). */
+/* Fiş no — aynı düzenlenebilir buton deseni (.operator-shift-info).
+ * Boşken sessizce "Fiş no gir" davet eder, andon sinyal renklerinden
+ * bağımsız (durum değil, veri alanı). */
 .operator-fisno {
-  align-self: flex-start;
   border: none;
   background: none;
   padding: 0;
@@ -136,6 +146,21 @@
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Sağ üst: gerçek saat + durum rozeti, dikey istiflenmiş. */
+.operator-header-right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+
+.operator-clock {
+  font-size: clamp(0.85rem, 2.8vw, 1rem);
+  font-weight: 600;
+  color: var(--film-dim);
 }
 
 .operator-idle-date {
@@ -238,25 +263,24 @@ button.operator-line-code {
 }
 
 /* Ana ekran — operatörün asıl işi, dikey ortalanır, kaymaması hedeflenir. */
+/*
+ * `flex-start`, `center` DEĞİL — bkz. .operator-shell'in başındaki
+ * gerekçe: içerik viewport'tan uzun olduğunda `justify-content:center`
+ * fazlalığı YUKARIDAN kırpar ve o kırpılan kısım aşağı kaydırarak da
+ * görünmez hâle gelir (scrollTop 0'dan aşağı gidemez, negatife hiç
+ * gidemez) — yaşanmış hata: süre sayacının üstü kesik, kaydırma çubuğu
+ * var ama yukarı kaydırılamıyordu. `flex-start` ile taşma her zaman
+ * ALTTAN olur, panel kendi `overflow-y:auto`'suyla erişilebilir kalır.
+ */
 .operator-pager-panel--main {
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .operator-main {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.75rem, 2.5vh, 1.5rem);
+  gap: clamp(0.6rem, 2vh, 1.25rem);
   width: 100%;
-}
-
-/* Zaman çubuğu + Olay geçmişi butonu, asıl işin (BAŞLAT/MOLA/PALET)
- * hemen altında — ayrı bir çizgiyle görsel olarak ikincil işaretlenir. */
-.operator-main-secondary {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding-top: clamp(0.5rem, 2vh, 1rem);
-  border-top: 1px solid var(--steel-line);
 }
 
 /* Kahraman: süre. Ekranın en büyük tek öğesi. */
@@ -267,6 +291,13 @@ button.operator-line-code {
   align-items: center;
   gap: clamp(0.2rem, 0.8vh, 0.5rem);
   padding: clamp(0.4rem, 1.75vh, 1.25rem) 0;
+}
+
+/* Ana ekranda zaman çubuğu + hız/oran satırı da yer istediği için süre
+ * biraz küçültüldü — hâlâ ekranın en göze çarpan öğesi, sadece devasa
+ * değil (yaşanmış geri bildirim: "zamanı birazcık küçültebiliriz"). */
+.duration-block--compact {
+  padding: clamp(0.1rem, 0.5vh, 0.4rem) 0;
 }
 
 .duration-label {
@@ -283,6 +314,10 @@ button.operator-line-code {
   color: var(--status-text);
   text-shadow: 0 0 0.45em color-mix(in srgb, var(--status) 22%, transparent);
   transition: color 0.5s ease;
+}
+
+.duration-value--compact {
+  font-size: clamp(2.5rem, 12vw, 4.5rem);
 }
 
 /*
@@ -437,6 +472,31 @@ button.operator-line-code {
 
 .count-cell + .count-cell {
   border-left: 1px solid var(--steel-line);
+}
+
+/* Ana ekrandaki "Hız" hücresi tek başına dokunulabilir (SpeedSheet'i
+ * açar) — geri kalan iki hücre (Açık kalma/Hız verimi) salt-okunur.
+ * `.count-cell`in görünümünü aynen korur, sadece buton sıfırlaması. */
+.count-cell--tap {
+  border: none;
+  background: none;
+  width: 100%;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.count-cell--tap:active {
+  background: var(--steel-700);
+}
+
+/* Ana ekranın metrik satırı, ürün geçmişindeki "Bu ürün" ızgarasından
+ * (`.operator-counts`) ödünç alınan aynı üç sütun — üstteki
+ * `.duration-block`/butonlarla aynı hizada, kenarlıksız (o kadar ayraç
+ * bu ekranda kalabalık ederdi). */
+.operator-metrics {
+  border-bottom: none;
 }
 
 /* Vardiya toplamı — bu üründen ayrı, küçük ve soluk: birden çok ürün

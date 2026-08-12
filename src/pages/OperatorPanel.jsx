@@ -9,6 +9,7 @@ import {
   buildIntervals,
   currentState,
   groupSegmentsByEvent,
+  hizVerimi,
   koliToPaket,
   newEventWindow,
   paceStatus,
@@ -16,9 +17,11 @@ import {
   palletTotalsByRun,
   runSpans,
   shiftPaket,
+  shiftTotals,
+  totalsByRun,
 } from '../lib/timeline'
 import { formatBreakdown, formatDelta, formatDuration } from '../lib/duration'
-import { formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
+import { formatClock, formatDateLabel, vardiyaBaslangici, VARDIYA_SURESI_MS } from '../lib/time'
 import StatusBadge from '../components/StatusBadge'
 import RadialGauge from '../components/RadialGauge'
 import ShiftClockBar from '../components/ShiftClockBar'
@@ -121,6 +124,24 @@ function OperatorPanel() {
     ? paletlerByRun.get(activeRun.id) ?? { paletAdedi: 0, koliAdedi: 0 }
     : { paletAdedi: 0, koliAdedi: 0 }
   const activeRunPaket = koliToPaket(activeRunPaletler.koliAdedi, activeRun?.koli_ici_adet)
+
+  /*
+   * Müdür panosundaki aynı iki oran (bkz. CLAUDE.md "Müdür panosu: iki
+   * oran"), operatörün de kendi ekranında görmesi için — aynı fonksiyon,
+   * aynı hesap, ayrı ayrı türetilmesin. Açık kalma vardiya geneli, hız
+   * verimi aktif ürüne göre (önceki üründen kalan paletler yeni ürünün
+   * birkaç dakikalık süresine bölünüp anlamsız yüzde vermesin diye).
+   */
+  const zamanKullanimi = shiftTotals(intervals).zamanKullanimi
+  const activeRunUretimMs = activeRun ? totalsByRun(intervals).get(activeRun.id)?.uretimMs ?? 0 : 0
+  const performans =
+    activeRun?.calisma_hizi_pkt_dk
+      ? hizVerimi({
+          paketAdedi: activeRunPaket ?? 0,
+          uretimMs: activeRunUretimMs,
+          hedefHizPktDk: activeRun.calisma_hizi_pkt_dk,
+        })
+      : null
 
   /*
    * Hedef koli ürün bazlıdır (vardiya kurulumunda artık sorulmuyor), bu
@@ -699,36 +720,50 @@ function OperatorPanel() {
       <div className="operator-panel">
         <header className="operator-header">
           <div className="operator-header-left">
-            <button type="button" className="operator-line-code" onClick={clearLine}>
-              {lineCode}
-            </button>
-            <button
-              type="button"
-              className="operator-shift-info"
-              onClick={() => {
-                setOperatorName(shift.operator ?? '')
-                setOperatorOpen(true)
-              }}
-            >
-              {shift.vardiya}. vardiya · {shift.operator || 'Operatör girilmedi'}
-            </button>
-            <button
-              type="button"
-              className="operator-fisno tnum"
-              onClick={() => {
-                setFisNoValue(shift.fis_no ?? '')
-                setFisNoOpen(true)
-              }}
-            >
-              {shift.fis_no ? `Fiş ${shift.fis_no}` : 'Fiş no gir'}
-            </button>
+            {/*
+             * Makine + vardiya/operatör + fiş no aynı satırda yan yana —
+             * eskiden üç ayrı satır dikey yer kaplıyordu (yaşanmış
+             * şikayet: "ana ekran kayıyor", bu üç satır tek başına
+             * derinlik ekliyordu). Satır sığmazsa doğal olarak sarar,
+             * hiçbiri kesilmez.
+             */}
+            <div className="operator-header-top">
+              <button type="button" className="operator-line-code" onClick={clearLine}>
+                {lineCode}
+              </button>
+              <button
+                type="button"
+                className="operator-shift-info"
+                onClick={() => {
+                  setOperatorName(shift.operator ?? '')
+                  setOperatorOpen(true)
+                }}
+              >
+                {shift.vardiya}. vardiya · {shift.operator || 'Operatör girilmedi'}
+              </button>
+              <button
+                type="button"
+                className="operator-fisno tnum"
+                onClick={() => {
+                  setFisNoValue(shift.fis_no ?? '')
+                  setFisNoOpen(true)
+                }}
+              >
+                {shift.fis_no ? `Fiş ${shift.fis_no}` : 'Fiş no gir'}
+              </button>
+            </div>
             <span className="operator-run-name">
               {activeRun ? activeRun.urun_adi : 'Ürün seçilmedi'}
             </span>
           </div>
-          <span aria-live="polite">
-            <StatusBadge status={state} />
-          </span>
+          <div className="operator-header-right">
+            <span className="operator-clock tnum" aria-label="Gerçek saat">
+              {formatClock(new Date(now))}
+            </span>
+            <span aria-live="polite">
+              <StatusBadge status={state} />
+            </span>
+          </div>
         </header>
 
         {error && <div className="operator-error">{error}</div>}
@@ -845,9 +880,28 @@ function OperatorPanel() {
               * BAŞLAT/DURDUR ve MOLA/+1 PALET hep aynı yerde, hiç kaymaz. */}
             <div className="operator-pager-panel operator-pager-panel--main">
               <div className="operator-main">
-                <div className="duration-block">
+                {/*
+                 * Zaman çubuğu süre sayacının HEMEN ÜSTÜNDE — "az önce
+                 * durdu/kalktı, ne zaman oldu" sorusunun cevabı ilk bakışta
+                 * orada. `compact`: lejant/ipucu metni burada gereksiz yer
+                 * kaplıyordu, dokunma davranışı (balon açma) aynen çalışır.
+                 */}
+                <ShiftClockBar
+                  intervals={intervals}
+                  shiftStartMs={shiftStartMs}
+                  shiftEndMs={shiftEndMs}
+                  runsById={runsById}
+                  nowMs={now}
+                  compact
+                  onEdit={(interval) => {
+                    setLogFocusEventId(interval.eventId)
+                    setLogOpen(true)
+                  }}
+                />
+
+                <div className="duration-block duration-block--compact">
                   <span className="duration-label plate">{durationLabel}</span>
-                  <span className="duration-value tnum">
+                  <span className="duration-value duration-value--compact tnum">
                     {formatDuration(son ? son.durationMs : 0)}
                   </span>
                 </div>
@@ -897,36 +951,45 @@ function OperatorPanel() {
                 </div>
 
                 {/*
-                 * Zaman çubuğu + olay geçmişi burada, asıl işin hemen
-                 * altında — operatör "az önce durdu/kalktı, ne zaman
-                 * oldu" diye başka ekrana geçmeden bakabilsin. İki yol:
-                 * çubukta bir segmente dokunmak (balonda "Düzenle") ya da
-                 * doğrudan "Olay geçmişi" butonu — ikisi de aynı sheet'i
-                 * açar, biri odaklanmış (bkz. logFocusEventId).
+                 * Hız girişi + iki oran (müdür panosundaki AYNI hesap,
+                 * bkz. CLAUDE.md "Müdür panosu: iki oran") yan yana, tek
+                 * satırda — operatör hıza dokunup değiştirebilir, diğer
+                 * ikisi salt-okunur. `.operator-counts` ile aynı ızgara,
+                 * yeni bir stil eklemeye gerek kalmadı.
                  */}
-                <div className="operator-main-secondary">
-                  <ShiftClockBar
-                    intervals={intervals}
-                    shiftStartMs={shiftStartMs}
-                    shiftEndMs={shiftEndMs}
-                    runsById={runsById}
-                    nowMs={now}
-                    onEdit={(interval) => {
-                      setLogFocusEventId(interval.eventId)
-                      setLogOpen(true)
-                    }}
-                  />
+                <div className="operator-counts operator-metrics">
                   <button
                     type="button"
-                    className="ghost-button"
-                    onClick={() => {
-                      setLogFocusEventId(null)
-                      setLogOpen(true)
-                    }}
+                    className="count-cell count-cell--tap"
+                    onClick={() => setSpeedOpen(true)}
                   >
-                    Olay geçmişi
+                    <span className="count-label plate">Hız</span>
+                    <span className="count-value tnum">
+                      {activeRun?.calisma_hizi_pkt_dk ? activeRun.calisma_hizi_pkt_dk : 'Gir'}
+                    </span>
                   </button>
+                  <div className="count-cell">
+                    <span className="count-label plate">Açık kalma</span>
+                    <span className="count-value tnum">%{Math.round(zamanKullanimi * 100)}</span>
+                  </div>
+                  <div className="count-cell">
+                    <span className="count-label plate">Hız verimi</span>
+                    <span className="count-value tnum">
+                      {performans ? `%${Math.round(performans.oran * 100)}` : '—'}
+                    </span>
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => {
+                    setLogFocusEventId(null)
+                    setLogOpen(true)
+                  }}
+                >
+                  Olay geçmişi
+                </button>
               </div>
             </div>
 

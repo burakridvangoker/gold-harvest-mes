@@ -38,7 +38,7 @@ function reasonLabel(interval, runsById) {
   return interval.note || NO_REASON_LABEL
 }
 
-function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs, onEdit }) {
+function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs, onEdit, compact = false }) {
   const [activeId, setActiveId] = useState(null)
 
   if (shiftStartMs == null) return null
@@ -203,23 +203,31 @@ function ShiftClockBar({ intervals, shiftStartMs, shiftEndMs, runsById, nowMs, o
         </button>
       </div>
 
-      <div className="clockbar-legend">
-        <span className="clockbar-legend-item">
-          <span className="clockbar-legend-dot clockbar-legend-dot--uretim" />
-          Üretim
-        </span>
-        <span className="clockbar-legend-item">
-          <span className="clockbar-legend-dot clockbar-legend-dot--durus" />
-          Duruş
-        </span>
-        <span className="clockbar-legend-item">
-          <span className="clockbar-legend-dot clockbar-legend-dot--mola" />
-          Mola
-        </span>
-        <span className="clockbar-legend-hint">
-          {onEdit ? 'Sebebi görmek ve düzenlemek için bir bloğa dokun' : 'Sebebi görmek için bir bloğa dokun'}
-        </span>
-      </div>
+      {/*
+       * `compact`: dar bir yerde (ör. operatörün Ana ekranı, hiç
+       * kaymaması istenen bir ekran) lejant + ipucu metni fazla dikey yer
+       * kaplıyordu — renk zaten durumu anlatıyor, dokunma davranışı
+       * (balon açma) lejant görünmese de aynen çalışır.
+       */}
+      {!compact && (
+        <div className="clockbar-legend">
+          <span className="clockbar-legend-item">
+            <span className="clockbar-legend-dot clockbar-legend-dot--uretim" />
+            Üretim
+          </span>
+          <span className="clockbar-legend-item">
+            <span className="clockbar-legend-dot clockbar-legend-dot--durus" />
+            Duruş
+          </span>
+          <span className="clockbar-legend-item">
+            <span className="clockbar-legend-dot clockbar-legend-dot--mola" />
+            Mola
+          </span>
+          <span className="clockbar-legend-hint">
+            {onEdit ? 'Sebebi görmek ve düzenlemek için bir bloğa dokun' : 'Sebebi görmek için bir bloğa dokun'}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
