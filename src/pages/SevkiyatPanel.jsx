@@ -66,27 +66,44 @@ function SevkiyatPanel() {
           <p className="sevkiyat-empty">Şu an açık vardiya yok.</p>
         ) : null}
 
-        {rows.map((row) => (
-          <button
-            key={row.key}
-            type="button"
-            className="sevkiyat-row"
-            onClick={() => setDetayKey(row.key)}
-          >
-            <div className="sevkiyat-row-main">
-              <span className="sevkiyat-row-line plate">{row.shift.line_code}</span>
-              <span className="sevkiyat-row-urun">{row.run.urun_adi}</span>
-            </div>
-            <div className="sevkiyat-row-sub tnum">
-              {row.fisNo ? <span>Fiş {row.fisNo}</span> : <span className="sevkiyat-row-muted">Fiş no yok</span>}
-              <span>·</span>
-              <span>{row.shift.operator || 'Operatör girilmedi'}</span>
-            </div>
-            <span className="sevkiyat-row-badge tnum">
-              {row.yuklenen} / {row.toplam} palet
-            </span>
-          </button>
-        ))}
+        {rows.map((row) => {
+          const tamamMi = row.toplam > 0 && row.yuklenen === row.toplam
+          const kismiMi = row.yuklenen > 0 && !tamamMi
+          const durum = tamamMi ? 'tamam' : kismiMi ? 'kismi' : 'bekliyor'
+
+          return (
+            <button
+              key={row.key}
+              type="button"
+              className={`sevkiyat-row sevkiyat-row--${durum}`}
+              onClick={() => setDetayKey(row.key)}
+            >
+              <div className="sevkiyat-row-body">
+                <div className="sevkiyat-row-main">
+                  <span className="sevkiyat-row-line plate">{row.shift.line_code}</span>
+                  <span className="sevkiyat-row-urun">{row.run.urun_adi}</span>
+                </div>
+                <div className="sevkiyat-row-sub tnum">
+                  {row.fisNo ? (
+                    <span>Fiş {row.fisNo}</span>
+                  ) : (
+                    <span className="sevkiyat-row-muted">Fiş no yok</span>
+                  )}
+                  <span>·</span>
+                  <span>{row.shift.operator || 'Operatör girilmedi'}</span>
+                </div>
+              </div>
+              <div className={`sevkiyat-row-badge sevkiyat-row-badge--${durum}`}>
+                <span className="sevkiyat-row-badge-value tnum">
+                  {row.yuklenen}/{row.toplam}
+                </span>
+                <span className="sevkiyat-row-badge-label plate">
+                  {tamamMi ? 'Tamam' : 'Palet'}
+                </span>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       {detay ? (

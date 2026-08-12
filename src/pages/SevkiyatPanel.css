@@ -54,15 +54,16 @@
 
 .sevkiyat-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.3rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   width: 100%;
   border: 1px solid var(--steel-600);
+  border-left: 4px solid var(--steel-600);
   border-radius: 0.9rem;
   background: var(--steel-800);
   box-shadow: var(--shadow-soft);
-  padding: 0.85rem 1.1rem;
+  padding: 0.95rem 1.1rem;
   box-sizing: border-box;
   text-align: left;
   font-family: var(--data);
@@ -75,7 +76,25 @@
 
 .sevkiyat-row:active {
   transform: scale(0.99);
-  border-color: var(--film-dim);
+}
+
+/* Sol kenar çizgisi durum sinyaline göre — tamamlandıysa yeşil, kısmi
+ * yüklemede amber, hiç yüklenmemişse nötr. Rozet zaten renk+metin+ikon
+ * taşıyor (dataviz kuralı: renk tek başına anlam taşımaz), bu sadece
+ * listede tarama kolaylığı için ikinci bir ipucu. */
+.sevkiyat-row--tamam {
+  border-left-color: var(--signal-run);
+}
+
+.sevkiyat-row--kismi {
+  border-left-color: var(--signal-idle);
+}
+
+.sevkiyat-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
 }
 
 .sevkiyat-row-main {
@@ -85,14 +104,21 @@
 }
 
 .sevkiyat-row-line {
-  font-size: 1.05rem;
+  flex-shrink: 0;
+  padding: 0.15rem 0.55rem;
+  border-radius: 0.4rem;
+  background: var(--steel-700);
+  font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
 
 .sevkiyat-row-urun {
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: clamp(1.05rem, 3.6vw, 1.2rem);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sevkiyat-row-sub {
@@ -107,10 +133,50 @@
 }
 
 .sevkiyat-row-badge {
-  align-self: flex-end;
-  font-size: 0.95rem;
-  font-weight: 600;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  min-width: 4.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.7rem;
+  background: var(--steel-700);
+  border: 1px solid var(--steel-600);
+}
+
+.sevkiyat-row-badge-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.sevkiyat-row-badge-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
   color: var(--film-dim);
+}
+
+.sevkiyat-row-badge--tamam {
+  background: var(--wash-run);
+  border-color: var(--signal-run);
+}
+
+.sevkiyat-row-badge--tamam .sevkiyat-row-badge-value {
+  color: var(--signal-run-text);
+}
+
+.sevkiyat-row-badge--tamam .sevkiyat-row-badge-label {
+  color: var(--signal-run-text);
+}
+
+.sevkiyat-row-badge--kismi {
+  background: var(--wash-idle);
+  border-color: var(--signal-idle);
+}
+
+.sevkiyat-row-badge--kismi .sevkiyat-row-badge-value {
+  color: var(--signal-idle-text);
 }
 
 /* ---- Detay: palet listesi ---- */
