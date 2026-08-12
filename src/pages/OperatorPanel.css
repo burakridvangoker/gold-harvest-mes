@@ -11,27 +11,25 @@
   /* Lamba bandı üstte, içerik altta — kabuk artık dikey akar. */
   flex-direction: column;
   /*
-   * ESKİ TASARIM (kaldırıldı): sabit `height:100svh` + kabuk `overflow-y:
-   * auto` + `.operator-readout` KENDİ İÇİNDE ayrıca `overflow-y:auto` —
-   * iki İÇ İÇE bağımsız kaydırma alanı. Bu, gerçek telefonlarda tutarsız
-   * davrandı: bazen `.operator-readout`'un içeriği (Duruş süresi/sebepleri,
-   * Bu ürün, Vardiya toplamı, Müdür panosu listesi) TAMAMEN KAYBOLUYORDU —
-   * aynı sayfa aynı durumda bir seferinde tam, bir seferinde bomboş
-   * geliyordu (yaşanmış hata, kullanıcı iki ekran görüntüsüyle bildirdi).
-   * İç içe iki bağımsız `overflow-y:auto` konteynerinin flex yükseklik
-   * hesaplaması mobil tarayıcılarda kararsız.
+   * ÜÇÜNCÜ TASARIM — üç ekranlı yatay pager (bkz. CLAUDE.md, "operatör
+   * ekranı üç ekrana bölündü"). Önceki iki tasarımın ikisi de aynı köke
+   * dayanıyordu: TÜM içerik tek dikey akışta, kabuk ya sabit yükseklikte
+   * kırpıyordu (içerik bazen tamamen kayboluyordu, yaşanmış hata) ya da
+   * `min-height` ile sayfa serbestçe uzuyordu (o zaman BAŞLAT/DURDUR
+   * dikey kaymaya maruz kalıyordu — kullanıcı "ekran kesinlikle
+   * kaymamalı" dedi, bu da BAŞLAT'ın konumunu istikrarsızlaştırıyordu).
    *
-   * Şimdiki tasarım: TEK bir kaydırma alanı — sayfanın kendisi. Kabuk
-   * artık sabit yükseklik/kırpma yapmıyor, `min-height` ile en az ekran
-   * kadar, İÇERİK NE KADAR BÜYÜRSE büyüsün. Sığdığında görünüm eskisiyle
-   * birebir aynı (BAŞLAT en altta, hiç kaydırma gerekmez); sığmadığında
-   * sayfa doğal olarak kayar — ManagerDashboard'un aynı sınıf soruna
-   * verdiği çözümle (`min-height:100dvh`, bkz. CLAUDE.md) aynı prensip.
-   * Bedel: BAŞLAT artık "hiçbir koşulda asla kaymaz" değil, sadece içerik
-   * sığdığında sabit görünür — ama bu, içeriğin bazen tamamen
-   * KAYBOLMASINDAN kesinlikle iyidir.
+   * Çözüm içeriği dikeyde büyütmek yerine YATAYDA üç ekrana bölmek:
+   * kabuk artık gerçekten sabit `height:100dvh` + `overflow:hidden` —
+   * sayfa hiçbir zaman dikey kaymaz. Taşan içerik varsa (ör. çok sebep
+   * segmenti) sadece İLGİLİ EKRANIN kendi `.operator-pager-panel`'i
+   * kendi içinde kayar (bkz. OperatorPanel.jsx'teki üç panel), kabuk
+   * asla etkilenmez. Eski hatanın kökü İKİ BAĞIMSIZ dikey kaydırma
+   * alanının aynı anda var olmasıydı; burada tek seviye var (panel
+   * kendisi), o yüzden aynı sınıf hata tekrar oluşmaz.
    */
-  min-height: 100svh;
+  height: 100dvh;
+  overflow: hidden;
   background:
     linear-gradient(var(--status-wash), var(--status-wash)),
     var(--steel-900);
@@ -168,28 +166,86 @@ button.operator-line-code {
   line-height: 1.45;
 }
 
-.operator-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(1rem, 3vh, 2rem);
+/*
+ * Üç ekranlı pager — sekme çubuğu + yatay kaydıran şerit (bkz.
+ * .operator-shell başındaki yorum, OperatorPanel.jsx#PANEL_TITLES).
+ * `wizard-track`in (ShiftWizard.css) translateX deseniyle aynı fikir.
+ */
+.operator-pager-nav {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
 }
 
-.operator-readout {
+.operator-pager-tab {
+  min-height: 2.5rem;
+  border: 1px solid var(--steel-line);
+  border-radius: 0.6rem;
+  background: var(--steel-800);
+  color: var(--film-dim);
+  font-family: var(--plate);
+  font-size: clamp(0.85rem, 3.2vw, 0.95rem);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.operator-pager-tab--active {
+  background: var(--film);
+  border-color: var(--film);
+  color: var(--steel-900);
+}
+
+.operator-pager {
   flex: 1;
   min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.operator-pager-track {
+  display: flex;
+  width: 300%;
+  height: 100%;
+  transition: transform 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .operator-pager-track {
+    transition: none;
+  }
+}
+
+/*
+ * Her panel KENDİ İÇİNDE kayar (`overflow-y:auto`) — tek seviyeli, bkz.
+ * .operator-shell'in başındaki gerekçe. Kabuk asla kaymaz, en fazla
+ * içeriği en yoğun panel (Detay) kendi sınırları içinde kayar.
+ */
+.operator-pager-panel {
+  flex: 0 0 calc(100% / 3);
+  width: calc(100% / 3);
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 0.1rem 0.1rem clamp(1rem, 3vh, 1.5rem);
   display: flex;
   flex-direction: column;
-  /*
-   * Kendi başına ARTIK ayrı bir kaydırma alanı değil (bkz. .operator-shell
-   * başındaki uzun yorum — iç içe iki bağımsız overflow-y:auto konteyneri
-   * mobilde içeriği bazen tamamen kayboluyor gösteriyordu). Taşarsa sayfa
-   * (.operator-shell) kayar. `justify-content:flex-start`: flexbox'ta
-   * center taşan içeriğin üstünü kırpar, bu yüzden start kullanılıyor.
-   */
-  justify-content: flex-start;
   gap: clamp(0.6rem, 2vh, 1.5rem);
+}
+
+/* Ana ekran — operatörün asıl işi, dikey ortalanır, kaymaması hedeflenir. */
+.operator-pager-panel--main {
+  justify-content: center;
+}
+
+.operator-main {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 2.5vh, 1.5rem);
 }
 
 /* Kahraman: süre. Ekranın en büyük tek öğesi. */
@@ -515,14 +571,6 @@ button.operator-line-code {
 }
 
 /* Aksiyonlar: ekranın altını tutar, başparmağın doğal yeri. */
-
-.operator-actions {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding-top: clamp(0.5rem, 2vh, 1.25rem);
-}
 
 .action-primary,
 .action-secondary {
