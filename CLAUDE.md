@@ -999,6 +999,39 @@ edilirken gerçek bir cihazda doğrulanmadı (bu oturumun tarayıcı erişimi
 yok) — sahada ilk denemede parmak kaydırmasının/sekmelerin beklendiği
 gibi çalıştığından emin olun.
 
+**Yaşanmış hata — `justify-content:center` taşan içeriğin üstünü GÖRÜNMEZ
+yapar.** İlk sürümde `.operator-pager-panel--main` (Ana ekran) içeriği
+dikeyde ortalıyordu. Kullanıcı gerçek cihazda test edince süre sayacının
+ÜSTÜNÜN KESİK olduğunu, kaydırma çubuğu görünse de yukarı kaydırılamadığını
+bildirdi (ekran görüntüsüyle). Sebep: bir flex konteyner taştığında
+`justify-content:center` fazlalığı SİMETRİK olarak hem üstten hem alttan
+keser, ama `scrollTop` asla negatife gidemediği için üstten kesilen kısım
+kaydırmayla da erişilemez — kalıcı olarak görünmez. Bu, `.operator-shell`
+başındaki eski hatanın (bkz. yukarısı) aynı ailesi; çözümü de aynı:
+`justify-content: flex-start` (taşma her zaman ALTTAN olsun, panel kendi
+`overflow-y:auto`'suyla erişilebilir kalsın). **Bu proje için genel
+kural: `overflow` olabilecek bir flex konteynerde ASLA `justify-content:
+center` kullanmayın**, `flex-start` + gerekiyorsa dıştan bir sarmalayıcıyla
+görsel ortalama yapın.
+
+**Ana ekranın son hâli (yoğunluk sırasına göre):** zaman çubuğu
+(`compact` modda, lejant/ipucu metni olmadan — süre sayacının HEMEN
+ÜSTÜNDE, "az önce ne zaman durdu/kalktı" sorusu ekran değişmeden
+cevaplansın diye) → süre sayacı (küçültülmüş, `duration-value--compact`)
+→ BAŞLAT/DURDUR → MOLA/+1 PALET → Hız/Açık kalma/Hız verimi (üç sütun,
+`ProductHistory`'nin "Bu ürün" ızgarasıyla `.operator-counts` sınıfını
+paylaşır — sadece "Hız" hücresi `count-cell--tap` ile dokunulabilir,
+SpeedSheet'i açar) → Olay geçmişi butonu. Açık kalma/hız verimi müdür
+panosundaki AYNI fonksiyonlarla hesaplanır (`shiftTotals`/`hizVerimi`,
+CLAUDE.md "Müdür panosu: iki oran") — ayrı bir hesap yazılmadı.
+
+**Header de tek satıra sıkıştırıldı:** eskiden hat kodu/vardiya-operatör/
+fiş no üç ayrı dikey satırdı, tek başına Ana ekranı taşırıyordu. Şimdi
+`.operator-header-top` (flex-wrap satır) üçünü yan yana taşıyor, ürün adı
+altında kendi satırında kalıyor. Sağ üstte artık gerçek saat de var
+(`formatClock`, `now` state'inden — zaten saniyede bir tikliyor), durum
+rozetinin üstünde, dikey istiflenmiş.
+
 ## İki fabrika: Merkez sabit, Şok elle
 
 Seçim ekranı iki adımlı: önce **fabrika**, sonra **makine**.
