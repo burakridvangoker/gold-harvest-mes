@@ -74,7 +74,7 @@
  */
 .eventlog-row {
   display: grid;
-  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  grid-template-columns: 3.75rem minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.9rem;
   width: 100%;
@@ -114,9 +114,22 @@
 }
 
 .eventlog-row-time {
-  font-size: 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--film-dim);
+  line-height: 1.2;
+}
+
+.eventlog-row-time-start {
+  color: var(--film);
+}
+
+.eventlog-row-time-end::before {
+  content: '↓ ';
+  opacity: 0.6;
 }
 
 .eventlog-row-body {

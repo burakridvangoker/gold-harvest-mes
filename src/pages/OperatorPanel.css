@@ -246,6 +246,17 @@ button.operator-line-code {
   display: flex;
   flex-direction: column;
   gap: clamp(0.75rem, 2.5vh, 1.5rem);
+  width: 100%;
+}
+
+/* Zaman çubuğu + Olay geçmişi butonu, asıl işin (BAŞLAT/MOLA/PALET)
+ * hemen altında — ayrı bir çizgiyle görsel olarak ikincil işaretlenir. */
+.operator-main-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: clamp(0.5rem, 2vh, 1rem);
+  border-top: 1px solid var(--steel-line);
 }
 
 /* Kahraman: süre. Ekranın en büyük tek öğesi. */

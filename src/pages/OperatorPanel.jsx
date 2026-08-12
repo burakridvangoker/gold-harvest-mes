@@ -895,6 +895,38 @@ function OperatorPanel() {
                     +1 PALET
                   </button>
                 </div>
+
+                {/*
+                 * Zaman çubuğu + olay geçmişi burada, asıl işin hemen
+                 * altında — operatör "az önce durdu/kalktı, ne zaman
+                 * oldu" diye başka ekrana geçmeden bakabilsin. İki yol:
+                 * çubukta bir segmente dokunmak (balonda "Düzenle") ya da
+                 * doğrudan "Olay geçmişi" butonu — ikisi de aynı sheet'i
+                 * açar, biri odaklanmış (bkz. logFocusEventId).
+                 */}
+                <div className="operator-main-secondary">
+                  <ShiftClockBar
+                    intervals={intervals}
+                    shiftStartMs={shiftStartMs}
+                    shiftEndMs={shiftEndMs}
+                    runsById={runsById}
+                    nowMs={now}
+                    onEdit={(interval) => {
+                      setLogFocusEventId(interval.eventId)
+                      setLogOpen(true)
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => {
+                      setLogFocusEventId(null)
+                      setLogOpen(true)
+                    }}
+                  >
+                    Olay geçmişi
+                  </button>
+                </div>
               </div>
             </div>
 

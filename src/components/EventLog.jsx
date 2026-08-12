@@ -174,6 +174,18 @@ function EventLog({
                       ? entry.note || 'Mola'
                       : entry.note || 'Sebep girilmemiş'
 
+              /*
+               * "Kaçta başlayıp kaçta bitti" tek bakışta görünsün diye —
+               * sadece başlangıcı gösterip bitişi süreden hesaplatmak
+               * operatöre ek bir zihinsel iş yüklüyordu. Palet gibi tek
+               * anlık kayıtların bitişi yok, aralık yalnızca durum
+               * geçişlerinde (uretim/durus/mola) gösterilir. İki satıra
+               * bölünür (başlangıç üstte/bitiş altta) — dar sütunda tek
+               * satıra sıkıştırılan "07:00 – 09:43" okunaksızlaşıyordu.
+               */
+              const ongoing = !frozen && interval?.ongoing
+              const isRange = entry.type === 'event' && interval
+
               return (
                 <li key={`${entry.type}-${entry.id}`}>
                   <button
@@ -182,7 +194,18 @@ function EventLog({
                     onClick={() => startEdit(entry)}
                   >
                     <span className="eventlog-row-time tnum">
-                      {formatShortTime(new Date(entry.atMs))}
+                      {isRange ? (
+                        <>
+                          <span className="eventlog-row-time-start">
+                            {formatShortTime(new Date(interval.startMs))}
+                          </span>
+                          <span className="eventlog-row-time-end">
+                            {ongoing ? 'şimdi' : formatShortTime(new Date(interval.endMs))}
+                          </span>
+                        </>
+                      ) : (
+                        formatShortTime(new Date(entry.atMs))
+                      )}
                     </span>
                     <span className="eventlog-row-body">
                       <span className="eventlog-row-kind plate">{KIND_LABELS[displayKind]}</span>
@@ -190,11 +213,7 @@ function EventLog({
                     </span>
                     <span className="eventlog-row-meta tnum">
                       {interval ? formatDuration(interval.durationMs) : ''}
-                      {/* Kapanmış vardiyada son aralık yapısal olarak
-                       * ongoing çıkar ama gerçekten sürmüyor. */}
-                      {!frozen && interval?.ongoing ? (
-                        <span className="eventlog-row-live"> sürüyor</span>
-                      ) : null}
+                      {ongoing ? <span className="eventlog-row-live"> sürüyor</span> : null}
                     </span>
                   </button>
                 </li>
