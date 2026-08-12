@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { runSummaries } from '../lib/timeline'
+import { fisNoForRun, runSummaries } from '../lib/timeline'
 import { formatShortTime } from '../lib/time'
 import ProductDetail from './ProductDetail'
 import TimeSheet from './TimeSheet'
@@ -52,6 +52,7 @@ function ProductHistory({
   pallets,
   nowMs,
   shiftStartMs,
+  fisNo,
   onUpdateRun,
   onAddPallet,
   onSavePallet,
@@ -87,6 +88,7 @@ function ProductHistory({
   if (summaries.length === 0) return null
 
   const open = summaries.find((entry) => entry.run.id === openId) ?? null
+  const openFisNo = open ? fisNoForRun(fisNo, runs, open.run) : null
 
   const startEdit = () => {
     setForm(runToForm(open.run))
@@ -162,21 +164,27 @@ function ProductHistory({
     <div className="history-strip">
       <span className="history-strip-label plate">Bu vardiyadaki ürünler</span>
       <div className="history-strip-list">
-        {summaries.map(({ run, span }) => (
-          <button
-            key={run.id}
-            type="button"
-            className="history-card"
-            onClick={() => setOpenId(run.id)}
-          >
-            <span className="history-card-name">{run.urun_adi}</span>
-            <span className="history-card-time tnum">
-              {span ? formatShortTime(new Date(span.startMs)) : '—'}
-              {' – '}
-              {span?.ongoing ? 'sürüyor' : span ? formatShortTime(new Date(span.endMs)) : '—'}
-            </span>
-          </button>
-        ))}
+        {summaries.map(({ run, span }) => {
+          const runFisNo = fisNoForRun(fisNo, runs, run)
+          return (
+            <button
+              key={run.id}
+              type="button"
+              className="history-card"
+              onClick={() => setOpenId(run.id)}
+            >
+              <span className="history-card-top">
+                <span className="history-card-name">{run.urun_adi}</span>
+                {runFisNo ? <span className="history-card-fisno tnum">Fiş {runFisNo}</span> : null}
+              </span>
+              <span className="history-card-time tnum">
+                {span ? formatShortTime(new Date(span.startMs)) : '—'}
+                {' – '}
+                {span?.ongoing ? 'sürüyor' : span ? formatShortTime(new Date(span.endMs)) : '—'}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {open ? (
@@ -190,8 +198,10 @@ function ProductHistory({
           >
             <div className="sheet-handle" />
             <h2 className="sheet-title plate">{open.run.urun_adi}</h2>
-            {open.run.parti_no ? (
-              <p className="sheet-subtitle">{open.run.parti_no}</p>
+            {open.run.parti_no || openFisNo ? (
+              <p className="sheet-subtitle">
+                {[open.run.parti_no, openFisNo ? `Fiş ${openFisNo}` : null].filter(Boolean).join(' · ')}
+              </p>
             ) : null}
 
             {editing ? (

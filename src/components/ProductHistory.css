@@ -41,12 +41,25 @@
   background: var(--steel-700);
 }
 
+.history-card-top {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
 .history-card-name {
   font-size: 0.95rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.history-card-fisno {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--film-dim);
 }
 
 .history-card-time {
@@ -115,6 +128,25 @@
   font-weight: 600;
   color: var(--signal-run-text);
   white-space: nowrap;
+  animation: history-pallets-loaded-in 0.3s ease;
+}
+
+@keyframes history-pallets-loaded-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .history-pallets-loaded {
+    animation: none;
+  }
 }
 
 .history-pallets-empty {

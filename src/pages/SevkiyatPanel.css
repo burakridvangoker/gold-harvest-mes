@@ -37,6 +37,25 @@
   color: var(--film-dim);
 }
 
+/* Liste özeti — "sistem her şeyi anlık izliyor" hissi ilk bakışta. */
+.sevkiyat-summary {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: var(--wash-idle);
+  border: 1px solid var(--signal-idle);
+  color: var(--signal-idle-text);
+  font-size: clamp(0.85rem, 3vw, 0.95rem);
+  font-weight: 600;
+}
+
+.sevkiyat-summary--tamam {
+  background: var(--wash-run);
+  border-color: var(--signal-run);
+  color: var(--signal-run-text);
+}
+
 .sevkiyat-list {
   flex: 1;
   display: flex;
@@ -71,7 +90,7 @@
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s ease, border-color 0.15s ease;
+  transition: transform 0.1s ease, border-left-color 0.3s ease;
 }
 
 .sevkiyat-row:active {
@@ -144,6 +163,7 @@
   border-radius: 0.7rem;
   background: var(--steel-700);
   border: 1px solid var(--steel-600);
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .sevkiyat-row-badge-value {
@@ -220,6 +240,7 @@
 .sevkiyat-pallet-row--loaded {
   background: var(--wash-run);
   border-color: var(--signal-run);
+  animation: sevkiyat-pallet-flash 0.4s ease;
 }
 
 .sevkiyat-pallet-check {
@@ -232,11 +253,36 @@
   border: 1px solid var(--steel-600);
   color: var(--signal-run-text);
   font-weight: 700;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .sevkiyat-pallet-row--loaded .sevkiyat-pallet-check {
   border-color: var(--signal-run);
   background: #ffffff;
+  transform: scale(1.15);
+}
+
+/* Dokununca kısa bir "yakalandı" hissi — sevkiyatçının ve videonun
+ * gözünde işaretlemenin gerçekten kaydedildiği belli olsun diye.
+ * prefers-reduced-motion'da devre dışı (andon.css'in genel kuralı). */
+@keyframes sevkiyat-pallet-flash {
+  0% {
+    background: var(--signal-run);
+  }
+
+  100% {
+    background: var(--wash-run);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sevkiyat-pallet-row--loaded {
+    animation: none;
+  }
+
+  .sevkiyat-pallet-check {
+    transition: none;
+  }
 }
 
 .sevkiyat-pallet-state {

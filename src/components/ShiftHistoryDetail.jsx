@@ -276,6 +276,7 @@ function ShiftHistoryDetail({ shiftId, readOnly, wall, onBack }) {
         pallets={pallets}
         nowMs={nowMs}
         shiftStartMs={shiftStartMs}
+        fisNo={shift.fis_no}
         onUpdateRun={readOnly ? undefined : updateRun}
         onAddPallet={readOnly ? undefined : addPalletToRun}
         onSavePallet={readOnly ? undefined : updatePallet}
