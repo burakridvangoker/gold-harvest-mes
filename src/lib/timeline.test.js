@@ -8,6 +8,7 @@ import {
   clampToWindow,
   currentState,
   downtimeByNote,
+  fisNoForRun,
   frequentNotes,
   groupSegmentsByEvent,
   hizVerimi,
@@ -373,6 +374,33 @@ describe('palet ve koli', () => {
     const paletlerByRun = palletTotalsByRun(pallets)
 
     assert.equal(shiftPaket(runs, paletlerByRun), 210)
+  })
+})
+
+describe('fisNoForRun', () => {
+  const runs = [
+    { id: 'A', sira: 1 },
+    { id: 'B', sira: 2 },
+    { id: 'C', sira: 3 },
+  ]
+
+  it('ilk ürün fiş no\'yu çıplak taşır', () => {
+    assert.equal(fisNoForRun('505792', runs, runs[0]), '505792')
+  })
+
+  it('ikinci ve üçüncü ürün alt fiş no alır', () => {
+    assert.equal(fisNoForRun('505792', runs, runs[1]), '505792.1')
+    assert.equal(fisNoForRun('505792', runs, runs[2]), '505792.2')
+  })
+
+  it('fiş no girilmemişse null döner', () => {
+    assert.equal(fisNoForRun(null, runs, runs[0]), null)
+    assert.equal(fisNoForRun('', runs, runs[0]), null)
+  })
+
+  it('sıra karışık gelse bile sira alanına göre sıralar', () => {
+    const karisik = [runs[2], runs[0], runs[1]]
+    assert.equal(fisNoForRun('9', karisik, runs[1]), '9.1')
   })
 })
 

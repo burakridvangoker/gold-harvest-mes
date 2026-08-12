@@ -108,6 +108,15 @@
   background: var(--steel-600);
 }
 
+/* Sevkiyat ekranından işaretlenince görünür — salt görsel, operatör
+ * buradan değiştiremez (yazma yetkisi sadece sevkiyat tarafında). */
+.history-pallets-loaded {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--signal-run-text);
+  white-space: nowrap;
+}
+
 .history-pallets-empty {
   margin: 0;
   font-size: 0.9rem;

@@ -343,6 +343,26 @@ export function shiftPaket(runs, paletlerByRun) {
   }, 0)
 }
 
+/* ---- Fiş no ---- */
+
+/**
+ * Logo'daki "vardiya fişi → ürün değişince alt fiş" mantığının aynısı.
+ * Alt fiş no DB'de ayrı saklanmaz, burada türetilir: vardiyadaki ürünler
+ * `sira`'ya göre dizilir, ilk ürün fiş no'yu çıplak taşır, N'inci ürün
+ * "{fisNo}.{N-1}" olur (ör. 505792, 505792.1, 505792.2).
+ *
+ * `fisNo` boşsa (henüz girilmemişse) null döner — gösterilecek bir şey yok.
+ */
+export function fisNoForRun(fisNo, runs, run) {
+  if (!fisNo || !run) return null
+
+  const sirali = [...runs].sort((a, b) => a.sira - b.sira)
+  const index = sirali.findIndex((r) => r.id === run.id)
+
+  if (index <= 0) return fisNo
+  return `${fisNo}.${index}`
+}
+
 /* ---- Plan takibi ---- */
 
 /**

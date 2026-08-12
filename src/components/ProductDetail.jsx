@@ -140,12 +140,18 @@ function ProductDetail({ ozet, onPalletTap, onPalletAdd }) {
                     >
                       <span>{formatShortTime(new Date(pallet.completed_at))}</span>
                       <span>{pallet.koli_count} koli</span>
+                      {pallet.loaded_at ? (
+                        <span className="history-pallets-loaded">Sevkiyata yüklendi ✓</span>
+                      ) : null}
                     </button>
                   </li>
                 ) : (
                   <li key={pallet.id} className="history-pallets-row tnum">
                     <span>{formatShortTime(new Date(pallet.completed_at))}</span>
                     <span>{pallet.koli_count} koli</span>
+                    {pallet.loaded_at ? (
+                      <span className="history-pallets-loaded">Sevkiyata yüklendi ✓</span>
+                    ) : null}
                   </li>
                 ),
               )}

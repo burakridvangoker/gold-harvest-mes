@@ -53,6 +53,8 @@ function OperatorPanel() {
   const [speedOpen, setSpeedOpen] = useState(false)
   const [operatorOpen, setOperatorOpen] = useState(false)
   const [operatorName, setOperatorName] = useState('')
+  const [fisNoOpen, setFisNoOpen] = useState(false)
+  const [fisNoValue, setFisNoValue] = useState('')
   const [logOpen, setLogOpen] = useState(false)
   const [logFocusEventId, setLogFocusEventId] = useState(null)
   const [historyPickerOpen, setHistoryPickerOpen] = useState(false)
@@ -174,6 +176,7 @@ function OperatorPanel() {
           line_code: lineCode,
           vardiya: payload.shift.vardiya,
           operator: payload.shift.operator,
+          fis_no: payload.shift.fis_no,
           started_at: startedAt,
           planlanan_bitis: new Date(startMs + VARDIYA_SURESI_MS).toISOString(),
         })
@@ -527,6 +530,24 @@ function OperatorPanel() {
   )
 
   /*
+   * Fiş no (Logo'daki vardiya fişinin MES karşılığı, bkz. CLAUDE.md
+   * "ŞİMDİ YAPILACAK — Sevkiyat") vardiya açılışında opsiyonel; kağıt
+   * elde değilse boş bırakılıp buradan sonradan girilir. Aynı desen:
+   * updateOperator ile birebir aynı.
+   */
+  const updateFisNo = useCallback(
+    (value) => {
+      setFisNoOpen(false)
+      if (!shift) return
+      guard(
+        () => supabase.from('shifts').update({ fis_no: value.trim() || null }).eq('id', shift.id),
+        'Fiş no güncellenemedi',
+      )
+    },
+    [shift, guard],
+  )
+
+  /*
    * Ürünü bitirme, yeni ürüne geçmekten AYRI bir iş: numaratör bitişleri
    * alınır, ürün kapanır ve hat duruşa geçer. Yeni ürüne geçilecekse
    * ayrıca "Yeni ürün" (ya da ana ekrandaki "ÜRÜN BAŞLAT") kullanılır.
@@ -653,6 +674,16 @@ function OperatorPanel() {
               }}
             >
               {shift.vardiya}. vardiya · {shift.operator || 'Operatör girilmedi'}
+            </button>
+            <button
+              type="button"
+              className="operator-fisno tnum"
+              onClick={() => {
+                setFisNoValue(shift.fis_no ?? '')
+                setFisNoOpen(true)
+              }}
+            >
+              {shift.fis_no ? `Fiş ${shift.fis_no}` : 'Fiş no gir'}
             </button>
             <span className="operator-run-name">
               {activeRun ? activeRun.urun_adi : 'Ürün seçilmedi'}
@@ -1050,6 +1081,51 @@ function OperatorPanel() {
                   type="button"
                   className="sheet-button sheet-button--primary"
                   onClick={() => updateOperator(operatorName)}
+                >
+                  Kaydet
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {fisNoOpen && (
+          <div className="sheet-overlay" onClick={() => setFisNoOpen(false)}>
+            <div
+              className="sheet-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Fiş no"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="sheet-handle" />
+              <h2 className="sheet-title plate">Fiş no</h2>
+              <label className="sheet-field">
+                <span className="sheet-field-label">Vardiya fiş numarası</span>
+                <input
+                  className="sheet-input"
+                  type="text"
+                  inputMode="numeric"
+                  value={fisNoValue}
+                  onChange={(event) => setFisNoValue(event.target.value)}
+                  placeholder="Örn. 505792"
+                />
+                <span className="sheet-field-hint">
+                  Ürün değişince sevkiyat ekranında otomatik alt fiş (.1, .2…) görünür.
+                </span>
+              </label>
+              <div className="sheet-actions">
+                <button
+                  type="button"
+                  className="sheet-button sheet-button--secondary"
+                  onClick={() => setFisNoOpen(false)}
+                >
+                  Vazgeç
+                </button>
+                <button
+                  type="button"
+                  className="sheet-button sheet-button--primary"
+                  onClick={() => updateFisNo(fisNoValue)}
                 >
                   Kaydet
                 </button>

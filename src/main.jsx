@@ -10,6 +10,7 @@ import './styles/andon.css'
 import App from './App.jsx'
 import OperatorPanel from './pages/OperatorPanel.jsx'
 import ManagerDashboard from './pages/ManagerDashboard.jsx'
+import SevkiyatPanel from './pages/SevkiyatPanel.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -18,6 +19,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element={<App />} />
         <Route path="/operator" element={<OperatorPanel />} />
         <Route path="/mudur" element={<ManagerDashboard />} />
+        <Route path="/sevkiyat" element={<SevkiyatPanel />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
