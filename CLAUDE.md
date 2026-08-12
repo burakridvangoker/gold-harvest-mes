@@ -970,6 +970,35 @@ Bilinen tuzaklar (yaşanmış hatalar, tekrar düşmeyin):
   doğal olarak kayar. Bedel: BAŞLAT artık "hiçbir koşulda asla kaymaz"
   değil — ama bu, içeriğin bazen tamamen kaybolmasından kesinlikle iyidir.
 
+**Üçüncü tasarım (yukarıdakini SÜPERSEDE eder) — operatör ekranı üç
+ekrana bölündü.** Kullanıcı geri bildirimi nettti: "ekran kesinlikle
+kaymamalı" — `min-height:100svh` çözümünün kabul ettiği bedel (BAŞLAT
+bazen sayfa kayınca aşağıda kalabiliyordu) sahada istenmedi. Kök sorun
+hep aynıydı: TÜM içerik TEK dikey akışta birikiyordu. Çözüm dikeyde
+büyütmek yerine YATAYDA üç ekrana bölmek (`OperatorPanel.jsx`,
+`PANEL_TITLES = ['Genel', 'Ana ekran', 'Detay']`, `ShiftWizard.jsx`'in
+`wizard-track` translateX deseniyle aynı fikir):
+- **Genel** — zaman çizelgesi (`ShiftClockBar`), `ReasonSegments`,
+  ikincil butonlar (Olay geçmişi, Ürünü bitir, Yeni ürün, Vardiyayı
+  bitir, Geçmiş vardiyalar).
+- **Ana ekran** (açılışta aktif, `MAIN_PANEL_INDEX = 1`) — süre +
+  BAŞLAT/DURDUR + MOLA/+1 PALET. Operatörün asıl işi, en az içerik,
+  en yüksek "kaymama" garantisi.
+- **Detay** — çalışma hızı, ürün planı, Bu ürün/Vardiya toplamı
+  rakamları, `ProductHistory`.
+
+Geçiş sağ/sol parmak kaydırmasıyla (`handleTouchStart`/`handleTouchEnd`,
+`SWIPE_THRESHOLD_PX`) ya da üstteki üç sekmeye dokunarak olur.
+`.operator-shell` artık gerçekten sabit `height:100dvh; overflow:hidden`
+— sayfa/kabuk HİÇBİR ZAMAN kaymaz. Taşan içerik varsa sadece o anki
+`.operator-pager-panel` kendi içinde kayar (`overflow-y:auto`) — bu,
+yukarıdaki "iki bağımsız kaydırma konteyneri" hatasını TEKRARLAMAZ:
+aynı anda sadece BİR panel görünür/aktif olduğu için iki seviyeli
+kaydırma çakışması yapısal olarak oluşamaz. Bu değişiklik test
+edilirken gerçek bir cihazda doğrulanmadı (bu oturumun tarayıcı erişimi
+yok) — sahada ilk denemede parmak kaydırmasının/sekmelerin beklendiği
+gibi çalıştığından emin olun.
+
 ## İki fabrika: Merkez sabit, Şok elle
 
 Seçim ekranı iki adımlı: önce **fabrika**, sonra **makine**.

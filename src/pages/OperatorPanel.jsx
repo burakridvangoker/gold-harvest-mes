@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useShift } from '../hooks/useShift'
 import { useFrequentNotes } from '../hooks/useFrequentNotes'
@@ -39,6 +39,19 @@ import './OperatorPanel.css'
 
 const TAM_ISRAR_MS = 30 * 60 * 1000
 
+/*
+ * Üç ekranlı yatay kaydırma: sağ/sol parmak kaydırması ya da üstteki
+ * sekmeye dokunarak geçilir. "Ana ekran" (index 1, açılışta aktif)
+ * BAŞLAT/DURDUR + MOLA/+1 PALET'i taşır — operatörün asıl işi, hiçbir
+ * koşulda dikey kaymamalı (bkz. CLAUDE.md, yaşanmış "ekran kayıyor"
+ * şikayeti). Diğer ikisi ("Genel" — zaman çizelgesi + ikincil butonlar,
+ * "Detay" — hız/hedef/palet rakamları) içerik uzunsa KENDİ İÇİNDE kayar,
+ * sayfa/kabuk hiç kaymaz.
+ */
+const PANEL_TITLES = ['Genel', 'Ana ekran', 'Detay']
+const MAIN_PANEL_INDEX = 1
+const SWIPE_THRESHOLD_PX = 45
+
 function OperatorPanel() {
   const { lineCode, selectLine, clearLine } = useLineCode()
   const { shift, runs, events, pallets, segments, loading, error, setError, refresh } = useShift(lineCode)
@@ -62,6 +75,8 @@ function OperatorPanel() {
   const [pending, setPending] = useState(null)
   const [noteEventId, setNoteEventId] = useState(null)
   const [palletKoli, setPalletKoli] = useState('')
+  const [activePanel, setActivePanel] = useState(MAIN_PANEL_INDEX)
+  const touchStartXRef = useRef(null)
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -560,6 +575,28 @@ function OperatorPanel() {
     setPending({ type: 'run-finish', values })
   }, [])
 
+  /* Sağ/sol parmak kaydırmasıyla ekran değiştirme — üstteki sekmelerin
+   * dokunmatik alternatifi. Basit eşik: dikey kaydırmayla (sayfa scroll)
+   * karışmaması için sadece yatay hareket net baskınsa geçilir. */
+  const handleTouchStart = (event) => {
+    touchStartXRef.current = { x: event.touches[0].clientX, y: event.touches[0].clientY }
+  }
+
+  const handleTouchEnd = (event) => {
+    const start = touchStartXRef.current
+    touchStartXRef.current = null
+    if (!start) return
+
+    const dx = event.changedTouches[0].clientX - start.x
+    const dy = event.changedTouches[0].clientY - start.y
+    if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) < Math.abs(dy)) return
+
+    setActivePanel((current) => {
+      if (dx < 0) return Math.min(2, current + 1)
+      return Math.max(0, current - 1)
+    })
+  }
+
 
   /* ---- Görünüm ---- */
 
@@ -696,240 +733,263 @@ function OperatorPanel() {
 
         {error && <div className="operator-error">{error}</div>}
 
-        {/*
-         * Müdür panosundaki aynı bileşen (bkz. CLAUDE.md "Veri
-         * görselleştirme"), tek farkla: `onEdit` verildiği için balondaki
-         * "Düzenle" butonu görünür ve dokununca EventLog'u o olaya
-         * odaklanmış açar (`logFocusEventId`) — müdür panosunda bu prop hiç
-         * geçirilmez, orası salt-okunur kalır.
-         */}
-        <ShiftClockBar
-          intervals={intervals}
-          shiftStartMs={shiftStartMs}
-          shiftEndMs={shiftEndMs}
-          runsById={runsById}
-          nowMs={now}
-          onEdit={(interval) => {
-            setLogFocusEventId(interval.eventId)
-            setLogOpen(true)
-          }}
-        />
-
-        {/*
-         * Her zaman görünür: bunlar kaydırılabilir alanın içinde kalırsa
-         * küçük telefonlarda (ör. 375×667) kaydırma ipucu olmadan ekran
-         * dışına taşabiliyordu. "İstediğini sil/düzelt" sözü verdiğimiz
-         * erişim noktası hiçbir zaman gizlenmemeli.
-         */}
-        <div className="operator-secondary">
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => {
-              setLogFocusEventId(null)
-              setLogOpen(true)
-            }}
-          >
-            Olay geçmişi
-          </button>
-          {/*
-            * İki ayrı iş, iki ayrı buton: "Ürünü bitir" numaratör bitişlerini
-            * alıp ürünü kapatır (hat duruşa geçer), "Yeni ürün" doğrudan yeni
-            * ürün sihirbazını açar. Eskiden tek bir "Ürün değiştir" vardı ve
-            * ürünü bitirmek zorunlu olarak yeni ürüne geçmeyi gerektiriyordu.
-            */}
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => setRunEndOpen(true)}
-            disabled={!activeRun}
-          >
-            Ürünü bitir
-          </button>
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => setProductWizardOpen(true)}
-          >
-            Yeni ürün
-          </button>
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => setPending({ type: 'shift-end' })}
-          >
-            Vardiyayı bitir
-          </button>
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => setHistoryPickerOpen(true)}
-          >
-            Geçmiş vardiyalar
-          </button>
+        <div className="operator-pager-nav">
+          {PANEL_TITLES.map((title, index) => (
+            <button
+              key={title}
+              type="button"
+              className={`operator-pager-tab${activePanel === index ? ' operator-pager-tab--active' : ''}`}
+              onClick={() => setActivePanel(index)}
+            >
+              {title}
+            </button>
+          ))}
         </div>
 
-        <div className="operator-body">
-          <div className="operator-readout">
-            <div className="duration-block">
-              <span className="duration-label plate">{durationLabel}</span>
-              <span className="duration-value tnum">
-                {formatDuration(son ? son.durationMs : 0)}
-              </span>
+        <div className="operator-pager" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+          <div
+            className="operator-pager-track"
+            style={{ transform: `translateX(-${activePanel * (100 / 3)}%)` }}
+          >
+            {/* Ekran 1/3 — Genel: zaman çizelgesi + ikincil aksiyonlar.
+              * "İstediğini sil/düzelt" sözü verdiğimiz erişim noktası
+              * hiçbir zaman gizlenmemeli, bu yüzden kendi ekranında sabit. */}
+            <div className="operator-pager-panel">
+              {/*
+               * Müdür panosundaki aynı bileşen (bkz. CLAUDE.md "Veri
+               * görselleştirme"), tek farkla: `onEdit` verildiği için
+               * balondaki "Düzenle" butonu görünür ve dokununca EventLog'u
+               * o olaya odaklanmış açar (`logFocusEventId`) — müdür
+               * panosunda bu prop hiç geçirilmez, orası salt-okunur kalır.
+               */}
+              <ShiftClockBar
+                intervals={intervals}
+                shiftStartMs={shiftStartMs}
+                shiftEndMs={shiftEndMs}
+                runsById={runsById}
+                nowMs={now}
+                onEdit={(interval) => {
+                  setLogFocusEventId(interval.eventId)
+                  setLogOpen(true)
+                }}
+              />
+
+              {/*
+               * Tek bir duruş boyunca birbirini ARDIŞIK değil ÇAKIŞIK takip
+               * eden birden fazla sebep olabiliyor (net sıraları yok) —
+               * ReasonSegments bunları ayrı zaman damgalarına bölünmüş
+               * olaylar yerine, TEK duruşun içinde kendi başlangıç/bitişi
+               * olan segmentler olarak tutar. Zaman çizelgesinin hemen
+               * altında: olay tam yaşanırken/hemen sonra eklenip düzenlenir.
+               */}
+              <ReasonSegments
+                interval={son}
+                segments={sonSegments}
+                suggestions={suggestions}
+                onAdd={addSegment}
+                onUpdate={updateSegment}
+                onDelete={deleteSegment}
+              />
+
+              <div className="operator-secondary">
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => {
+                    setLogFocusEventId(null)
+                    setLogOpen(true)
+                  }}
+                >
+                  Olay geçmişi
+                </button>
+                {/*
+                  * İki ayrı iş, iki ayrı buton: "Ürünü bitir" numaratör
+                  * bitişlerini alıp ürünü kapatır (hat duruşa geçer), "Yeni
+                  * ürün" doğrudan yeni ürün sihirbazını açar. Eskiden tek
+                  * bir "Ürün değiştir" vardı ve ürünü bitirmek zorunlu
+                  * olarak yeni ürüne geçmeyi gerektiriyordu.
+                  */}
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => setRunEndOpen(true)}
+                  disabled={!activeRun}
+                >
+                  Ürünü bitir
+                </button>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => setProductWizardOpen(true)}
+                >
+                  Yeni ürün
+                </button>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => setPending({ type: 'shift-end' })}
+                >
+                  Vardiyayı bitir
+                </button>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => setHistoryPickerOpen(true)}
+                >
+                  Geçmiş vardiyalar
+                </button>
+              </div>
             </div>
 
-            {/*
-             * Tek bir duruş boyunca birbirini ARDIŞIK değil ÇAKIŞIK takip
-             * eden birden fazla sebep olabiliyor (net sıraları yok) —
-             * ReasonSegments bunları ayrı zaman damgalarına bölünmüş
-             * olaylar yerine, TEK duruşun içinde kendi başlangıç/bitişi
-             * olan segmentler olarak tutar. Ana ekranda: "Olay geçmişi"ne
-             * girmeden, olay tam yaşanırken/hemen sonra eklenip düzenlenir.
-             */}
-            <ReasonSegments
-              interval={son}
-              segments={sonSegments}
-              suggestions={suggestions}
-              onAdd={addSegment}
-              onUpdate={updateSegment}
-              onDelete={deleteSegment}
-            />
+            {/* Ekran 2/3 — Ana ekran: operatörün asıl işi. Açılışta aktif,
+              * BAŞLAT/DURDUR ve MOLA/+1 PALET hep aynı yerde, hiç kaymaz. */}
+            <div className="operator-pager-panel operator-pager-panel--main">
+              <div className="operator-main">
+                <div className="duration-block">
+                  <span className="duration-label plate">{durationLabel}</span>
+                  <span className="duration-value tnum">
+                    {formatDuration(son ? son.durationMs : 0)}
+                  </span>
+                </div>
 
-            {activeRun && (
-              <button type="button" className="speed-row" onClick={() => setSpeedOpen(true)}>
-                <span className="speed-row-label plate">Çalışma hızı</span>
-                <span className="speed-row-value tnum">
-                  {activeRun.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : 'Gir'}
-                </span>
-              </button>
-            )}
+                <button
+                  type="button"
+                  className={`action-primary action-primary--${
+                    isMola ? 'mola' : !activeRun ? 'start' : isRunning ? 'stop' : 'start'
+                  }`}
+                  onClick={() => {
+                    if (isMola) {
+                      setPending({ type: 'mola-end' })
+                      return
+                    }
+                    if (!activeRun) {
+                      setProductWizardOpen(true)
+                      return
+                    }
+                    setPending({ type: isRunning ? 'stop' : 'start' })
+                  }}
+                  disabled={busy}
+                >
+                  {isMola ? 'MOLA BİTTİ' : !activeRun ? 'ÜRÜN BAŞLAT' : isRunning ? 'DURDUR' : 'BAŞLAT'}
+                </button>
+                <div className="operator-actions-row">
+                  {!isMola && (
+                    <button
+                      type="button"
+                      className="action-secondary"
+                      onClick={() => setPending({ type: 'mola-start' })}
+                      disabled={busy}
+                    >
+                      MOLA
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="action-secondary"
+                    onClick={() => {
+                      setPalletKoli(String(activeRun?.koli_per_palet ?? ''))
+                      setPending({ type: 'pallet' })
+                    }}
+                    disabled={busy || !activeRun || isMola}
+                  >
+                    +1 PALET
+                  </button>
+                </div>
+              </div>
+            </div>
 
-            {pace && (
-              <div className={`plan-block plan-block--${pace.durum}`}>
-                <div className="plan-head">
-                  <RadialGauge
-                    value={pace.ilerleme}
-                    seviye={pace.durum === 'geride' ? 'kotu' : pace.durum === 'onde' || pace.durum === 'tamam' ? 'iyi' : 'orta'}
-                    size={56}
-                    thickness={6}
-                    valueLabel={`%${Math.round(pace.ilerleme * 100)}`}
-                  />
-                  <div className="plan-head-text">
-                    <span className="plan-label plate">Ürün planı</span>
-                    <span className="plan-figure tnum">
-                      {pace.uretilenKoli} / {pace.hedefKoli} <small>koli</small>
+            {/* Ekran 3/3 — Detay: hız/hedef/palet rakamları, ürün geçmişi. */}
+            <div className="operator-pager-panel">
+              {activeRun && (
+                <button type="button" className="speed-row" onClick={() => setSpeedOpen(true)}>
+                  <span className="speed-row-label plate">Çalışma hızı</span>
+                  <span className="speed-row-value tnum">
+                    {activeRun.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : 'Gir'}
+                  </span>
+                </button>
+              )}
+
+              {pace && (
+                <div className={`plan-block plan-block--${pace.durum}`}>
+                  <div className="plan-head">
+                    <RadialGauge
+                      value={pace.ilerleme}
+                      seviye={pace.durum === 'geride' ? 'kotu' : pace.durum === 'onde' || pace.durum === 'tamam' ? 'iyi' : 'orta'}
+                      size={56}
+                      thickness={6}
+                      valueLabel={`%${Math.round(pace.ilerleme * 100)}`}
+                    />
+                    <div className="plan-head-text">
+                      <span className="plan-label plate">Ürün planı</span>
+                      <span className="plan-figure tnum">
+                        {pace.uretilenKoli} / {pace.hedefKoli} <small>koli</small>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="plan-track">
+                    <div className="plan-fill" style={{ width: `${pace.ilerleme * 100}%` }} />
+                  </div>
+                  <div className="plan-foot">
+                    <span className="plan-remaining tnum">{pace.kalanKoli} koli kaldı</span>
+                    <span className="plan-pace">
+                      {pace.durum === 'tamam'
+                        ? 'Hedef tamam'
+                        : pace.durum === 'planinda'
+                          ? 'Planında'
+                          : `${formatDelta(pace.farkDk)} ${
+                              pace.durum === 'onde' ? 'öndesin' : 'geridesin'
+                            }`}
                     </span>
                   </div>
                 </div>
-                <div className="plan-track">
-                  <div className="plan-fill" style={{ width: `${pace.ilerleme * 100}%` }} />
-                </div>
-                <div className="plan-foot">
-                  <span className="plan-remaining tnum">{pace.kalanKoli} koli kaldı</span>
-                  <span className="plan-pace">
-                    {pace.durum === 'tamam'
-                      ? 'Hedef tamam'
-                      : pace.durum === 'planinda'
-                        ? 'Planında'
-                        : `${formatDelta(pace.farkDk)} ${
-                            pace.durum === 'onde' ? 'öndesin' : 'geridesin'
-                          }`}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/*
-             * Bu ürün / vardiya toplamı ayrı ayrı gösterilir — birden
-             * çok ürün üretilen bir vardiyada ikisi karıştırılmasın diye
-             * (yaşanmış hata: ürün değişince eski ürünün toplamı yeni
-             * ürünün altında görünüyordu). Ana ızgara HER ZAMAN aktif
-             * ürünün kendi sayıları, vardiya toplamı ayrı, küçük bir satır.
-             */}
-            <div className="operator-counts-section">
-              <span className="operator-counts-label plate">Bu ürün</span>
-              <div className="operator-counts">
-                <div className="count-cell">
-                  <span className="count-label plate">Palet</span>
-                  <span className="count-value tnum">{activeRunPaletler.paletAdedi}</span>
-                </div>
-                <div className="count-cell">
-                  <span className="count-label plate">Koli</span>
-                  <span className="count-value tnum">{activeRunPaletler.koliAdedi}</span>
-                </div>
-                <div className="count-cell">
-                  <span className="count-label plate">Paket</span>
-                  <span className="count-value tnum">{activeRunPaket ?? '—'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="operator-shift-totals">
-              <span className="operator-shift-totals-label plate">Vardiya toplamı</span>
-              <span className="operator-shift-totals-value tnum">
-                {formatBreakdown(paletParts, paletlerToplam.paletAdedi)} palet ·{' '}
-                {formatBreakdown(koliParts, paletlerToplam.koliAdedi)} koli ·{' '}
-                {formatBreakdown(paketParts, paket)} paket
-              </span>
-            </div>
-
-            <ProductHistory
-              runs={runs}
-              events={events}
-              pallets={pallets}
-              nowMs={now}
-              shiftStartMs={shiftStartMs}
-              fisNo={shift.fis_no}
-              onUpdateRun={updateRun}
-              onAddPallet={addPalletToRun}
-              onSavePallet={updatePallet}
-              onDeletePallet={deletePallet}
-            />
-          </div>
-
-          <div className="operator-actions">
-            <button
-              type="button"
-              className={`action-primary action-primary--${
-                isMola ? 'mola' : !activeRun ? 'start' : isRunning ? 'stop' : 'start'
-              }`}
-              onClick={() => {
-                if (isMola) {
-                  setPending({ type: 'mola-end' })
-                  return
-                }
-                if (!activeRun) {
-                  setProductWizardOpen(true)
-                  return
-                }
-                setPending({ type: isRunning ? 'stop' : 'start' })
-              }}
-              disabled={busy}
-            >
-              {isMola ? 'MOLA BİTTİ' : !activeRun ? 'ÜRÜN BAŞLAT' : isRunning ? 'DURDUR' : 'BAŞLAT'}
-            </button>
-            <div className="operator-actions-row">
-              {!isMola && (
-                <button
-                  type="button"
-                  className="action-secondary"
-                  onClick={() => setPending({ type: 'mola-start' })}
-                  disabled={busy}
-                >
-                  MOLA
-                </button>
               )}
-              <button
-                type="button"
-                className="action-secondary"
-                onClick={() => {
-                  setPalletKoli(String(activeRun?.koli_per_palet ?? ''))
-                  setPending({ type: 'pallet' })
-                }}
-                disabled={busy || !activeRun || isMola}
-              >
-                +1 PALET
-              </button>
+
+              {/*
+               * Bu ürün / vardiya toplamı ayrı ayrı gösterilir — birden
+               * çok ürün üretilen bir vardiyada ikisi karıştırılmasın diye
+               * (yaşanmış hata: ürün değişince eski ürünün toplamı yeni
+               * ürünün altında görünüyordu). Ana ızgara HER ZAMAN aktif
+               * ürünün kendi sayıları, vardiya toplamı ayrı, küçük bir satır.
+               */}
+              <div className="operator-counts-section">
+                <span className="operator-counts-label plate">Bu ürün</span>
+                <div className="operator-counts">
+                  <div className="count-cell">
+                    <span className="count-label plate">Palet</span>
+                    <span className="count-value tnum">{activeRunPaletler.paletAdedi}</span>
+                  </div>
+                  <div className="count-cell">
+                    <span className="count-label plate">Koli</span>
+                    <span className="count-value tnum">{activeRunPaletler.koliAdedi}</span>
+                  </div>
+                  <div className="count-cell">
+                    <span className="count-label plate">Paket</span>
+                    <span className="count-value tnum">{activeRunPaket ?? '—'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="operator-shift-totals">
+                <span className="operator-shift-totals-label plate">Vardiya toplamı</span>
+                <span className="operator-shift-totals-value tnum">
+                  {formatBreakdown(paletParts, paletlerToplam.paletAdedi)} palet ·{' '}
+                  {formatBreakdown(koliParts, paletlerToplam.koliAdedi)} koli ·{' '}
+                  {formatBreakdown(paketParts, paket)} paket
+                </span>
+              </div>
+
+              <ProductHistory
+                runs={runs}
+                events={events}
+                pallets={pallets}
+                nowMs={now}
+                shiftStartMs={shiftStartMs}
+                fisNo={shift.fis_no}
+                onUpdateRun={updateRun}
+                onAddPallet={addPalletToRun}
+                onSavePallet={updatePallet}
+                onDeletePallet={deletePallet}
+              />
             </div>
           </div>
         </div>
