@@ -591,6 +591,14 @@ button.operator-line-code {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+/* Ana ekranda yer daraldığında (bkz. overflow:hidden) — düşük frekanslı
+ * bir aksiyon için 44px'in altına inmek kabul edilebilir, DURDUR/MOLA
+ * gibi ana kontrollerin eldiven eşiğine (88px) hiç dokunmuyoruz. */
+.ghost-button--compact {
+  min-height: 2.25rem;
+  font-size: clamp(0.75rem, 2.4vw, 0.85rem);
+}
+
 .ghost-button:active {
   background: var(--steel-700);
   color: var(--film);
@@ -691,9 +699,15 @@ button.operator-line-code {
   --btn-face: var(--signal-idle);
   --btn-edge: color-mix(in srgb, var(--btn-face) 45%, black);
 
-  /* Eldivenli dokunuş için rahat eşik 88px; burada fazlasıyla üstünde. */
-  min-height: clamp(5.5rem, 15vh, 9rem);
-  font-size: clamp(2rem, 8vw, 3rem);
+  /*
+   * Eldivenli dokunuş için rahat eşik 88px (5.5rem) — alt sınır bu, asla
+   * altına inmez. Üst sınır Ana ekran'a hız/oran satırı ve Olay geçmişi
+   * de eklenince küçültüldü (eskisi 9rem'e kadar çıkıyordu, tek başına
+   * ekranın çoğunu kaplıyordu) — "butonları birazcık küçült" geri
+   * bildirimi.
+   */
+  min-height: clamp(5.5rem, 11vh, 7rem);
+  font-size: clamp(1.85rem, 6.5vw, 2.5rem);
   letter-spacing: 0.1em;
   /* Sinyal renkli yüzeyde her zaman koyu mürekkep: güvenlik levhası dili. */
   color: var(--ink);
