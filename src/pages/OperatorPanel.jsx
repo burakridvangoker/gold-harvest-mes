@@ -810,7 +810,17 @@ function OperatorPanel() {
         <div className="operator-pager" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           <div
             className="operator-pager-track"
-            style={{ left: `-${activePanel * (100 / 3)}%` }}
+            /*
+             * `left` yüzdesi `transform`'un aksine KENDİ genişliğine değil
+             * ÜST konteynerin (parent) genişliğine göre hesaplanır — track
+             * 300% genişlikte olsa da `left`in referansı hâlâ dıştaki
+             * .operator-pager'ın (100%) genişliği. Bu yüzden çarpan
+             * 100/3 DEĞİL, doğrudan 100: her adım tam bir panel (=parent
+             * genişliği) kadar kaymalı. Yaşanmış hata: eski 100/3 çarpanı
+             * panelleri sadece 1/3 oranında kaydırıyordu, üç ekran yan
+             * yana yarım yarım görünüyordu (ekran görüntüsüyle bildirildi).
+             */
+            style={{ left: `-${activePanel * 100}%` }}
           >
             {/* Ekran 1/3 — Genel: zaman çizelgesi + ikincil aksiyonlar.
               * "İstediğini sil/düzelt" sözü verdiğimiz erişim noktası
