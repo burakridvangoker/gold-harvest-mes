@@ -354,6 +354,59 @@ h1 {
   color: var(--kagit);
 }
 
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  background: var(--kagit-alt);
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+.slayt--koyu code { background: rgba(248, 250, 247, 0.12); }
+
+/* ---------- Kod bloğu ---------- */
+.kod {
+  margin-top: 18px;
+  padding: 16px 20px;
+  background: var(--murekkep);
+  color: #d7ffe4;
+  border-radius: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+/* ---------- Tablo listesi (Supabase şeması) ---------- */
+.tablo-liste {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px 44px;
+  margin-top: 22px;
+}
+.tablo-satir {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.tablo-satir b {
+  flex: 0 0 190px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--murekkep);
+}
+.tablo-satir span { color: var(--soluk); }
+
+/* ---------- İki sütunlu metin ---------- */
+.ikili-metin {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-top: 6px;
+}
+
 @page { size: 1280px 720px; margin: 0; }
 </style>
 </head>
@@ -478,79 +531,177 @@ h1 {
   <span class="sayfa-no">04</span>
 </section>
 
-<!-- 5 — GITHUB -->
+<!-- 5 — GITHUB: DEPO VE DALLAR -->
 <section class="slayt">
   <div class="bant"></div>
   <div class="govde">
-    <p class="ustbaslik">Kod deposu</p>
-    <h1>Kod nerede duruyor, nasıl değişiyor</h1>
+    <p class="ustbaslik">Kod deposu — genel bakış</p>
+    <h1>Kod GitHub'da, tek bir depoda tutuluyor</h1>
     <ul class="madde">
-      <li>Uygulamanın tüm kaynak kodu <strong>tek bir GitHub deposunda</strong>.</li>
+      <li><strong>Tek depo</strong> (burakridvangoker/gold-harvest-mes) — projenin
+        başından beri tüm kaynak kod ve değişiklik geçmişi burada.</li>
       <li>Değişiklikler doğrudan yayındaki dala değil, ayrı isimli
-        <strong>"dallar"</strong>a yapılıyor; hazır olunca ana dala aktarılıyor.</li>
-      <li>Otomatik test/derleme hattı (CI) henüz kurulu değil; kontrol elle ve
-        Vercel'in kendi derleme adımıyla yapılıyor.</li>
-      <li>Veritabanı değişiklikleri de kodla birlikte, ayrı
-        <strong>".sql" dosyaları</strong> olarak burada saklanıyor — elle,
-        sırayla Supabase'e uygulanıyor.</li>
+        <strong>"dallar"</strong> üzerinde yapılıyor (bu sunumun kendisi de bir
+        dal üzerinde hazırlandı); iş hazır olunca yayın dalına aktarılıyor.</li>
+      <li>Şu an yayına bağlı dal <strong>main değil</strong>, ayrı isimli bir
+        geliştirme dalı — hangisi fiilen kullanılan/güncel dalsa "gerçek" kabul
+        edilen odur, isim "main" olması onu otomatik öncelikli yapmıyor.</li>
+      <li>Otomatik test/derleme hattı (CI, GitHub Actions) henüz kurulu değil —
+        depoda böyle bir tanım yok; kontrol elle (<code>npm run lint</code>,
+        <code>npm test</code>) ve Vercel'in kendi derleme adımıyla yapılıyor.</li>
+      <li>Pull request akışı kullanılabiliyor ama zorunlu değil; küçük/acil
+        düzeltmeler doğrudan ilgili dala da işlenebiliyor.</li>
     </ul>
-    <div class="vurgu-kutu">
-      <strong>Yaşanmış bir ders:</strong> yayın dalı bir süre ana daldan
-      geride kaldı; farkında olmadan eski koda göre yayın yapılınca site
-      aylar öncesine döndü. İkisi artık kasıtlı olarak eşit tutuluyor.
-    </div>
   </div>
   <span class="sayfa-no">05</span>
 </section>
 
-<!-- 6 — VERCEL -->
+<!-- 6 — GITHUB: ŞEMA VE YAŞANMIŞ DERS -->
 <section class="slayt">
-  <div class="bant bant--kirmizi"></div>
+  <div class="bant"></div>
   <div class="govde">
-    <p class="ustbaslik">Yayın</p>
-    <h1>Kod nasıl canlıya çıkıyor</h1>
+    <p class="ustbaslik">Kod deposu — şema yönetimi ve yaşanmış ders</p>
+    <h1>Veritabanı şeması da kodla birlikte, ama elle uygulanıyor</h1>
     <ul class="madde">
-      <li>Belirlenen dala her değişiklik geldiğinde Vercel siteyi
-        <strong>otomatik olarak</strong> yeniden derleyip yayınlıyor — elle
-        yükleme yok.</li>
-      <li>Uygulama tek sayfalık: bütün ekranlar aynı dosyadan yükleniyor. Bir
-        yönlendirme kuralı olmadan bir ekrana doğrudan girmek hataya düşer.</li>
-      <li>Veritabanı adresi ve erişim anahtarı Vercel'in kendi ayarlarında,
-        koddan ayrı tutuluyor.</li>
+      <li>Veritabanı değişiklikleri klasik bir "migration aracı" ile değil, düz
+        <strong>".sql" dosyalarıyla</strong> yönetiliyor (ör.
+        <code>setup_shifts.sql</code>, <code>add_mola.sql</code>) — depo
+        kökünde, numaralı bir sırayla.</li>
+      <li>Yazan tarafın (bu depoyla çalışan yapay zeka asistanı dahil)
+        Supabase'e <strong>doğrudan yazma yetkisi yok</strong>: yeni bir .sql
+        dosyası hazırlanır, tam içeriği burada gösterilir, ilgili kişi bunu
+        Supabase SQL Editor'e elle yapıştırıp çalıştırır.</li>
+      <li>Yaşanmış ders: yayın dalı bir süre <strong>main'den aylarca geride</strong>
+        kaldı — main eski bir "an"da donmuştu, o anda vardiya modeli, zaman
+        çizelgesi, hatta sayfa yönlendirme kuralı bile yoktu.</li>
+      <li>Biri farkında olmadan main üzerinden yayın yapınca sitede aylar
+        öncesinin arayüzü çıktı ve "her şey mahvoldu" izlenimi doğdu — oysa
+        geliştirme dalına hiç dokunulmamıştı, sorun sadece yanlış daldan
+        yayın yapılmasıydı.</li>
     </ul>
     <div class="vurgu-kutu">
-      <strong>Yaşanmış bir ders:</strong> bir deployment elle de "canlıya"
-      terfi ettirilebiliyor — bu yapıldığında ayarlar doğru görünse bile
-      yayındaki sürüm yanlış olabiliyor. Kontrolü basit: canlı sitenin
-      yüklediği dosya adı, yerel derleme çıktısındaki adla uyuşmalı.
+      main artık geliştirme dalıyla <strong>bilerek eşit</strong> tutuluyor —
+      aksi halde bu karışıklık tekrar yaşanır.
     </div>
   </div>
   <span class="sayfa-no">06</span>
 </section>
 
-<!-- 7 — SUPABASE -->
+<!-- 7 — VERCEL: OTOMATİK YAYIN -->
 <section class="slayt">
-  <div class="bant bant--amber"></div>
+  <div class="bant bant--kirmizi"></div>
   <div class="govde">
-    <p class="ustbaslik">Veritabanı</p>
-    <h1>Veri nerede duruyor, nasıl anında yayılıyor</h1>
+    <p class="ustbaslik">Yayın — genel bakış</p>
+    <h1>Değişiklik push'landığı anda yayın süreci başlıyor</h1>
     <ul class="madde">
-      <li>Vardiya, ürün, duruş/mola olayları, palet kayıtları — hepsi
-        <strong>tek bir veritabanında</strong>.</li>
-      <li>Bir kayıt değişince açık olan tüm ekranlara <strong>anında</strong>
-        haber veriliyor: operatör bir olay girince müdür panosu sayfa
-        yenilenmeden güncelleniyor.</li>
-      <li>Süreler ve toplamlar hiçbir yerde ayrıca saklanmıyor; hep ham olay
-        kayıtlarından hesaplanıyor — bu, saatin geriye dönük düzeltilebilmesini
-        yapısal olarak mümkün kılıyor.</li>
-      <li>Kimlik doğrulama henüz yok; sahada hızlı iterasyon için bilinçli bir
-        tercih — bir kullanıcı/rol sistemi eklenince erişim sıkılaştırılacak.</li>
+      <li>Vercel projesi GitHub deposuna bağlı; <strong>"Production Branch"</strong>
+        ayarı hangi dalın canlıya yansıyacağını belirliyor.</li>
+      <li>Belirlenen dala her değişiklik gönderildiğinde Vercel otomatik bir
+        derleme (<code>npm run build</code>) tetikliyor; birkaç dakika içinde
+        yeni sürüm yayında — elle bir "yükleme" adımı yok.</li>
+      <li>Aynı anda başka dallar için de ayrı, geçici <strong>önizleme
+        adresleri</strong> üretilebiliyor; bunlar canlı siteyi hiç etkilemiyor.</li>
+      <li>Yayın adresi tek; ayrıca bir sunucu/hosting kurup yönetmek
+        gerekmiyor, bu işi Vercel üstleniyor.</li>
     </ul>
   </div>
   <span class="sayfa-no">07</span>
 </section>
 
-<!-- 8 — UÇTAN UCA AKIŞ -->
+<!-- 8 — VERCEL: TEKNİK DETAY VE TUZAKLAR -->
+<section class="slayt">
+  <div class="bant bant--kirmizi"></div>
+  <div class="govde">
+    <p class="ustbaslik">Yayın — teknik detay ve yaşanmış tuzaklar</p>
+    <h1>Tek bir küçük dosya, iki büyük tuzak</h1>
+    <div class="ikili-metin">
+      <div>
+        <p class="akis-etiket" style="margin-bottom: 8px">vercel.json</p>
+        <div class="kod">{
+  "rewrites": [{ "source": "/(.*)",
+    "destination": "/index.html" }]
+}</div>
+        <p class="dipnot" style="margin-top: 10px">
+          Uygulama tek sayfalık (/operator, /mudur gibi rotaları tarayıcı
+          üretiyor); bu kural olmadan biri o adrese doğrudan girince
+          sunucu "böyle bir dosya yok" deyip 404 verir.
+        </p>
+      </div>
+      <div>
+        <ul class="madde" style="margin-top: 0">
+          <li><code>VITE_SUPABASE_URL</code> ve
+            <code>VITE_SUPABASE_ANON_KEY</code> Vercel proje ayarlarında
+            ortam değişkeni olarak tanımlı; eksikse derleme sırasında hata
+            verip site hiç açılmıyor.</li>
+          <li>Vercel'de bir deployment elle de <strong>"Promote to
+            Production"</strong> ile terfi ettirilebiliyor — bu yapıldığında
+            ayarlar doğru görünse bile yayındaki sürüm yanlış olabiliyor.</li>
+          <li>Belirtisi: canlı sitenin yüklediği <code>assets/index-*.js</code>
+            dosya adı, yerel derleme çıktısındaki adla uyuşmuyor.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <span class="sayfa-no">08</span>
+</section>
+
+<!-- 9 — SUPABASE: VERİTABANI VE ERİŞİM -->
+<section class="slayt">
+  <div class="bant bant--amber"></div>
+  <div class="govde">
+    <p class="ustbaslik">Veritabanı — genel bakış</p>
+    <h1>Tek veritabanı, sekiz ana tablo</h1>
+    <div class="tablo-liste">
+      <div class="tablo-satir"><b>line_status</b><span>hangi hat/makine kayıtlı</span></div>
+      <div class="tablo-satir"><b>shifts</b><span>vardiyalar (operatör, hat, başlangıç)</span></div>
+      <div class="tablo-satir"><b>product_runs</b><span>vardiya içindeki ürün üretimleri</span></div>
+      <div class="tablo-satir"><b>timeline_events</b><span>üretim/duruş/mola durum geçişleri</span></div>
+      <div class="tablo-satir"><b>pallet_records</b><span>çıkan paletler</span></div>
+      <div class="tablo-satir"><b>stop_reason_segments</b><span>bir duruşun içindeki çakışan sebepler</span></div>
+      <div class="tablo-satir"><b>personnel</b><span>personel listesi (ayrı sistemden kopya)</span></div>
+      <div class="tablo-satir"><b>manager_dashboard_visits</b><span>müdür panosu ne zaman açıldı</span></div>
+    </div>
+    <div class="vurgu-kutu">
+      Tarayıcı, düşük yetkili bir <strong>"anon key"</strong> ile doğrudan
+      Supabase'e bağlanıyor. Kimlik doğrulama henüz yok; tüm tablolarda
+      Row Level Security açık ama politikalar <code>using (true)</code> —
+      yani herkes okuyup yazabiliyor. Bu, sahada hızlı iterasyon için
+      bilinçli bir tercih; bir kullanıcı/rol sistemi eklenince sıkılaştırılacak.
+    </div>
+  </div>
+  <span class="sayfa-no">09</span>
+</section>
+
+<!-- 10 — SUPABASE: MİMARİ KARAR VE REALTIME -->
+<section class="slayt">
+  <div class="bant bant--amber"></div>
+  <div class="govde">
+    <p class="ustbaslik">Veritabanı — mimari karar ve gerçek zamanlılık</p>
+    <h1>Süre hiçbir yerde saklanmıyor, hep hesaplanıyor</h1>
+    <ul class="madde">
+      <li>Operatör bir olayı genelde birkaç dakika geç giriyor
+        ("7:30'da makine durdu ama ben 7:35'te girdim") — bu sahada
+        <strong>istisna değil, kural</strong>.</li>
+      <li>Bu yüzden <code>timeline_events</code> bir durumun sadece
+        <strong>BAŞLADIĞI anı</strong> tutuyor; süre bir sonraki olayın
+        anına kadar hesaplanıyor, hiçbir "toplam süre" kolonunda
+        saklanmıyor.</li>
+      <li>Sonuç: geriye dönük saat düzeltmesi <strong>yapısal olarak
+        mümkün</strong> — bir saat değişince komşu aralıklar otomatik
+        kayıyor, boşluk ya da çakışma oluşmuyor.</li>
+      <li><strong>Realtime:</strong> Supabase'in canlı abonelik mekanizması
+        kullanılıyor; bir kayıt değişince açık olan tüm ekranlara anında
+        haber veriliyor.</li>
+      <li>Kayıtlar sonradan düzenlenebilir/silinebilir olduğu için gelen
+        sinyalde "artımlı yama" yapılmıyor, o vardiyanın <strong>tamamı
+        yeniden çekiliyor</strong> — vardiya başına veri az olduğu için bu
+        hem ucuz hem daha güvenli.</li>
+    </ul>
+  </div>
+  <span class="sayfa-no">10</span>
+</section>
+
+<!-- 11 — UÇTAN UCA AKIŞ -->
 <section class="slayt">
   <div class="bant"></div>
   <div class="govde">
@@ -582,10 +733,10 @@ h1 {
       Biri yavaşlasa da diğeri etkilenmez.
     </div>
   </div>
-  <span class="sayfa-no">08</span>
+  <span class="sayfa-no">11</span>
 </section>
 
-<!-- 9 — KAPANIŞ -->
+<!-- 12 — KAPANIŞ -->
 <section class="slayt slayt--koyu">
   <div class="bant"></div>
   <div class="govde">
@@ -609,7 +760,7 @@ h1 {
       Sorularını bekliyorum — istersen canlı üzerinde de gösterebilirim.
     </div>
   </div>
-  <span class="sayfa-no">09</span>
+  <span class="sayfa-no">12</span>
 </section>
 
 </body>
