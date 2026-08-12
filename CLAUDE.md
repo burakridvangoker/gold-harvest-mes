@@ -76,6 +76,10 @@ da Deployments'ta doğru deployment'ı yeniden terfi ettirmek.
     ataması/ön-doldurma için
 13. `add_manager_visits.sql` — `manager_dashboard_visits`, müdür panosu
     ne zaman/ne kadar açıldı (anonim)
+14. `add_fis_no.sql` — `shifts.fis_no`, Logo'daki vardiya fişinin MES
+    karşılığı (opsiyonel)
+15. `add_pallet_loaded.sql` — `pallet_records.loaded_at`, sevkiyat
+    ekranından bir paletin TIR'a yüklendiği an
 
 RLS tüm tablolarda açık, tüm politikalar `using (true)` — henüz
 kimlik doğrulama yok, sahada hızlı iterasyon için bilinçli bir tercih.
@@ -666,6 +670,55 @@ BİLEREK dokunulmadı** — `manager_dashboard_visits` tablosuna kayıt
 gösterilmiyor. Görüntüleme geri istenirse veri zaten orada duruyor,
 sadece yeni bir okuma yüzeyi eklemek yeterli.
 
+## Sevkiyat: canlı eşleştirme, iki yönlü kontrol
+
+Logo'daki mevcut sevkiyat akışı: palet TIR'a yüklenmeden önce önce "ara
+depo"ya okutuluyor, sonra bir koli etiketiyle TEKRAR okutularak lojistiğe
+düşürülüyor — çift adım, hataya açık, eksiklik/fazlalık ancak günler
+sonra fark ediliyor (kullanıcının sahada yaşadığı ve anlattığı süreç).
+
+**Çözüm operatörün zaten anlık girdiği paleti (`pallet_records`) sevkiyatçıya
+canlı göstermek, tersine bir yazma yetkisi vermeden.** Yeni bir ekran,
+`/sevkiyat`, hat seçimi YOK — `LineSelect`'in aksine TÜM hatların açık
+vardiyalarını tek listede gösterir (sevkiyatçı hangi hattan palet
+geleceğini bilmiyor). Bir palet TIR'a yüklenirken işaretlenir
+(`pallet_records.loaded_at`), bu işaret operatör tarafına da (ürün
+detayında "Sevkiyata yüklendi ✓" rozeti, `ProductDetail.jsx`) anlık
+yansır — realtime, `useOpenShifts`/`useShift` aynı desen. İki taraf
+birbirini canlı görüp kontrol eder; eksiklik/fazlalık o an fark edilir,
+günler sonra değil.
+
+**Yazma yönü tek yönlü, bilerek:** sevkiyat ekranı SADECE `loaded_at`
+yazar (`update ... set loaded_at = now()`, tekrar dokununca `null`'a
+geri döner — yanlış işaretleme telafisi). Palet miktarı/koli sayısı
+sevkiyattan DEĞİŞTİRİLEMEZ; düzeltme gerekiyorsa operatör tarafındaki
+mevcut palet düzenleme akışı (`ProductDetail`'in `onPalletTap`'i)
+kullanılır. Sevkiyatçı için ayrı bir rol/giriş sistemi yok, MES'in geri
+kalanıyla aynı RLS.
+
+**Fiş no — Logo'nun vardiya fişinin MES karşılığı, ayrı bir tabloya
+değil `shifts.fis_no`'ya.** Logo'da bir vardiyaya özel fiş no (ör.
+505792) veri girişi operatörü tarafından girilir; ürün değişince aynı
+vardiyada `.1`, `.2` gibi alt fiş açılır. Alt fiş no DB'de ayrı satır
+olarak SAKLANMAZ — `timeline.js#fisNoForRun(fisNo, runs, run)` saf
+fonksiyonuyla görüntülemede türetilir: vardiyadaki ürünler `sira`'ya
+göre dizilir, ilk ürün fiş no'yu çıplak taşır, N'inci ürün
+`{fisNo}.{N-1}` olur. Alan OPSİYONEL — `ShiftWizard`'ın vardiya
+adımında boş bırakılabilir, `OperatorPanel` başlığında (`.operator-fisno`,
+`.operator-shift-info` ile aynı "dokununca düzenle" deseni) sonradan da
+girilebilir. Kağıt elde olmayabilir; eksik alan sonradan doldurulur,
+uydurma kayıttan iyidir (genel proje ilkesi burada da geçerli).
+
+- `src/hooks/useOpenShifts.js` — TÜM hatların açık vardiyalarını +
+  ürünlerini + paletlerini tek seferde çeker. `useShift.js`'in aynı
+  realtime + yeniden-çekme deseni, tek fark `line_code` filtresi olmadan
+  tüm hatları kapsaması (sevkiyatçı hangi hattan palet geleceğini
+  bilmiyor).
+- `src/pages/SevkiyatPanel.jsx` — `/sevkiyat` route'u. Liste: hat, ürün
+  adı, fiş no (+ alt fiş), operatör, yüklenen/toplam palet sayısı.
+  Satıra dokununca detay: paletler tek tek, her biri dokununca
+  yüklendi/bekliyor arası geçiş yapan bir buton.
+
 ## Müdür panosunda liste kesmeleri kaldırıldı
 
 Eskiden "Son olaylar" `RECENT_EVENTS_LIMIT = 8` ile, "Duruş sebepleri"
@@ -1006,6 +1059,8 @@ Türkçe'ye duyarlı büyütülür — `toLocaleUpperCase('tr')`, çünkü düz
   geçmiş vardiya seçici ve donmuş özet; ManagerDashboard.css'in vw/clamp
   ölçeğini KULLANMAZ, kendi taşınabilir rem ölçeği var (telefonda da
   duvar ekranında da gömülüyor).
+- `src/hooks/useOpenShifts.js` + `src/pages/SevkiyatPanel.jsx` — sevkiyat
+  canlı eşleştirme ekranı, tüm hatlar (bkz. "Sevkiyat" bölümü).
 
 ## Müdür sunumu (`sunum/`)
 

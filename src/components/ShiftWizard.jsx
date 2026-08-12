@@ -49,6 +49,7 @@ const PRODUCT_STEPS = ['urun', 'parametre', 'palet', 'numarator', 'ozet']
 const INITIAL_FORM = {
   vardiya: '',
   operator: '',
+  fisNo: '',
   urunAdi: '',
   partiNo: '',
   gramaj: '',
@@ -153,6 +154,7 @@ function ShiftWizard({ open, mode = 'shift', personnel = [], onClose, onSubmit }
         shift: {
           vardiya: form.vardiya,
           operator: form.operator.trim() || null,
+          fis_no: form.fisNo.trim() || null,
         },
         run: null,
       })
@@ -212,6 +214,18 @@ function ShiftWizard({ open, mode = 'shift', personnel = [], onClose, onSubmit }
             vardiyaNo={form.vardiya}
             inputClassName="wizard-input"
           />
+        </label>
+        <label className="wizard-field">
+          <span className="wizard-label">Fiş no</span>
+          <input
+            className="wizard-input"
+            type="text"
+            inputMode="numeric"
+            value={form.fisNo}
+            onChange={update('fisNo')}
+            placeholder="Örn. 505792"
+          />
+          <span className="wizard-hint">Bilmiyorsan boş bırak, sonra girebilirsin.</span>
         </label>
       </div>
     ),

@@ -124,6 +124,22 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Fiş no — vardiya bilgisinin hemen altında, aynı düzenlenebilir buton
+ * deseni (.operator-shift-info). Boşken sessizce "Fiş no gir" davet eder,
+ * andon sinyal renklerinden bağımsız (durum değil, veri alanı). */
+.operator-fisno {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--data);
+  font-size: clamp(0.8rem, 2.8vw, 0.95rem);
+  color: var(--film-dim);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .operator-idle-date {
   margin: 0.75rem 0 0;
   font-size: clamp(0.9rem, 3vw, 1.1rem);

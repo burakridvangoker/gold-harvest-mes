@@ -1,0 +1,185 @@
+/*
+ * Sevkiyat ekranı. LineSelect'in aksine bir hat/durum sinyaline bağlı
+ * değil (birden çok hattı aynı anda gösteriyor) — andon-rail nötr steel
+ * tonunda, yalnızca "bu ekran açık" göstergesi.
+ */
+
+.sevkiyat-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--steel-900);
+  color: var(--film);
+  font-family: var(--data);
+  box-sizing: border-box;
+}
+
+.sevkiyat-shell .andon-rail {
+  height: clamp(0.7rem, 2vh, 1.1rem);
+  background-color: var(--film-dim);
+}
+
+.sevkiyat-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: clamp(1.1rem, 4vw, 1.75rem) clamp(1.1rem, 4vw, 2rem) 0.75rem;
+}
+
+.sevkiyat-title {
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.sevkiyat-subtitle {
+  font-size: clamp(0.85rem, 3vw, 0.95rem);
+  color: var(--film-dim);
+}
+
+.sevkiyat-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.5rem clamp(1.1rem, 4vw, 2rem) calc(2rem + env(safe-area-inset-bottom));
+}
+
+.sevkiyat-empty {
+  color: var(--film-dim);
+  font-size: 1rem;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.sevkiyat-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  width: 100%;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.9rem;
+  background: var(--steel-800);
+  box-shadow: var(--shadow-soft);
+  padding: 0.85rem 1.1rem;
+  box-sizing: border-box;
+  text-align: left;
+  font-family: var(--data);
+  color: var(--film);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+
+.sevkiyat-row:active {
+  transform: scale(0.99);
+  border-color: var(--film-dim);
+}
+
+.sevkiyat-row-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.sevkiyat-row-line {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.sevkiyat-row-urun {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.sevkiyat-row-sub {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--film-dim);
+}
+
+.sevkiyat-row-muted {
+  font-style: italic;
+}
+
+.sevkiyat-row-badge {
+  align-self: flex-end;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--film-dim);
+}
+
+/* ---- Detay: palet listesi ---- */
+
+.sevkiyat-detail-empty {
+  color: var(--film-dim);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.sevkiyat-pallet-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sevkiyat-pallet-row {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 3.25rem;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.6rem;
+  background: var(--steel-700);
+  padding: 0 0.9rem;
+  box-sizing: border-box;
+  font-family: var(--data);
+  font-size: 1rem;
+  color: var(--film);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sevkiyat-pallet-row--loaded {
+  background: var(--wash-run);
+  border-color: var(--signal-run);
+}
+
+.sevkiyat-pallet-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--steel-600);
+  color: var(--signal-run-text);
+  font-weight: 700;
+}
+
+.sevkiyat-pallet-row--loaded .sevkiyat-pallet-check {
+  border-color: var(--signal-run);
+  background: #ffffff;
+}
+
+.sevkiyat-pallet-state {
+  font-size: 0.85rem;
+  color: var(--film-dim);
+  justify-self: end;
+}
+
+.sevkiyat-pallet-row--loaded .sevkiyat-pallet-state {
+  color: var(--signal-run-text);
+  font-weight: 600;
+}
