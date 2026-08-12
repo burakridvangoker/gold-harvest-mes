@@ -879,6 +879,7 @@ function OperatorPanel() {
               pallets={pallets}
               nowMs={now}
               shiftStartMs={shiftStartMs}
+              fisNo={shift.fis_no}
               onUpdateRun={updateRun}
               onAddPallet={addPalletToRun}
               onSavePallet={updatePallet}

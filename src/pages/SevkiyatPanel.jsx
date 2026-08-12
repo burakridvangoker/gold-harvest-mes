@@ -46,6 +46,9 @@ function SevkiyatPanel() {
 
   const detay = rows.find((row) => row.key === detayKey) ?? null
 
+  const bekleyenUrunSayisi = rows.filter((row) => row.toplam - row.yuklenen > 0).length
+  const bekleyenPaletSayisi = rows.reduce((acc, row) => acc + (row.toplam - row.yuklenen), 0)
+
   const togglePallet = async (pallet) => {
     const next = pallet.loaded_at ? null : new Date().toISOString()
     await supabase.from('pallet_records').update({ loaded_at: next }).eq('id', pallet.id)
@@ -57,6 +60,13 @@ function SevkiyatPanel() {
       <div className="sevkiyat-header">
         <span className="sevkiyat-title plate">Sevkiyat</span>
         <span className="sevkiyat-subtitle">Tüm hatlar · canlı</span>
+        {!loading && !error && rows.length > 0 ? (
+          <span className={`sevkiyat-summary tnum${bekleyenPaletSayisi === 0 ? ' sevkiyat-summary--tamam' : ''}`}>
+            {bekleyenPaletSayisi === 0
+              ? 'Tüm paletler yüklendi'
+              : `${bekleyenUrunSayisi} üründe bekleyen palet var · toplam ${bekleyenPaletSayisi}`}
+          </span>
+        ) : null}
       </div>
 
       <div className="sevkiyat-list">
