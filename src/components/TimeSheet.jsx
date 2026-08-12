@@ -196,8 +196,8 @@ function TimeSheet({
               <button
                 type="button"
                 className="wheel-step"
-                aria-label="Saati bir artır"
-                onClick={() => setHour((hour + 1) % 24)}
+                aria-label="Saati bir azalt"
+                onClick={() => setHour((hour + 23) % 24)}
               >
                 ▲
               </button>
@@ -205,8 +205,8 @@ function TimeSheet({
               <button
                 type="button"
                 className="wheel-step"
-                aria-label="Saati bir azalt"
-                onClick={() => setHour((hour + 23) % 24)}
+                aria-label="Saati bir artır"
+                onClick={() => setHour((hour + 1) % 24)}
               >
                 ▼
               </button>
@@ -216,8 +216,8 @@ function TimeSheet({
               <button
                 type="button"
                 className="wheel-step"
-                aria-label="Dakikayı bir artır"
-                onClick={() => setMinute((minute + 1) % 60)}
+                aria-label="Dakikayı bir azalt"
+                onClick={() => setMinute((minute + 59) % 60)}
               >
                 ▲
               </button>
@@ -231,8 +231,8 @@ function TimeSheet({
               <button
                 type="button"
                 className="wheel-step"
-                aria-label="Dakikayı bir azalt"
-                onClick={() => setMinute((minute + 59) % 60)}
+                aria-label="Dakikayı bir artır"
+                onClick={() => setMinute((minute + 1) % 60)}
               >
                 ▼
               </button>

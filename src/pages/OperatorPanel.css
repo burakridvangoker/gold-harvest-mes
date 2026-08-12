@@ -284,14 +284,25 @@ button.operator-line-code {
  * var ama yukarı kaydırılamıyordu. `flex-start` ile taşma her zaman
  * ALTTAN olur, panel kendi `overflow-y:auto`'suyla erişilebilir kalır.
  */
+/*
+ * Ana ekran KESİN olarak kaymaz — diğer iki panelin aksine (onlar taşarsa
+ * kendi içlerinde kayabilir) burada `overflow: hidden` ile taşma imkânsız
+ * hâle getirildi. Yaşanmış geri bildirim: `overflow-y:auto` + tam
+ * sığmayan içerik hâlâ "çok az" bir kayma hissi veriyordu (elastik
+ * bounce + birkaç pikselik taşma) — kullanıcı bunu iki kez bildirdi.
+ * Riski azaltmak için içerik de sıkılaştırıldı (aşağıdaki gap/padding
+ * değerleri, "Olay geçmişi" butonu Genel'e taşındı); yine de aşırı küçük
+ * bir ekranda bir satır kırpılabilirse bunun bedeli KAYMADAN iyidir.
+ */
 .operator-pager-panel--main {
   justify-content: flex-start;
+  overflow: hidden;
 }
 
 .operator-main {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.6rem, 2vh, 1.25rem);
+  gap: clamp(0.4rem, 1.4vh, 1rem);
   width: 100%;
 }
 
@@ -309,7 +320,8 @@ button.operator-line-code {
  * biraz küçültüldü — hâlâ ekranın en göze çarpan öğesi, sadece devasa
  * değil (yaşanmış geri bildirim: "zamanı birazcık küçültebiliriz"). */
 .duration-block--compact {
-  padding: clamp(0.1rem, 0.5vh, 0.4rem) 0;
+  padding: 0;
+  gap: 0.1rem;
 }
 
 .duration-label {
@@ -509,6 +521,13 @@ button.operator-line-code {
  * bu ekranda kalabalık ederdi). */
 .operator-metrics {
   border-bottom: none;
+}
+
+/* Ana ekran overflow:hidden olduğu için burada dikey dolgu daha sıkı —
+ * Detay'daki aynı ızgara (.operator-counts) kendi panelinde güvenlik
+ * ağı (overflow-y:auto) taşıdığı için daha ferah kalabiliyor. */
+.operator-metrics .count-cell {
+  padding: 0.3rem 0.75rem;
 }
 
 /* Vardiya toplamı — bu üründen ayrı, küçük ve soluk: birden çok ürün

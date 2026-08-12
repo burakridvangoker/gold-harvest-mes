@@ -979,17 +979,6 @@ function OperatorPanel() {
                     </span>
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  className="ghost-button"
-                  onClick={() => {
-                    setLogFocusEventId(null)
-                    setLogOpen(true)
-                  }}
-                >
-                  Olay geçmişi
-                </button>
               </div>
             </div>
 
