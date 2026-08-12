@@ -999,6 +999,39 @@ edilirken gerçek bir cihazda doğrulanmadı (bu oturumun tarayıcı erişimi
 yok) — sahada ilk denemede parmak kaydırmasının/sekmelerin beklendiği
 gibi çalıştığından emin olun.
 
+**Yaşanmış hata — `transform` taşıyan track, içindeki `position:fixed`
+sheet'leri kırıyordu.** Panel geçişi `translateX(...)` ile yapılıyordu.
+CSS'te `transform` taşıyan bir öğe, torunlarındaki `position:fixed`
+elemanlar için viewport YERİNE kendisini yeni konumlanma referansı yapar
+— Detay ekranındaki bir ürün kartına dokununca `ProductHistory`'nin kendi
+`sheet-overlay`'i (`position:fixed; inset:0`) artık tüm ekranı değil,
+kayan track'in (300% genişlik, kaymış) kutusunu kaplıyordu; kullanıcı
+"detaydaki ürüne basınca ekran bozuldu" diye ekran görüntüsüyle bildirdi.
+Düzeltme: `translateX` → `left` yüzdesi (`operator-pager-track`de
+`position:relative` + `left: -${panel * 100/3}%`, `transition: left`).
+`left` de aynı kayma animasyonunu verir ama yeni bir konumlanma bloğu
+AÇMAZ — içindeki `fixed` elemanlar yine gerçek viewport'u referans alır.
+**Genel kural: bir öğeyi CSS `transform` ile kaydırıyorsanız ve o öğenin
+altında `position:fixed` açan bir bileşen (sheet/modal) varsa ya da
+ileride olabilirse, `transform` KULLANMAYIN** — `left`/`right` gibi
+transform açmayan bir özelliğe geçin.
+
+**Genel ekranına "Ürün" kısayolu, Detay'a sevkiyat aynası eklendi:**
+"Ürün" butonu (`operator-secondary`, `setActivePanel(2)`) doğrudan
+Detay'a atlar — orada zaten yaşayan `ProductHistory` ürün
+özelliklerini görme/düzenlemeyi ve (birden fazla ürün varsa) aralarında
+gezinmeyi karşılıyor, ayrı bir kopya/sheet açmaya gerek yok. Detay'a
+ayrıca **"Sevkiyat durumu"** eklendi (`operator-sevkiyat*`) —
+`/sevkiyat` ekranının salt-okunur aynası: hangi ürünün hangi fiş
+no'yla kaç paletinin sevkiyatçı tarafından TIR'a yüklendiğini
+(`pallet_records.loaded_at`) gösterir, aynı renk dili (tamam yeşil/
+kısmi amber/bekliyor nötr). Operatör buradan işaretleyemez — yazma
+yetkisi hâlâ sadece `/sevkiyat`'ta, bu iki tarafın birbirini canlı
+görüp kontrol ettiği "çift taraflı kontrol" zincirinin operatör
+tarafındaki yarısı. Artık Ana ekranda olduğu için Detay'daki eski
+`speed-row` (Çalışma hızı) kaldırıldı — aynı kontrolün ikinci bir
+kopyası kafa karıştırırdı.
+
 **Yaşanmış hata — `justify-content:center` taşan içeriğin üstünü GÖRÜNMEZ
 yapar.** İlk sürümde `.operator-pager-panel--main` (Ana ekran) içeriği
 dikeyde ortalıyordu. Kullanıcı gerçek cihazda test edince süre sayacının
