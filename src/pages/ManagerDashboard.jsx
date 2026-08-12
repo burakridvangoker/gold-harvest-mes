@@ -9,7 +9,6 @@ import {
   aktifUrun,
   buildIntervals,
   currentState,
-  downtimeByNote,
   hizVerimi,
   koliToPaket,
   paceStatus,
@@ -17,10 +16,8 @@ import {
   palletTotalsByRun,
   runSpans,
   runSummaries,
-  segmentKind,
   seviyeDurumu,
   shiftPaket,
-  shiftSegments,
   shiftTotals,
   totalsByRun,
 } from '../lib/timeline'
@@ -33,7 +30,6 @@ import ProductDetail from '../components/ProductDetail'
 import '../components/Sheet.css'
 import './ManagerDashboard.css'
 
-const NO_REASON_LABEL = 'Sebep girilmemiş'
 const TAM_ISRAR_MS = 30 * 60 * 1000
 const VISIT_HEARTBEAT_MS = 20 * 1000
 const VISIT_SESSION_KEY = 'mes_manager_visit'
@@ -165,20 +161,8 @@ function ManagerDashboard() {
   const totals = useMemo(() => shiftTotals(intervals), [intervals])
   const paletler = useMemo(() => palletTotals(pallets), [pallets])
   const state = useMemo(() => currentState(events), [events])
-  /* Limitsiz — sayfa kaydırılabilir, hiçbir duruş sebebi gizlenmesin. */
-  const topReasons = useMemo(() => downtimeByNote(intervals), [intervals])
 
   const shiftStartMs = shift ? new Date(shift.started_at).getTime() : null
-
-  /*
-   * "Tüm vardiya alt alta" yerine mola başlangıçlarına göre bölümlere
-   * ayrılmış, yan yana bir görünüm — 3 mola varsa 4 bölüm çıkar. Her
-   * bölümün kendi olay listesi kendi içinde alt alta.
-   */
-  const segments = useMemo(
-    () => shiftSegments(events, { shiftStartMs, endMs: now }),
-    [events, shiftStartMs, now],
-  )
 
   /* Operatör ekranıyla aynı kural: son olay ürünsüzse ("Ürünü bitir" ya da
    * vardiya açılışı) aktif ürün yoktur — bkz. timeline.js#aktifUrun. */
@@ -259,8 +243,6 @@ function ManagerDashboard() {
 
   const son = intervals[intervals.length - 1] ?? null
   const urgency = state === 'durdu' && son ? Math.min(1, son.durationMs / TAM_ISRAR_MS) : 0
-
-  const maxReasonMs = topReasons[0]?.ms ?? 0
 
   /* Hedef koli ürün bazlı; tempo da her ürünün kendi başlangıcına göre. */
   const spans = runSpans(events, now)
@@ -611,90 +593,6 @@ function ManagerDashboard() {
           )}
         </section>
 
-        {/* NEDEN */}
-        <section className="zone zone--why">
-          <h2 className="zone-title plate">Duruş sebepleri</h2>
-          {topReasons.length === 0 ? (
-            <p className="zone-empty plate">Duruş kaydı yok</p>
-          ) : (
-            <ul className="reasons-list">
-              {topReasons.map((reason) => (
-                <li key={reason.note ?? '__yok__'} className="reasons-row">
-                  <div className="reasons-row-head">
-                    <span className="reasons-row-label">{reason.note ?? NO_REASON_LABEL}</span>
-                    <span className="reasons-row-value tnum">
-                      {formatDuration(reason.ms)}
-                      <span className="reasons-row-count"> ×{reason.adet}</span>
-                    </span>
-                  </div>
-                  <div className="reasons-row-bar-track">
-                    <div
-                      className="reasons-row-bar-fill"
-                      style={{ width: `${maxReasonMs > 0 ? (reason.ms / maxReasonMs) * 100 : 0}%` }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* ÇEYREKLER — molalara göre bölünmüş, yan yana */}
-        <section className="zone zone--quarters">
-          <h2 className="zone-title plate">Vardiya bölümleri</h2>
-          <div className="quarters-row">
-            {segments.map((segment) => {
-              const segIntervals = intervals
-                .filter((interval) => interval.startMs >= segment.startMs && interval.startMs < segment.endMs)
-                .reverse()
-
-              return (
-                <div key={segment.index} className="quarter-col">
-                  <div className="quarter-col-head">
-                    <span className="quarter-col-title plate">{segment.index}. Bölüm</span>
-                    <span className="quarter-col-time tnum">
-                      {formatShortTime(new Date(segment.startMs))} –{' '}
-                      {segment.endMs >= now ? 'şimdi' : formatShortTime(new Date(segment.endMs))}
-                    </span>
-                  </div>
-                  {segIntervals.length === 0 ? (
-                    <p className="zone-empty plate">Olay yok</p>
-                  ) : (
-                    <ul className="quarter-col-list">
-                      {segIntervals.map((interval) => (
-                        <li
-                          key={interval.eventId}
-                          className={`quarter-row${interval.ongoing ? ' quarter-row--ongoing' : ''} quarter-row--${segmentKind(interval)}`}
-                        >
-                          <span className="quarter-row-time tnum">
-                            {formatShortTime(new Date(interval.startMs))}
-                          </span>
-                          {/*
-                           * 'uretim' ve 'mola' dışındaki HER kind burada duruş
-                           * gibi ele alınır (tek satır 'durus' kontrolü değil) —
-                           * addToTotals'taki final else ile aynı desen. Kaldırılmış
-                           * özelliklerden (ör. eski 'hazirlik') kalan satırlar bu
-                           * sayede "Üretim" gibi yanlış bir etikete düşmez.
-                           */}
-                          <span className="quarter-row-label">
-                            {interval.kind === 'uretim'
-                              ? runsById.get(interval.productRunId)?.urun_adi || 'Üretim'
-                              : interval.kind === 'mola'
-                                ? 'Mola'
-                                : interval.note || NO_REASON_LABEL}
-                          </span>
-                          <span className="quarter-row-duration tnum">
-                            {formatDuration(interval.durationMs)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </section>
       </div>
 
       {/*

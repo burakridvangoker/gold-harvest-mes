@@ -309,13 +309,20 @@ GRİ) kalıyordu — yaşanmış hata, kullanıcı ekran görüntüsüyle bildir
 `kind === 'durus'` exact-match kontrolüne (ör. `ReasonSegments`'in aktif
 duruş şartı) sokan her yeni kod bunu KULLANMALI.
 
-**Vardiya bölümleri (çeyrekler):** `timeline.js#shiftSegments` vardiyayı
-mola BAŞLANGIÇLARINA göre böler — N mola → N+1 bölüm (3 mola → 4 bölüm).
-Müdür panosunda "Son olaylar" tek bir uzun liste yerine bu bölümler yan
-yana (`zone--quarters`/`quarters-row`), her bölümün kendi olayları kendi
-içinde alt alta. `ShiftHistoryDetail`'de (donmuş özet) de aynı görünüm var
-— operatörün "Olay geçmişi" (`EventLog`, düzenleme yüzeyi) düz kronolojik
-liste olarak kaldı, düzenlemek için en basiti bu.
+**Vardiya bölümleri (çeyrekler) — CANLI müdür panosundan KALDIRILDI
+(yaşanmış karar).** `timeline.js#shiftSegments` vardiyayı mola
+BAŞLANGIÇLARINA göre bölen fonksiyonun kendisi hâlâ duruyor ve
+`ShiftHistoryDetail`'de (donmuş özet — hem operatörün hem müdürün
+"Geçmiş vardiyalar"ı, ikisi de aynı bileşeni paylaşır) hâlâ kullanılıyor;
+kullanıcı sadece CANLI `ManagerDashboard`'daki "Vardiya bölümleri"
+(`zone--quarters`) ve "Duruş sebepleri" (`zone--why`, `downtimeByNote`)
+bölümlerinin silinmesini istedi — "adam gibi çeki düzen" geri
+bildirimiyle. `ManagerDashboard.jsx`'te bu iki bölümün JS'i (state,
+import, hesap) ve `ManagerDashboard.css`'teki karşılık gelen tüm
+sınıflar (`.zone--why`, `.reasons-*`, `.zone--quarters`, `.quarters-*`,
+`.quarter-*`) TAMAMEN silindi — geri eklenecekse sıfırdan tasarlanmalı,
+eski kodun izi bilerek bırakılmadı. Operatörün "Olay geçmişi" (`EventLog`,
+düzenleme yüzeyi) hâlâ düz kronolojik liste, hiç etkilenmedi.
 
 **Palet çıkış saatleri: her ürünün KENDİ listesi, tek ortak liste değil.**
 İlk sürümde tek, vardiya geneli bir "Palet çıkış saatleri" listesi vardı —
@@ -728,6 +735,11 @@ kaydırılabilir olduğu için bu keyfi kesmeler kaldırıldı —
 `downtimeByNote`'un varsayılanı artık `Infinity`, çağıran yer limit
 vermedikçe hiçbir sebep gizlenmiyor. Operatörün "Olay geçmişi"nde gördüğü
 sayıyla aynı. `ShiftHistoryDetail` de aynı ilkeyle tam liste gösterir.
+
+**Not (sonradan):** CANLI `ManagerDashboard`'da "Duruş sebepleri" bölümü
+tamamen kaldırıldı (bkz. "Vardiya bölümleri" notu) — bu limit tartışması
+artık sadece `ShiftHistoryDetail`'in (geçmiş vardiya özeti) `downtimeByNote`
+kullanımı için geçerli, canlı panoda o fonksiyon hiç çağrılmıyor.
 
 ## Ürün geçmişi ve ürün değiştirme
 
