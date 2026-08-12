@@ -8,6 +8,7 @@ import {
   aktifUrun,
   buildIntervals,
   currentState,
+  fisNoForRun,
   groupSegmentsByEvent,
   hizVerimi,
   koliToPaket,
@@ -88,6 +89,31 @@ function OperatorPanel() {
 
   const runsById = useMemo(() => new Map(runs.map((run) => [run.id, run])), [runs])
   const paletlerByRun = useMemo(() => palletTotalsByRun(pallets), [pallets])
+
+  /*
+   * Detay ekranındaki "Sevkiyat durumu": operatörün kendi tarafından,
+   * hangi ürünün (hangi fiş no ile) kaç paletinin sevkiyatçı tarafından
+   * TIR'a yüklendiğini gösterir (`pallet_records.loaded_at`, bkz.
+   * CLAUDE.md "Sevkiyat"). Sevkiyat ekranının aynadaki karşılığı — iki
+   * taraf birbirini canlı görüp kontrol eder. Salt-okunur: operatör
+   * buradan işaretleyemez, yazma yetkisi sadece /sevkiyat'ta.
+   */
+  const sevkiyatRows = useMemo(
+    () =>
+      runs
+        .map((run) => {
+          const runPallets = pallets.filter((pallet) => pallet.product_run_id === run.id)
+          if (runPallets.length === 0) return null
+          return {
+            run,
+            fisNo: fisNoForRun(shift?.fis_no, runs, run),
+            toplam: runPallets.length,
+            yuklenen: runPallets.filter((pallet) => pallet.loaded_at).length,
+          }
+        })
+        .filter(Boolean),
+    [runs, pallets, shift?.fis_no],
+  )
 
   /* Aktif ürün son olayın işaret ettiği üründür; son olay ürünsüzse ("Ürünü
    * bitir" ya da vardiya açılışı) aktif ürün yoktur — bkz. timeline.js. */
@@ -784,7 +810,7 @@ function OperatorPanel() {
         <div className="operator-pager" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           <div
             className="operator-pager-track"
-            style={{ transform: `translateX(-${activePanel * (100 / 3)}%)` }}
+            style={{ left: `-${activePanel * (100 / 3)}%` }}
           >
             {/* Ekran 1/3 — Genel: zaman çizelgesi + ikincil aksiyonlar.
               * "İstediğini sil/düzelt" sözü verdiğimiz erişim noktası
@@ -836,6 +862,16 @@ function OperatorPanel() {
                   }}
                 >
                   Olay geçmişi
+                </button>
+                {/*
+                  * Ürün özelliklerini görme/düzenleme ve (birden fazla
+                  * ürün varsa) aralarında gezinme zaten ProductHistory'de
+                  * hazır — Detay ekranında yaşıyor. Burası ona doğrudan
+                  * bir kısayol: ekran değiştirir (setActivePanel), yeni
+                  * bir sheet/kopya açmaz.
+                  */}
+                <button type="button" className="ghost-button" onClick={() => setActivePanel(2)}>
+                  Ürün
                 </button>
                 {/*
                   * İki ayrı iş, iki ayrı buton: "Ürünü bitir" numaratör
@@ -993,15 +1029,37 @@ function OperatorPanel() {
               </div>
             </div>
 
-            {/* Ekran 3/3 — Detay: hız/hedef/palet rakamları, ürün geçmişi. */}
+            {/* Ekran 3/3 — Detay: hedef/palet rakamları, sevkiyat durumu, ürün geçmişi. */}
             <div className="operator-pager-panel">
-              {activeRun && (
-                <button type="button" className="speed-row" onClick={() => setSpeedOpen(true)}>
-                  <span className="speed-row-label plate">Çalışma hızı</span>
-                  <span className="speed-row-value tnum">
-                    {activeRun.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : 'Gir'}
-                  </span>
-                </button>
+              {/*
+               * Hangi ürün, hangi fiş no, kaç palet çıkmış ve sevkiyatçı
+               * kaçını TIR'a yükledi — /sevkiyat ekranının aynadaki
+               * karşılığı, salt-okunur. Palet hiç çıkmamış ürünler listeye
+               * hiç girmez (gösterecek bir şey yok).
+               */}
+              {sevkiyatRows.length > 0 && (
+                <div className="operator-sevkiyat">
+                  <span className="operator-sevkiyat-label plate">Sevkiyat durumu</span>
+                  {sevkiyatRows.map(({ run, fisNo, toplam, yuklenen }) => {
+                    const tamamMi = yuklenen === toplam
+                    const kismiMi = yuklenen > 0 && !tamamMi
+                    const durum = tamamMi ? 'tamam' : kismiMi ? 'kismi' : 'bekliyor'
+
+                    return (
+                      <div key={run.id} className="operator-sevkiyat-row">
+                        <div className="operator-sevkiyat-row-main">
+                          <span className="operator-sevkiyat-row-urun">{run.urun_adi}</span>
+                          {fisNo ? (
+                            <span className="operator-sevkiyat-row-fisno tnum">Fiş {fisNo}</span>
+                          ) : null}
+                        </div>
+                        <span className={`operator-sevkiyat-row-badge operator-sevkiyat-row-badge--${durum}`}>
+                          {yuklenen}/{toplam} palet
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
               )}
 
               {pace && (
