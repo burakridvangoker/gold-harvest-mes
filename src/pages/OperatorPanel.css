@@ -30,6 +30,7 @@
    */
   height: 100dvh;
   overflow: hidden;
+  overscroll-behavior: none;
   background:
     linear-gradient(var(--status-wash), var(--status-wash)),
     var(--steel-900);
@@ -55,7 +56,10 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem, 3vh, 2rem);
+  /* Küçük telefonlarda (ör. 400×642) Ana ekran'ın tam sığması için sıkı
+   * tutuluyor — üç ekrandan biri bile taşarsa "kesinlikle kaymamalı"
+   * sözü bozuluyordu (yaşanmış geri bildirim). */
+  gap: clamp(0.6rem, 2vh, 1.25rem);
   /* 520px sınırı kaldırıldı: tablet yatayken iki yanda ölü boşluk kalıyordu. */
   padding: calc(1.25rem + env(safe-area-inset-top)) clamp(1.1rem, 4vw, 2.5rem)
     calc(1.25rem + env(safe-area-inset-bottom));
@@ -112,9 +116,12 @@
   color: var(--film);
 }
 
+/* Ürün adı — "şu an ne üretiliyor" operatörün en sık baktığı bilgilerden
+ * biri, dim/soluk kalması yaşanmış şikayetti. Belirgin, kalın. */
 .operator-run-name {
-  font-size: clamp(0.95rem, 3.2vw, 1.15rem);
-  color: var(--film-dim);
+  font-size: clamp(1.1rem, 3.8vw, 1.35rem);
+  font-weight: 700;
+  color: var(--film);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -133,16 +140,17 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Fiş no — aynı düzenlenebilir buton deseni (.operator-shift-info).
- * Boşken sessizce "Fiş no gir" davet eder, andon sinyal renklerinden
- * bağımsız (durum değil, veri alanı). */
+/* Fiş no — aynı düzenlenebilir buton deseni (.operator-shift-info), ama
+ * Logo'nun karşılığı olduğu için (veri girişi bunu arıyor) daha belirgin:
+ * koyu metin + kalın. Boşken "Fiş no gir" hâlâ sessizce davet eder. */
 .operator-fisno {
   border: none;
   background: none;
   padding: 0;
   font-family: var(--data);
-  font-size: clamp(0.8rem, 2.8vw, 0.95rem);
-  color: var(--film-dim);
+  font-size: clamp(0.9rem, 3vw, 1.05rem);
+  font-weight: 700;
+  color: var(--film);
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -255,11 +263,15 @@ button.operator-line-code {
   height: 100%;
   min-height: 0;
   overflow-y: auto;
+  /* Panel tam sığdığında bile tarayıcının elastik "bounce" kaydırması
+   * (özellikle iOS) küçük bir oynama hissi veriyordu — bu, kalan içerik
+   * yokken bile "ekran kayıyor" algısı yaratıyordu. */
+  overscroll-behavior: contain;
   box-sizing: border-box;
-  padding: 0.1rem 0.1rem clamp(1rem, 3vh, 1.5rem);
+  padding: 0.1rem 0.1rem clamp(0.5rem, 1.5vh, 1rem);
   display: flex;
   flex-direction: column;
-  gap: clamp(0.6rem, 2vh, 1.5rem);
+  gap: clamp(0.5rem, 1.5vh, 1rem);
 }
 
 /* Ana ekran — operatörün asıl işi, dikey ortalanır, kaymaması hedeflenir. */

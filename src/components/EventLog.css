@@ -72,17 +72,21 @@
  * Satırın tamamı dokunulabilir: düzeltme sık yapılacak bir iş, ayrı bir
  * "düzenle" ikonunu hedeflemek zorunda kalmasın.
  */
+/*
+ * Kart düzeni — yaşanmış geri bildirim: dar bir sütuna sıkıştırılmış
+ * dikey "07:00 / 09:43" okunaksızdı, "yatay yönde çok daha güzel olsun"
+ * istendi. Durum rengi (üretim yeşil / duruş kırmızı / mola sarı) artık
+ * ALT kenarda, kalın bir şerit — andon dilinin aynısı, satırı bir bakışta
+ * tarayabilmek için.
+ */
 .eventlog-row {
-  display: grid;
-  grid-template-columns: 3.75rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
   width: 100%;
-  min-height: 4.25rem;
-  padding: 0.75rem 0.5rem 0.75rem 0.75rem;
+  padding: 0.85rem 0.9rem;
   border: none;
-  border-left: 3px solid var(--steel-600);
-  border-bottom: 1px solid var(--steel-line);
+  border-bottom: 3px solid var(--steel-600);
   background: transparent;
   color: var(--film);
   font-family: var(--data);
@@ -98,53 +102,50 @@
 }
 
 .eventlog-row--uretim {
-  border-left-color: var(--signal-run);
+  border-bottom-color: var(--signal-run);
 }
 
 .eventlog-row--durus {
-  border-left-color: var(--signal-stop);
+  border-bottom-color: var(--signal-stop);
 }
 
 .eventlog-row--mola {
-  border-left-color: var(--signal-idle);
+  border-bottom-color: var(--signal-idle);
 }
 
 .eventlog-row--palet {
-  border-left-color: var(--film-dim);
+  border-bottom-color: var(--film-dim);
+}
+
+.eventlog-row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.eventlog-row-kind {
+  font-size: 0.8rem;
+  color: var(--film-dim);
 }
 
 .eventlog-row-time {
   display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  font-size: 0.95rem;
-  font-weight: 600;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.eventlog-row-time-arrow {
   color: var(--film-dim);
-  line-height: 1.2;
-}
-
-.eventlog-row-time-start {
-  color: var(--film);
-}
-
-.eventlog-row-time-end::before {
-  content: '↓ ';
-  opacity: 0.6;
-}
-
-.eventlog-row-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.eventlog-row-kind {
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
 
 .eventlog-row-label {
-  font-size: 1.05rem;
+  font-size: 1rem;
+  color: var(--film-dim);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -152,8 +153,8 @@
 
 .eventlog-row-meta {
   font-size: 0.95rem;
+  font-weight: 600;
   color: var(--film-dim);
-  text-align: right;
   white-space: nowrap;
 }
 

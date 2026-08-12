@@ -183,16 +183,60 @@ function TimeSheet({
 
         <div className="timesheet-clock-field">
           <span className="timesheet-clock-hint plate">Saat</span>
+          {/*
+           * Kaydırma tek başına uzak bir değere (ör. 3 saat geri) gitmek
+           * için yavaş kalabiliyordu (yaşanmış geri bildirim: "seçerken
+           * zorlanabiliyorum") — her sütunun üstünde/altında ok butonu,
+           * tek dokunuşla bir adım ilerletir/geriletir. Kaydırma ve satıra
+           * dokunma (WheelColumn'daki mevcut davranış) hâlâ aynen çalışır,
+           * bu üçüncü, ek bir yol.
+           */}
           <div className="timesheet-wheels">
-            <WheelColumn length={24} value={hour} onChange={setHour} formatItem={pad2} label="Saat" />
+            <div className="wheel-group">
+              <button
+                type="button"
+                className="wheel-step"
+                aria-label="Saati bir artır"
+                onClick={() => setHour((hour + 1) % 24)}
+              >
+                ▲
+              </button>
+              <WheelColumn length={24} value={hour} onChange={setHour} formatItem={pad2} label="Saat" />
+              <button
+                type="button"
+                className="wheel-step"
+                aria-label="Saati bir azalt"
+                onClick={() => setHour((hour + 23) % 24)}
+              >
+                ▼
+              </button>
+            </div>
             <span className="timesheet-clock-colon">:</span>
-            <WheelColumn
-              length={60}
-              value={minute}
-              onChange={setMinute}
-              formatItem={pad2}
-              label="Dakika"
-            />
+            <div className="wheel-group">
+              <button
+                type="button"
+                className="wheel-step"
+                aria-label="Dakikayı bir artır"
+                onClick={() => setMinute((minute + 1) % 60)}
+              >
+                ▲
+              </button>
+              <WheelColumn
+                length={60}
+                value={minute}
+                onChange={setMinute}
+                formatItem={pad2}
+                label="Dakika"
+              />
+              <button
+                type="button"
+                className="wheel-step"
+                aria-label="Dakikayı bir azalt"
+                onClick={() => setMinute((minute + 59) % 60)}
+              >
+                ▼
+              </button>
+            </div>
           </div>
         </div>
 
