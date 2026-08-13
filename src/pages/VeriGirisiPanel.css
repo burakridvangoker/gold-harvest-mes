@@ -170,7 +170,7 @@
   gap: 0.75rem;
 }
 
-.veri-row-operator {
+.veri-row-urun {
   font-size: clamp(1rem, 3.4vw, 1.1rem);
   font-weight: 700;
   overflow: hidden;
@@ -191,15 +191,7 @@
   font-weight: 600;
 }
 
-.veri-row-alt {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.9rem;
-  padding-top: 0.3rem;
-  border-top: 1px solid var(--steel-700);
-}
-
-.veri-row-alt-item {
+.veri-row-operator {
   font-size: 0.8rem;
   color: var(--film-dim);
 }
