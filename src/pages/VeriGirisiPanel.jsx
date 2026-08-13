@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAllShifts } from '../hooks/useAllShifts'
-import { fisNoForRun } from '../lib/timeline'
+import { fisNoForRun, runSummaries } from '../lib/timeline'
 import { formatDateLabel } from '../lib/time'
+import ProductDetail from '../components/ProductDetail'
 import '../components/Sheet.css'
 import './VeriGirisiPanel.css'
 
@@ -25,6 +26,17 @@ import './VeriGirisiPanel.css'
  * `durus` olayıyla açılmış, bkz. CLAUDE.md "Vardiya duruştan başlar")
  * gösterilecek bir fiş no'su yoktur ama fiş no YİNE DE önceden
  * girilebilsin diye vardiya tek satır olarak listede kalır.
+ *
+ * "Kontrol" — kullanıcı isteği: eskiden veri girişi operatörü miktarları/
+ * personeli/iş analizini kağıttan kendi eline yazıyordu. Artık bunların
+ * hepsi MES'te zaten var (`timeline.js#runSummaries` — aynı hesap
+ * operatör/müdür panosunda da kullanılıyor); bu kişinin işi artık ELLE
+ * GİRMEK değil, sistemin zaten hesapladığını KONTROL ETMEK. Fiş no
+ * düzenlemeden AYRI bir buton (`row-kontrol`, `stopPropagation`) —
+ * ikisi farklı iş: biri Logo taban numarasını yazmak, diğeri o fişin
+ * arkasındaki üretim verisini salt-okunur doğrulamak. Ortak `ProductDetail`
+ * (operatör/müdürle AYNI bileşen, aynı rakamlar) — müdür panosundaki
+ * gibi salt-okunur, hiçbir yazma prop'u geçirilmiyor.
  */
 function VeriGirisiPanel() {
   const { entries, loading, error } = useAllShifts()
@@ -32,13 +44,14 @@ function VeriGirisiPanel() {
   const [sadeceEksik, setSadeceEksik] = useState(false)
   const [editKey, setEditKey] = useState(null)
   const [editValue, setEditValue] = useState('')
+  const [detayKey, setDetayKey] = useState(null)
 
   const rows = useMemo(() => {
     const list = []
 
-    for (const { shift, runs } of entries) {
+    for (const { shift, runs, events, pallets } of entries) {
       if (runs.length === 0) {
-        list.push({ key: shift.id, shift, runs, run: null, fisNo: shift.fis_no ?? null })
+        list.push({ key: shift.id, shift, runs, events, pallets, run: null, fisNo: shift.fis_no ?? null })
         continue
       }
 
@@ -47,6 +60,8 @@ function VeriGirisiPanel() {
           key: run.id,
           shift,
           runs,
+          events,
+          pallets,
           run,
           fisNo: fisNoForRun(shift.fis_no, runs, run),
         })
@@ -95,6 +110,16 @@ function VeriGirisiPanel() {
   const previewFisler = edit
     ? edit.runs.map((run) => ({ run, fisNo: fisNoForRun(editValue.trim() || null, edit.runs, run) }))
     : []
+
+  const detayRow = detayKey ? rows.find((row) => row.key === detayKey) ?? null : null
+  const detayOzet = useMemo(() => {
+    if (!detayRow || !detayRow.run) return null
+    const frozen = Boolean(detayRow.shift.ended_at)
+    const nowMs = frozen ? new Date(detayRow.shift.ended_at).getTime() : Date.now()
+    return runSummaries(detayRow.runs, detayRow.events, detayRow.pallets, nowMs, { frozen }).find(
+      (ozet) => ozet.run.id === detayRow.run.id,
+    )
+  }, [detayRow])
 
   return (
     <div className="veri-shell">
@@ -156,7 +181,28 @@ function VeriGirisiPanel() {
                 )}
               </div>
 
-              <span className="veri-row-operator">{row.shift.operator || 'Operatör girilmedi'}</span>
+              <div className="veri-row-bottom">
+                <span className="veri-row-operator">{row.shift.operator || 'Operatör girilmedi'}</span>
+                {row.run ? (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className="veri-row-kontrol"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setDetayKey(row.key)
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter' && event.key !== ' ') return
+                      event.stopPropagation()
+                      event.preventDefault()
+                      setDetayKey(row.key)
+                    }}
+                  >
+                    Kontrol
+                  </span>
+                ) : null}
+              </div>
             </button>
           )
         })}
@@ -212,6 +258,33 @@ function VeriGirisiPanel() {
               </button>
               <button type="button" className="sheet-button sheet-button--primary" onClick={saveFisNo}>
                 Kaydet
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {detayOzet ? (
+        <div className="sheet-overlay" onClick={() => setDetayKey(null)}>
+          <div
+            className="sheet-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label={detayOzet.run.urun_adi}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="sheet-handle" />
+            <h2 className="sheet-title plate">{detayOzet.run.urun_adi}</h2>
+            <p className="sheet-subtitle">
+              {detayRow.shift.line_code} · {detayRow.fisNo ? `Fiş ${detayRow.fisNo}` : 'Fiş no yok'} ·{' '}
+              {detayRow.shift.operator || 'Operatör girilmedi'}
+            </p>
+
+            <ProductDetail ozet={detayOzet} />
+
+            <div className="sheet-actions">
+              <button type="button" className="sheet-button sheet-button--primary" onClick={() => setDetayKey(null)}>
+                Kapat
               </button>
             </div>
           </div>

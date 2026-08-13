@@ -822,6 +822,25 @@ birbirinden bağımsız kalması daha basit.
 (sevkiyat eklenirken açılan yolun aynısı) — bu ekranın da mock
 backend'le görsel doğrulaması/demo videosu mümkün olsun diye.
 
+**"Kontrol" — rolün asıl anlamı değişti, elle giren değil doğrulayan.**
+Kullanıcının açıkladığı eski süreç: veri girişi operatörü Logo'da fişi
+KENDİSİ açıyor, operatörün kağıtlarına bakıp miktarları/iş analizini/
+çalışan personeli ELLE giriyordu. Kullanıcının kararı: "artık böyle
+olmayacak, herşey sistemden otomatik... veri girişi operatörü bunu
+kontrol eden üst mekanizma olmalı." MES bu verilerin çoğunu (miktar,
+süre, hız, ambalaj firesi, palet kayıtları) zaten `timeline.js#
+runSummaries` ile hesaplıyor — operatör/müdür panosunda kullanılan AYNI
+fonksiyon. Her satırdaki **Kontrol** rozeti (fiş no düzenlemeden AYRI,
+`stopPropagation` ile) bu özeti salt-okunur açıyor: ortak `ProductDetail`
+bileşeni (müdür panosuyla BİREBİR aynı — ayrı bir hesap yok), hiçbir
+yazma prop'u geçirilmeden. `useAllShifts.js` bu yüzden `timeline_events`
++ `pallet_records`'ı da çekiyor (ilk sürümde sadece `shifts` +
+`product_runs` vardı, "palet çekilmiyor, bu ekranın işi fiş" deniyordu —
+artık işin bir parçası da miktarı doğrulamak, o yüzden palet de gerekli).
+Kapanmış bir vardiyanın ürünü `frozen: true` ile hesaplanır (`nowMs =
+shift.ended_at`, `ShiftHistoryDetail`'deki donmuş özet prensibinin
+aynısı) — kapanmış bir işin "süregelen" gibi görünmesi yanlış olurdu.
+
 ## Müdür panosunda liste kesmeleri kaldırıldı
 
 Eskiden "Son olaylar" `RECENT_EVENTS_LIMIT = 8` ile, "Duruş sebepleri"
