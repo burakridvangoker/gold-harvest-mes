@@ -11,6 +11,7 @@ import App from './App.jsx'
 import OperatorPanel from './pages/OperatorPanel.jsx'
 import ManagerDashboard from './pages/ManagerDashboard.jsx'
 import SevkiyatPanel from './pages/SevkiyatPanel.jsx'
+import VeriGirisiPanel from './pages/VeriGirisiPanel.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -20,6 +21,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/operator" element={<OperatorPanel />} />
         <Route path="/mudur" element={<ManagerDashboard />} />
         <Route path="/sevkiyat" element={<SevkiyatPanel />} />
+        <Route path="/veri-girisi" element={<VeriGirisiPanel />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

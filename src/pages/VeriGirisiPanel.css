@@ -1,0 +1,228 @@
+/*
+ * Veri girişi ekranı. Sevkiyat ekranıyla aynı "tüm hatlar tek listede"
+ * fikri ama farklı iş: burada arama/filtre var (liste zamanla büyür,
+ * geçmiş vardiyalar da dahil), sevkiyatta yok (sadece açık vardiyalar,
+ * hep kısa liste). andon-rail nötr steel tonunda — tek bir hat/duruma
+ * bağlı değil.
+ */
+
+.veri-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--steel-900);
+  color: var(--film);
+  font-family: var(--data);
+  box-sizing: border-box;
+}
+
+.veri-shell .andon-rail {
+  height: clamp(0.7rem, 2vh, 1.1rem);
+  background-color: var(--film-dim);
+}
+
+.veri-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: clamp(1.1rem, 4vw, 1.75rem) clamp(1.1rem, 4vw, 2rem) 0.75rem;
+}
+
+.veri-title {
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.veri-subtitle {
+  font-size: clamp(0.85rem, 3vw, 0.95rem);
+  color: var(--film-dim);
+}
+
+.veri-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.veri-search {
+  flex: 1;
+  min-width: 12rem;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.7rem;
+  background: var(--steel-800);
+  color: var(--film);
+  font-family: var(--data);
+  font-size: 0.95rem;
+  padding: 0.6rem 0.85rem;
+  box-sizing: border-box;
+}
+
+.veri-search::placeholder {
+  color: var(--film-dim);
+}
+
+.veri-chip {
+  flex-shrink: 0;
+  border: 1px solid var(--steel-600);
+  border-radius: 999px;
+  background: var(--steel-800);
+  color: var(--film-dim);
+  font-family: var(--data);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.veri-chip--active {
+  background: var(--wash-idle);
+  border-color: var(--signal-idle);
+  color: var(--signal-idle-text);
+}
+
+.veri-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.5rem clamp(1.1rem, 4vw, 2rem) calc(2rem + env(safe-area-inset-bottom));
+}
+
+.veri-empty {
+  color: var(--film-dim);
+  font-size: 1rem;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.veri-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.9rem;
+  background: var(--steel-800);
+  box-shadow: var(--shadow-soft);
+  padding: 0.85rem 1.05rem;
+  box-sizing: border-box;
+  text-align: left;
+  font-family: var(--data);
+  color: var(--film);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease;
+}
+
+.veri-row:active {
+  transform: scale(0.99);
+}
+
+.veri-row-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.veri-row-line {
+  padding: 0.15rem 0.55rem;
+  border-radius: 0.4rem;
+  background: var(--steel-700);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.veri-row-durum {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--film-dim);
+}
+
+.veri-row-durum--acik {
+  color: var(--signal-run-text);
+}
+
+.veri-row-date {
+  font-size: 0.8rem;
+  color: var(--film-dim);
+}
+
+.veri-row-vardiya {
+  font-size: 0.8rem;
+  color: var(--film-dim);
+  margin-left: auto;
+}
+
+.veri-row-mid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.veri-row-operator {
+  font-size: clamp(1rem, 3.4vw, 1.1rem);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.veri-row-fisno {
+  flex-shrink: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--film);
+}
+
+.veri-row-fisno--eksik {
+  color: var(--signal-idle-text);
+  font-style: italic;
+  font-weight: 600;
+}
+
+.veri-row-alt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--steel-700);
+}
+
+.veri-row-alt-item {
+  font-size: 0.8rem;
+  color: var(--film-dim);
+}
+
+/* ---- Fiş no düzenleme sheet'i: canlı alt fiş önizlemesi ---- */
+
+.veri-preview-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.veri-preview-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid var(--steel-600);
+  border-radius: 0.6rem;
+  background: var(--steel-700);
+  padding: 0.5rem 0.8rem;
+  font-size: 0.9rem;
+}
