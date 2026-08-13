@@ -17,6 +17,14 @@ import './VeriGirisiPanel.css'
  * Bilerek küçük başlıyor — daha fazla bölüm (Logo mutabakatı, vs.)
  * zamanla eklenecek, bu yüzden bileşen tek bir "fiş" fikrine odaklı
  * kalıyor, önceden genişletilmiş bir sekme/iskelet kurulmadı.
+ *
+ * Listenin BİRİMİ fiş no'dur, vardiya değil — kullanıcı isteği: bir
+ * vardiyada 3 ürün çıkarsa Logo'da 3 ayrı fiş no açılır (505792,
+ * 505792.1, 505792.2), o yüzden her ürün kendi satırıdır (`fisNoForRun`
+ * ile türetilir). Bir vardiyada henüz hiç ürün girilmemişse (tek
+ * `durus` olayıyla açılmış, bkz. CLAUDE.md "Vardiya duruştan başlar")
+ * gösterilecek bir fiş no'su yoktur ama fiş no YİNE DE önceden
+ * girilebilsin diye vardiya tek satır olarak listede kalır.
  */
 function VeriGirisiPanel() {
   const { entries, loading, error } = useAllShifts()
@@ -26,24 +34,36 @@ function VeriGirisiPanel() {
   const [editValue, setEditValue] = useState('')
 
   const rows = useMemo(() => {
-    return entries
-      .map(({ shift, runs }) => ({
-        key: shift.id,
-        shift,
-        runs,
-        altFisler: runs.map((run) => ({ run, fisNo: fisNoForRun(shift.fis_no, runs, run) })),
-      }))
-      .sort((a, b) => new Date(b.shift.started_at) - new Date(a.shift.started_at))
+    const list = []
+
+    for (const { shift, runs } of entries) {
+      if (runs.length === 0) {
+        list.push({ key: shift.id, shift, runs, run: null, fisNo: shift.fis_no ?? null })
+        continue
+      }
+
+      for (const run of runs) {
+        list.push({
+          key: run.id,
+          shift,
+          runs,
+          run,
+          fisNo: fisNoForRun(shift.fis_no, runs, run),
+        })
+      }
+    }
+
+    return list
   }, [entries])
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('tr')
 
     return rows.filter((row) => {
-      if (sadeceEksik && row.shift.fis_no) return false
+      if (sadeceEksik && row.fisNo) return false
       if (!query) return true
 
-      const haystack = [row.shift.line_code, row.shift.operator, row.shift.fis_no]
+      const haystack = [row.shift.line_code, row.shift.operator, row.run?.urun_adi, row.fisNo]
         .filter(Boolean)
         .join(' ')
         .toLocaleLowerCase('tr')
@@ -52,9 +72,13 @@ function VeriGirisiPanel() {
     })
   }, [rows, search, sadeceEksik])
 
-  const eksikSayisi = rows.filter((row) => !row.shift.fis_no).length
+  const eksikSayisi = rows.filter((row) => !row.fisNo).length
 
-  const edit = filteredRows.find((row) => row.key === editKey) ?? rows.find((row) => row.key === editKey) ?? null
+  const editShiftKey = editKey
+    ? (rows.find((row) => row.key === editKey)?.shift.id ?? null)
+    : null
+  const editRows = editShiftKey ? rows.filter((row) => row.shift.id === editShiftKey) : []
+  const edit = editRows[0] ?? null
 
   const openEdit = (row) => {
     setEditKey(row.key)
@@ -68,7 +92,7 @@ function VeriGirisiPanel() {
     await supabase.from('shifts').update({ fis_no: value }).eq('id', edit.shift.id)
   }
 
-  const previewAltFisler = edit
+  const previewFisler = edit
     ? edit.runs.map((run) => ({ run, fisNo: fisNoForRun(editValue.trim() || null, edit.runs, run) }))
     : []
 
@@ -84,7 +108,7 @@ function VeriGirisiPanel() {
             className="veri-search"
             type="text"
             inputMode="search"
-            placeholder="Hat, operatör ya da fiş no ara…"
+            placeholder="Hat, ürün, operatör ya da fiş no ara…"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -103,7 +127,7 @@ function VeriGirisiPanel() {
         {error ? <p className="veri-empty">{error}</p> : null}
         {!loading && !error && filteredRows.length === 0 ? (
           <p className="veri-empty">
-            {rows.length === 0 ? 'Henüz vardiya kaydı yok.' : 'Aramayla eşleşen vardiya yok.'}
+            {rows.length === 0 ? 'Henüz vardiya kaydı yok.' : 'Aramayla eşleşen fiş yok.'}
           </p>
         ) : null}
 
@@ -122,23 +146,17 @@ function VeriGirisiPanel() {
               </div>
 
               <div className="veri-row-mid">
-                <span className="veri-row-operator">{row.shift.operator || 'Operatör girilmedi'}</span>
-                {row.shift.fis_no ? (
-                  <span className="veri-row-fisno tnum">Fiş {row.shift.fis_no}</span>
+                <span className="veri-row-urun">
+                  {row.run ? row.run.urun_adi : 'Ürün henüz girilmedi'}
+                </span>
+                {row.fisNo ? (
+                  <span className="veri-row-fisno tnum">Fiş {row.fisNo}</span>
                 ) : (
                   <span className="veri-row-fisno veri-row-fisno--eksik">Fiş no gir</span>
                 )}
               </div>
 
-              {row.altFisler.length > 0 ? (
-                <div className="veri-row-alt">
-                  {row.altFisler.map(({ run, fisNo }) => (
-                    <span key={run.id} className="veri-row-alt-item tnum">
-                      {run.urun_adi} · {fisNo ?? '—'}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
+              <span className="veri-row-operator">{row.shift.operator || 'Operatör girilmedi'}</span>
             </button>
           )
         })}
@@ -171,13 +189,15 @@ function VeriGirisiPanel() {
                 placeholder="Örn. 505792"
               />
               <span className="sheet-field-hint">
-                Ürün değişince alt fiş (.1, .2…) otomatik türetilir — aşağıda canlı önizleme.
+                {previewFisler.length > 1
+                  ? 'Bu vardiyanın TÜM ürünleri bu taban numaradan türer — aşağıda her ürünün kendi fiş no\'su canlı önizlenir.'
+                  : 'Ürün değişince alt fiş (.1, .2…) otomatik türetilir.'}
               </span>
             </label>
 
-            {previewAltFisler.length > 0 ? (
+            {previewFisler.length > 1 ? (
               <ul className="veri-preview-list">
-                {previewAltFisler.map(({ run, fisNo }) => (
+                {previewFisler.map(({ run, fisNo }) => (
                   <li key={run.id} className="veri-preview-item tnum">
                     <span>{run.urun_adi}</span>
                     <span>{fisNo ?? '—'}</span>

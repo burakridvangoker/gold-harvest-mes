@@ -785,17 +785,30 @@ o kalır, sonra değiştirilebilir. Yeni bir "kilitli alan" kavramı
 BİLEREK eklenmedi; CLAUDE.md'nin "eksik alan sonradan doldurulur"
 ilkesiyle tutarlı.
 
-**Her satırda alt fiş dökümü de görünür (salt-okunur), tek satırda
-sadece ana fiş no değil.** Bir vardiyada birden çok ürün varsa
-(`fisNoForRun`'ın türettiği `.1`/`.2` deseni, bkz. "Sevkiyat" bölümü)
-veri girişi operatörünün Logo'ya HER ürün için hangi alt fiş no'yu
-gireceğini görmesi gerekiyor — satırın altında küçük bir "ürün adı ·
-fiş no" listesi bunu karşılıyor. Fiş no düzenleme sheet'i AÇIKKEN bu
-liste CANLI önizlemeye döner (`RunEndSheet`'in ambalaj fire önizlemesiyle
-aynı desen — girerken hesapla, kayıttan sonra değil): operatör yazdıkça
-`fisNoForRun(editValue, ...)` yeniden hesaplanıp altta gösterilir, "600123
-yazınca ikinci ürün 600123.1 mi olacak" sorusunun cevabı kaydetmeden
-önce görünür.
+**Listenin BİRİMİ fiş no'dur, vardiya değil — yaşanmış düzeltme.** İlk
+sürümde satır vardiya bazlıydı, birden fazla ürünün alt fiş no'ları o
+tek satırın altında küçük bir dökümdü. Kullanıcı düzeltti: "bu listenin
+belirteci fiş no lar... bir vardiyaya 3 tane ürün çıkabilir, fiş no 3
+tane olur" — Logo'da HER ürün kendi fiş no'suyla (505792, 505792.1,
+505792.2) ayrı ayrı işlem görüyor, veri girişi operatörünün asıl
+birimi de bu. `rows` artık vardiya değil `product_run` bazlı: bir
+vardiyada N ürün varsa N satır, her satırın kendi `fisNoForRun`
+değeri var. Vardiyanın henüz hiç ürünü yoksa (yeni açılmış, bkz.
+"Vardiya duruştan başlar") tek bir "Ürün henüz girilmedi" satırı kalır
+ki fiş no yine de önceden girilebilsin.
+
+Düzenleme YİNE DE vardiya seviyesinde — `shifts.fis_no` tek bir taban
+değer, tüm alt fiş no'lar ondan türer, satırlar sadece görünüm birimi.
+Bu yüzden bir satıra dokununca açılan sheet o vardiyanın TÜM ürünlerini
+etkileyeceğini açıkça söylüyor (`previewFisler.length > 1` ise ipucu
+metni değişir) ve altında TÜM ürünlerin fiş no'sunu CANLI önizler
+(`RunEndSheet`'in ambalaj fire önizlemesiyle aynı desen — girerken
+hesapla, kayıttan sonra değil): operatör yazdıkça `fisNoForRun(editValue,
+...)` yeniden hesaplanıp gösterilir, "600123 yazınca ikinci ürün
+600123.1 mi olacak" sorusunun cevabı kaydetmeden önce görünür. Aynı
+vardiyanın birden çok satırından hangisine dokunulursa dokunulsun aynı
+sheet açılır (`editRows`/`edit` — `editKey`'in ait olduğu `shift.id`'ye
+göre bulunur, tıklanan spesifik run değil).
 
 **Sheet operatörün fiş no sheet'inin KOPYASI, ortak bileşene
 çıkarılmadı — bilinçli.** İkisi görsel olarak aynı ama OperatorPanel'in
