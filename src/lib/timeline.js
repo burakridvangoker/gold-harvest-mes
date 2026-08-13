@@ -542,6 +542,50 @@ export function downtimeByNote(intervals, { segmentsByEventId = new Map(), limit
 }
 
 /**
+ * Duruşların KRONOLOJİK, başlangıç/bitiş saatli dökümü — `downtimeByNote`
+ * notlara göre TOPLAR (tek sebep, tek toplam süre + tekrar sayısı); bu
+ * fonksiyon her olayı/segmenti KENDİ zaman aralığıyla ayrı bir satır olarak
+ * döner. Veri girişi ekranının "İş analizi" bölümü için: "hangi sebep ne
+ * zaman başlayıp bitti" sorusunun cevabı toplam süre değil, gerçek saat
+ * aralığı.
+ *
+ * `segmentsByEventId` verilirse ve bir duruşun kendi segmentleri varsa,
+ * HER SEGMENT kendi start/end'iyle ayrı bir satır olur (çakışabilirler,
+ * `downtimeByNote`'taki gibi). Segmenti olmayan duruşlar tek satır,
+ * interval'ın kendi start/end'iyle.
+ */
+export function downtimeEntries(intervals, { segmentsByEventId = new Map() } = {}) {
+  const entries = []
+
+  for (const interval of intervals) {
+    if (segmentKind(interval) !== 'durus') continue
+
+    const segments = segmentsByEventId.get(interval.eventId)
+
+    if (segments && segments.length > 0) {
+      for (const segment of segments) {
+        entries.push({
+          note: segment.note.trim(),
+          startMs: segment.startMs,
+          endMs: segment.endMs,
+          durationMs: Math.max(0, segment.endMs - segment.startMs),
+        })
+      }
+      continue
+    }
+
+    entries.push({
+      note: (interval.note ?? '').trim(),
+      startMs: interval.startMs,
+      endMs: interval.endMs,
+      durationMs: interval.durationMs,
+    })
+  }
+
+  return entries.sort((a, b) => a.startMs - b.startMs)
+}
+
+/**
  * DB'den gelen ham stop_reason_segments satırlarını (snake_case, timestamp
  * string) event_id'ye göre gruplayıp ms cinsine çevirir — buildIntervals'ın
  * timeline_events için yaptığının aynısı.

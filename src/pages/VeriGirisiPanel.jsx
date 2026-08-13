@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAllShifts } from '../hooks/useAllShifts'
-import { buildIntervals, downtimeByNote, fisNoForRun, groupSegmentsByEvent, runSummaries } from '../lib/timeline'
-import { formatDateLabel } from '../lib/time'
+import { buildIntervals, downtimeEntries, fisNoForRun, groupSegmentsByEvent, runSummaries } from '../lib/timeline'
+import { formatDateLabel, formatShortTime } from '../lib/time'
 import { formatDuration } from '../lib/duration'
 import ProductDetail from '../components/ProductDetail'
 import '../components/Sheet.css'
@@ -43,10 +43,12 @@ import './VeriGirisiPanel.css'
  * ekranına ÖZEL bir bölüm — ortak bileşene eklenmedi çünkü "Duruş
  * sebepleri" CANLI ManagerDashboard'dan bilinçli olarak kaldırılmıştı
  * (bkz. CLAUDE.md "Vardiya bölümleri"); ProductDetail'e eklemek onu
- * sessizce geri getirirdi. Bu run'ı aktif ürün olarak taşıyan `durus`
- * aralıkları `downtimeByNote` ile notlarına göre toplanır — segmentli
- * duruşlarda (`stop_reason_segments`) sebep bazlı, değilse olay notuna
- * göre; `ShiftHistoryDetail`'in aynı deseni.
+ * sessizce geri getirirdi. Kullanıcı isteği: "saatin başlama bitiş süre
+ * belli olsun" — toplam/sayaç değil, HER duruşun kendi saat aralığı. Bu
+ * yüzden `downtimeByNote` (nota göre TOPLAR) değil `downtimeEntries`
+ * (kronolojik, her olayı/segmenti kendi start/end'iyle ayrı satır döner)
+ * kullanılır — `EventLog`'un yatay "07:00 → 07:30" gösterimiyle aynı
+ * desen (`eventlog-row-time`).
  */
 function VeriGirisiPanel() {
   const { entries, loading, error } = useAllShifts()
@@ -139,7 +141,7 @@ function VeriGirisiPanel() {
     const runIntervals = buildIntervals(detayRow.events, nowMs).filter(
       (interval) => interval.productRunId === detayRow.run.id,
     )
-    return downtimeByNote(runIntervals, { segmentsByEventId: groupSegmentsByEvent(detayRow.segments ?? []) })
+    return downtimeEntries(runIntervals, { segmentsByEventId: groupSegmentsByEvent(detayRow.segments ?? []) })
   }, [detayRow])
 
   return (
@@ -296,8 +298,13 @@ function VeriGirisiPanel() {
           >
             <div className="sheet-handle" />
             <h2 className="sheet-title plate">{detayOzet.run.urun_adi}</h2>
+            <p
+              className={`veri-detay-fisno tnum${detayRow.fisNo ? '' : ' veri-detay-fisno--eksik'}`}
+            >
+              {detayRow.fisNo ? `Fiş ${detayRow.fisNo}` : 'Fiş no girilmedi'}
+            </p>
             <p className="sheet-subtitle">
-              {detayRow.shift.line_code} · {detayRow.fisNo ? `Fiş ${detayRow.fisNo}` : 'Fiş no yok'} ·{' '}
+              {detayRow.shift.line_code} · {detayRow.shift.vardiya}. vardiya ·{' '}
               {detayRow.shift.operator || 'Operatör girilmedi'}
             </p>
 
@@ -307,12 +314,17 @@ function VeriGirisiPanel() {
               <div className="veri-analiz">
                 <span className="veri-analiz-label plate">İş analizi — duruş sebepleri</span>
                 <ul className="veri-analiz-list">
-                  {detayIsAnalizi.map((item) => (
-                    <li key={item.note ?? '__yok__'} className="veri-analiz-row">
+                  {detayIsAnalizi.map((item, index) => (
+                    <li key={index} className="veri-analiz-row">
                       <span className="veri-analiz-not">{item.note || 'Not girilmedi'}</span>
-                      <span className="veri-analiz-deger tnum">
-                        {formatDuration(item.ms)} · {item.adet}×
-                      </span>
+                      <div className="veri-analiz-alt">
+                        <span className="veri-analiz-saat tnum">
+                          {formatShortTime(new Date(item.startMs))}
+                          <span className="veri-analiz-ok">→</span>
+                          {formatShortTime(new Date(item.endMs))}
+                        </span>
+                        <span className="veri-analiz-sure tnum">{formatDuration(item.durationMs)}</span>
+                      </div>
                     </li>
                   ))}
                 </ul>
