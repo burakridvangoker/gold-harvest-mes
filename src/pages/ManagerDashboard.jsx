@@ -45,11 +45,13 @@ const VISIT_RESUME_WINDOW_MS = 30 * 60 * 1000
  * yer buluyor (dev sayaç kalabilir, kimseyle yer paylaşmıyor), "Vardiya"
  * sabit boyutlu özet, "Ürünler" ise zaten değişken uzunluklu tek bölüm
  * (`plan-stack`) — kabuk hiç kaymadan SADECE bu panel kendi içinde kayar.
- * Varsayılan aktif ekran "Şimdi" (index 0): müdürün ilk bakışta görmek
- * isteyeceği "şu an ne oluyor" sorusu, operatördeki "Ana ekran"ın
- * müdür panosundaki karşılığı.
+ * Varsayılan aktif ekran "Genel" (index 0): müdürün ilk bakışta görmek
+ * isteyeceği "şu an ne oluyor" + "bugün nasıl gidiyor" sorularının ikisi
+ * de burada — "Şimdi" ile "Vardiya" başta ayrı ekrandı, kullanıcı
+ * ikisinin birlikte daha mantıklı olduğuna karar verdi (ikisi de sabit
+ * boyutlu, ayrı ekrana ihtiyaç yoktu — bkz. CLAUDE.md).
  */
-const PANEL_TITLES = ['Şimdi', 'Vardiya', 'Ürünler']
+const PANEL_TITLES = ['Genel', 'Ürünler']
 const SWIPE_THRESHOLD_PX = 45
 
 function ManagerDashboard() {
@@ -80,7 +82,7 @@ function ManagerDashboard() {
     if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) < Math.abs(dy)) return
 
     setActivePanel((current) => {
-      if (dx < 0) return Math.min(2, current + 1)
+      if (dx < 0) return Math.min(1, current + 1)
       return Math.max(0, current - 1)
     })
   }
@@ -460,10 +462,24 @@ function ManagerDashboard() {
            * kalıba bilerek uyuyoruz — ileride biri o overlay'i pager'ın
            * içine taşırsa aynı hatayı tekrar yaşamasın. */}
           <div className="manager-pager-track" style={{ left: `-${activePanel * 100}%` }}>
-            {/* Ekran 1/3 — Şimdi: durum + süre + aktif ürün, tek başına.
-              * Açılışta aktif (index 0) — müdürün ilk sorusu "şu an ne
-              * oluyor", operatördeki "Ana ekran"ın karşılığı. */}
-            <div className="manager-pager-panel manager-pager-panel--now">
+            {/* Ekran 1/2 — Genel: zaman çizelgesi + şimdi + vardiya toplamı,
+              * tek ekranda. İlk sürümde "Şimdi" ile "Vardiya" ayrı ekrandı;
+              * kullanıcı ikisinin birlikte daha mantıklı olduğuna karar
+              * verdi ("şimdi ile vardiyayı birleştir") — ikisi de sabit
+              * boyutlu, ürün sayısından etkilenmiyor, ayrı ekrana ihtiyaç
+              * yoktu. Değişken uzunluklu TEK bölüm (ürün listesi) kendi
+              * ekranında kaldı. */}
+            <div className="manager-pager-panel">
+              {/* Vardiyanın tamamı, planlanan bitişe (07:00→15:00 gibi) kadar
+               * tek bakışta — henüz gelmemiş kısım taralı, "ŞİMDİ" çizgisi net. */}
+              <ShiftClockBar
+                intervals={intervals}
+                shiftStartMs={shiftStartMs}
+                shiftEndMs={shiftEndMs}
+                runsById={runsById}
+                nowMs={now}
+              />
+
               <section className="zone zone--now">
                 <div className="now-state" aria-live="polite">
                   <StatusBadge status={state} size="xl" />
@@ -477,10 +493,11 @@ function ManagerDashboard() {
                       {activeRun.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : ''}
                     </span>
                     {/*
-                     * Bu ürünün kendi palet/koli/paketi — "Vardiya" ekranındaki
-                     * toplamla karıştırılmasın diye burada, ürün adının hemen
-                     * altında, ayrı ve net (yaşanmış hata: ürün değişince eski
-                     * ürünün toplamı yenisinin altında görünüyordu).
+                     * Bu ürünün kendi palet/koli/paketi — aşağıdaki "Vardiya
+                     * toplamı" ile karıştırılmasın diye burada, ürün adının
+                     * hemen altında, ayrı ve net (yaşanmış hata: ürün
+                     * değişince eski ürünün toplamı yenisinin altında
+                     * görünüyordu).
                      */}
                     <div className="now-run-figures">
                       <span className="now-run-figure">
@@ -501,27 +518,13 @@ function ManagerDashboard() {
                   <div className="now-run-empty plate">Ürün girilmedi</div>
                 )}
               </section>
-            </div>
-
-            {/* Ekran 2/3 — Vardiya: zaman çizelgesi + iki oran + 6 rakam.
-              * Sabit boyutlu bir özet, ürün sayısından etkilenmez. */}
-            <div className="manager-pager-panel">
-              {/* Vardiyanın tamamı, planlanan bitişe (07:00→15:00 gibi) kadar
-               * tek bakışta — henüz gelmemiş kısım taralı, "ŞİMDİ" çizgisi net. */}
-              <ShiftClockBar
-                intervals={intervals}
-                shiftStartMs={shiftStartMs}
-                shiftEndMs={shiftEndMs}
-                runsById={runsById}
-                nowMs={now}
-              />
 
               <section className="zone zone--today">
                 <div className="zone-head">
                   {/*
                    * "Vardiya toplamı" — bilerek TÜM ürünlerin toplamı, aktif
-                   * ürünün değil (o "Şimdi" ekranında, .now-run-figures'ta).
-                   * Sadece "Vardiya" başlığı bunu netleştirmiyordu (yaşanmış
+                   * ürünün değil (o yukarıda, .now-run-figures'ta). Sadece
+                   * "Vardiya" başlığı bunu netleştirmiyordu (yaşanmış
                    * karışıklık: tek ürün varken bu toplam o ürünün rakamlarıyla
                    * birebir aynı görünüyor, "toplamı" ibaresi olmadan aktif
                    * ürüne aitmiş gibi okunuyordu).
@@ -582,7 +585,7 @@ function ManagerDashboard() {
               </section>
             </div>
 
-            {/* Ekran 3/3 — Ürünler: ürün bazlı liste. Sayfadaki TEK gerçekten
+            {/* Ekran 2/2 — Ürünler: ürün bazlı liste. Sayfadaki TEK gerçekten
               * değişken-uzunluklu bölüm burasıydı (ürün sayısı arttıkça
               * uzuyordu) — artık kabuğu değil, sadece kendi panelini kaydırır. */}
             <div className="manager-pager-panel">
