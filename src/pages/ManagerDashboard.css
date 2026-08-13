@@ -130,7 +130,7 @@
 }
 
 /*
- * Üç ekranlı pager — sekme çubuğu + yatay kaydıran şerit. OperatorPanel.css'in
+ * İki ekranlı pager — sekme çubuğu + yatay kaydıran şerit. OperatorPanel.css'in
  * `.operator-pager*` desenin BİREBİR aynısı, aynı gerekçelerle: `left` yüzdesi
  * (asla `transform` — `position:fixed` torunları için yeni bir konumlanma
  * bloğu açar), her panel KENDİ İÇİNDE kayar (`overflow-y:auto`), kabuk
@@ -138,11 +138,16 @@
  * center` KULLANILMAZ (bkz. OperatorPanel.css'teki aynı uyarı) — taşan
  * içeriğin üstü görünmez biçimde kırpılıp kaydırmayla da erişilemez hale
  * gelirdi; `flex-start` ile taşma her zaman alttan olur.
+ *
+ * Başta üç ekrandı (Şimdi/Vardiya/Ürünler); kullanıcı "Şimdi ile Vardiyayı
+ * birleştir" dedi — ikisi de sabit boyutlu olduğu için ayrı ekrana ihtiyaç
+ * yoktu, sadece değişken uzunluklu ürün listesi kendi ekranında kalmalıydı.
+ * Genişlik/oran sabitleri (`300%`→`200%`, `/3`→`/2`) buna göre güncellendi.
  */
 .manager-pager-nav {
   flex-shrink: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
 }
 
@@ -179,7 +184,7 @@
 .manager-pager-track {
   display: flex;
   position: relative;
-  width: 300%;
+  width: 200%;
   height: 100%;
   transition: left 0.25s ease;
 }
@@ -191,8 +196,8 @@
 }
 
 .manager-pager-panel {
-  flex: 0 0 calc(100% / 3);
-  width: calc(100% / 3);
+  flex: 0 0 calc(100% / 2);
+  width: calc(100% / 2);
   height: 100%;
   min-height: 0;
   overflow-y: auto;
@@ -202,18 +207,6 @@
   display: flex;
   flex-direction: column;
   gap: clamp(1.25rem, 2.2vh, 2.5rem);
-}
-
-/*
- * Şimdi ekranı — içerik sığdığında dikey ortalanmış görünsün (dev süre
- * sayacı boşlukta yalnız durmasın), ama `justify-content:center` DEĞİL
- * (bkz. dosya başındaki uyarı — taşınca üstü görünmez kırpılıyordu).
- * `margin:auto` aynı görsel sonucu güvenli veriyor: boş alan varsa eşit
- * paylaştırır, taşarsa 0'a çöker ve `flex-start` gibi davranır — üst
- * kenar hiçbir zaman erişilemez olmaz.
- */
-.manager-pager-panel--now .zone--now {
-  margin: auto 0;
 }
 
 /* Bölgeler */

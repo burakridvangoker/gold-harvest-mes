@@ -741,7 +741,7 @@ tamamen kaldırıldı (bkz. "Vardiya bölümleri" notu) — bu limit tartışmas
 artık sadece `ShiftHistoryDetail`'in (geçmiş vardiya özeti) `downtimeByNote`
 kullanımı için geçerli, canlı panoda o fonksiyon hiç çağrılmıyor.
 
-## Müdür panosu: üç ekranlı pager (SÜPERSEDE eder — artık tek scroll değil)
+## Müdür panosu: iki ekranlı pager (SÜPERSEDE eder — artık tek scroll değil)
 
 Yukarıdaki "sayfa artık kaydırılabilir" kararı (bir önceki bölüm) CANLI
 `ManagerDashboard` için artık geçerli değil — kullanıcı gerçek tarayıcı
@@ -749,24 +749,29 @@ penceresinde (duvar ekranı değil, normal masaüstü) ekran görüntüsüyle
 bildirdi: "Şimdi" bölgesindeki duvar-ölçekli dev süre sayacı
 (`.now-elapsed`, `clamp(3rem,6vw,9rem)`) tek başına sayfayı dolduruyor,
 altındaki "Vardiya toplamı" ve ürün listesini aşağı itiyordu — kullanıcı
-"aşağı kaydırma olmasın" dedi. OperatorPanel'in üç ekranlı pager deseni
-(bkz. "Andon tasarım sistemi" bölümündeki "Üçüncü tasarım") buraya da
-taşındı, aynı gerekçe ve aynı CSS kalıplarıyla:
+"aşağı kaydırma olmasın" dedi. OperatorPanel'in pager deseni (bkz. "Andon
+tasarım sistemi" bölümündeki "Üçüncü tasarım") buraya da taşındı, aynı
+gerekçe ve aynı CSS kalıplarıyla.
 
-- **Şimdi** (`PANEL_TITLES[0]`, açılışta aktif) — durum rozeti + süre
-  sayacı + aktif ürün adı/meta + o ürünün palet/koli/paket'i. Artık
-  KİMSEYLE yer paylaşmıyor; dev sayaç bilerek aynı boyutta kaldı (duvar
-  ekranında hâlâ uzaktan okunmalı), sadece tek başına bir ekranı kaplıyor.
-- **Vardiya** — `ShiftClockBar` + iki oran (`RadialGauge`) + `split-bar`
-  + altı rakam (Çalışma/Duruş/Mola/Palet/Koli/Paket). Sabit boyutlu,
-  ürün sayısından etkilenmez.
+**İlk sürüm ÜÇ ekrandı (Şimdi/Vardiya/Ürünler), kullanıcı ikisini
+birleştirmemizi istedi.** Ayrı ekran olma gerekçesi ikisi için de aynıydı
+("sabit boyutlu, ürün sayısından etkilenmiyor") — ayrı tutmanın somut bir
+faydası yoktu, sadece bir dokunuş fazlaydı. Son hâl iki ekran:
+
+- **Genel** (`PANEL_TITLES[0]`, açılışta aktif) — `ShiftClockBar` + durum
+  rozeti/süre sayacı/aktif ürün (eski "Şimdi") + iki oran/`split-bar`/altı
+  rakam (eski "Vardiya"), sırasıyla üst üste. Dev süre sayacı (`clamp(3rem,
+  6vw,9rem)`) bilerek aynı boyutta kaldı (duvar ekranında hâlâ uzaktan
+  okunmalı); "Vardiya toplamı" ile arasındaki `.zone + .zone` çizgisi
+  (border-top) ikisini görsel olarak ayırıyor, tek panelin içinde iki ayrı
+  fikir olduğu net kalsın diye.
 - **Ürünler** — `plan-stack` (ürün bazlı satırlar, her biri dokununca
   `ProductDetail` açar). Sayfadaki TEK gerçekten değişken-uzunluklu
   bölüm buradaydı (ürün sayısı arttıkça uzuyordu) — artık kabuğu değil
-  SADECE kendi panelini kaydırıyor.
+  SADECE kendi panelini kaydırıyor, bu yüzden ayrı ekran olarak kaldı.
 
 Header (hat kodu, tarih/vardiya/operatör, "Geçmiş vardiyalar", canlı saat)
-her üç ekranda da sabit — OperatorPanel'deki pager'ın dışında kalan
+her iki ekranda da sabit — OperatorPanel'deki pager'ın dışında kalan
 header'la aynı fikir. Sekmelere dokunarak ya da (duvar ekranı dokunmatikse)
 sağ/sol parmak kaydırmasıyla geçilir (`handleTouchStart`/`handleTouchEnd`,
 aynı `SWIPE_THRESHOLD_PX` deseni).
@@ -776,10 +781,13 @@ aynı `SWIPE_THRESHOLD_PX` deseni).
 `-panel`): `left` yüzdesi (asla `transform` — bkz. "Yaşanmış hata" notu,
 `position:fixed` torunları için yeni bir konumlanma bloğu açardı), her
 panel kendi `overflow-y:auto`'suyla kayar, kabuk (`.manager-shell`)
-`height:100dvh; overflow:hidden` ile HİÇBİR ZAMAN kaymaz. "Şimdi" ekranında
-içerik sığdığında dikey ortalanmış görünsün diye `.zone--now`'a
-`margin:auto 0` verildi — `justify-content:center` KULLANILMADI (aynı
-proje-geneli kural: taşan içeriğin üstü görünmez kırpılırdı).
+`height:100dvh; overflow:hidden` ile HİÇBİR ZAMAN kaymaz. İki panel olduğu
+için track genişliği `200%`, her panel `calc(100% / 2)` — üçten ikiye
+inince bu sabitler de güncellendi, unutulursa panel genişlikleri kayar.
+(İlk sürümdeki "Şimdi ekranını `margin:auto 0` ile dikey ortala" tekniği
+artık YOK — birleşik "Genel" ekranında tek başına duran dev bir sayaç
+kalmadı, ortalamaya gerek kalmadı; `justify-content:center` de HÂLÂ
+kullanılmıyor, aynı proje-geneli kural geçerli.)
 
 **`ProductDetail` sheet'i pager'ın dışında kaldı, bilerek dokunulmadı** —
 zaten `.manager-dashboard`'ın değil `.manager-shell`'in doğrudan çocuğu
