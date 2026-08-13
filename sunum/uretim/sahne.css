@@ -250,6 +250,31 @@ body.kart-kapanis .sahne-kart--kapanis { display: flex; }
   transform-origin: top left;
 }
 
+/*
+ * Sağ sütun TELEFON modu (sevkiyat ekranı için) — müdür panosunun geniş
+ * duvar kutusunun İÇİNDE, telefon boyutunda ortalanmış bir cihaz olarak
+ * gösterilir. Sevkiyat ekranı mobil-öncelikli (vw tabanlı) olduğu için
+ * geniş bir iframe'e olduğu gibi konursa masaüstü ölçeğinde açılırdı —
+ * grid'i (414px + 1fr) hiç bozmadan, sadece bu kutunun İÇİNDEKİ iframe'i
+ * telefonla birebir aynı boyuta (400×860, ölçek 0.979) küçültüp ortalıyoruz.
+ */
+.sahne-sutun--pano-telefon .sahne-duvar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sahne-sutun--pano-telefon .sahne-duvar-ic {
+  width: 400px;
+  height: 860px;
+  transform: scale(0.979);
+  border-radius: 14px;
+}
+
+.sahne-sutun--pano-telefon .sahne-duvar::after {
+  display: none;
+}
+
 /* Panoda alt kesim yumuşasın — düz kesik "eksik render" gibi duruyordu. */
 .sahne-duvar::after {
   content: '';

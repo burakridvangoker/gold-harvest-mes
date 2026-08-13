@@ -84,6 +84,7 @@ function Sahne() {
           <div className="sahne-telefon">
             <iframe
               className="sahne-telefon-ic"
+              name="sahne-telefon"
               src="/?ekran=operator&sade=1&video=1"
               title="Operatör ekranı"
             />
@@ -93,7 +94,12 @@ function Sahne() {
         <div className="sahne-sutun sahne-sutun--pano">
           <div className="sahne-etiket">MÜDÜR PANOSU · AYNI AN</div>
           <div className="sahne-duvar">
-            <iframe className="sahne-duvar-ic" src="/?ekran=mudur&video=1" title="Müdür panosu" />
+            <iframe
+              className="sahne-duvar-ic"
+              name="sahne-pano"
+              src="/?ekran=mudur&video=1"
+              title="Sağ ekran"
+            />
           </div>
         </div>
       </div>
