@@ -852,13 +852,32 @@ bölümleri" notu, "adam gibi çeki düzen" geri bildirimi) — `ProductDetail`
 paylaşılan bir bileşen olduğu için oraya eklemek bu kararı sessizce geri
 getirir, ManagerDashboard'un ürün detayında da aniden yeniden çıkardı.
 Hesap: `buildIntervals(events, nowMs)` ile o run'ın süresince aktif olan
-`durus` aralıkları (`interval.productRunId === run.id` filtresi) alınıp
-`downtimeByNote` ile notlarına göre toplanıyor — segment varsa
-(`stop_reason_segments`) sebep bazlı, yoksa olay notuna göre, tıpkı
-`ShiftHistoryDetail`'in aynı deseni. `useAllShifts.js` bu yüzden
-`stop_reason_segments`'ı da çekiyor artık (dördüncü tablo, `useShift.js`
-ile aynı tam set — sadece `manager_dashboard_visits` gibi bu ekranla
-alakasız tablolar hariç).
+`durus` aralıkları (`interval.productRunId === run.id` filtresi) alınır.
+`useAllShifts.js` bu yüzden `stop_reason_segments`'ı da çekiyor artık
+(dördüncü tablo, `useShift.js` ile aynı tam set — sadece
+`manager_dashboard_visits` gibi bu ekranla alakasız tablolar hariç).
+
+**`downtimeByNote` değil `downtimeEntries` — yaşanmış düzeltme.**
+Kullanıcı geri bildirimi: "iş analizleri saatin başlama bitiş süre
+belli olsun adam gibi." İlk sürüm `downtimeByNote` kullanıyordu — bu
+notlara göre TOPLAR (aynı notlu iki duruş tek satırda "40 dk · 2×" olur),
+gerçek saat aralığı kaybolur. `timeline.js#downtimeEntries` bunun için
+eklendi: `downtimeByNote` ile AYNI segment/interval mantığını taşır
+(segment varsa sebep bazlı, yoksa olay notuna göre) ama TOPLAMAZ — her
+olayı/segmenti kendi `startMs`/`endMs`'iyle kronolojik ayrı bir satır
+olarak döner. Kontrol sheet'inde her satır `EventLog`'un yatay
+"07:00 → 07:30" gösterimiyle AYNI desende (`eventlog-row-time`) render
+edilir, altında/yanında süre de ayrıca yazar. `downtimeByNote` silinmedi
+— `ShiftHistoryDetail`'in "Duruş sebepleri" listesi hâlâ toplam/tekrar
+sayısı istiyor, o kullanım yeri değişmedi.
+
+**Fiş no rozeti — kullanıcı isteği "daha belirgin olsun".** İlk sürümde
+fiş no, başlığın altındaki `sheet-subtitle` satırına hat/vardiya/
+operatörle birlikte küçük ve soluk gömülüydü. Artık kendi satırı
+(`.veri-detay-fisno`) — büyük, kalın, kutulu; ekranın asıl konusu fiş no
+olduğu için ilk bakışta göze çarpmalı. Eksikse (`--eksik` varyantı)
+`--signal-idle` (amber) rengiyle uyarır, tıpkı liste satırındaki "Fiş no
+gir" etiketiyle aynı dil.
 
 ## Müdür panosunda liste kesmeleri kaldırıldı
 

@@ -8,6 +8,7 @@ import {
   clampToWindow,
   currentState,
   downtimeByNote,
+  downtimeEntries,
   fisNoForRun,
   frequentNotes,
   groupSegmentsByEvent,
@@ -553,6 +554,68 @@ describe('duruş notları', () => {
     const dokum = downtimeByNote(intervals, { segmentsByEventId: new Map() })
     assert.equal(dokum[0].note, 'Temizlik')
     assert.equal(dokum[0].ms, 20 * DK)
+  })
+})
+
+describe('downtimeEntries', () => {
+  it('her duruşu kendi başlangıç/bitişiyle, kronolojik sırayla ayrı satır döner', () => {
+    const intervals = buildIntervals(
+      [
+        { id: '1', at: T(8, 0), kind: 'durus', note: 'Bobin' },
+        { id: '2', at: T(8, 30), kind: 'uretim', note: null },
+        { id: '3', at: T(9, 0), kind: 'durus', note: 'Ambalaj ayarı' },
+      ],
+      ms(T(9, 10)),
+    )
+
+    const girdiler = downtimeEntries(intervals)
+    assert.equal(girdiler.length, 2)
+    assert.equal(girdiler[0].note, 'Bobin')
+    assert.equal(girdiler[0].startMs, ms(T(8, 0)))
+    assert.equal(girdiler[0].endMs, ms(T(8, 30)))
+    assert.equal(girdiler[1].note, 'Ambalaj ayarı')
+    assert.equal(girdiler[1].startMs, ms(T(9, 0)))
+    assert.equal(girdiler[1].endMs, ms(T(9, 10)))
+  })
+
+  it('segmentleri olan bir duruşu, çakışsalar bile HER SEGMENTİ kendi saatiyle ayrı satır olarak döner', () => {
+    const olaylar = [
+      { id: '1', at: T(7, 0), kind: 'durus', note: 'Bobin + Ambalaj' },
+      { id: '2', at: T(7, 55), kind: 'uretim', note: null },
+    ]
+    const intervals = buildIntervals(olaylar, ms(T(8, 0)))
+
+    const segmentsByEventId = new Map([
+      [
+        '1',
+        [
+          { id: 's1', note: 'Bobin', startMs: ms(T(7, 0)), endMs: ms(T(7, 30)) },
+          { id: 's2', note: 'Ambalaj', startMs: ms(T(7, 15)), endMs: ms(T(7, 45)) },
+        ],
+      ],
+    ])
+
+    const girdiler = downtimeEntries(intervals, { segmentsByEventId })
+    assert.equal(girdiler.length, 2)
+    assert.equal(girdiler[0].note, 'Bobin')
+    assert.equal(girdiler[0].endMs, ms(T(7, 30)))
+    assert.equal(girdiler[1].note, 'Ambalaj')
+    assert.equal(girdiler[1].startMs, ms(T(7, 15)))
+  })
+
+  it('mola/üretim aralıklarını atlar, sadece duruşları döner', () => {
+    const intervals = buildIntervals(
+      [
+        { id: '1', at: T(8, 0), kind: 'uretim', note: null },
+        { id: '2', at: T(8, 10), kind: 'mola', note: null },
+        { id: '3', at: T(8, 20), kind: 'durus', note: 'Arıza' },
+      ],
+      ms(T(8, 30)),
+    )
+
+    const girdiler = downtimeEntries(intervals)
+    assert.equal(girdiler.length, 1)
+    assert.equal(girdiler[0].note, 'Arıza')
   })
 })
 
