@@ -191,9 +191,42 @@
   font-weight: 600;
 }
 
+.veri-row-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .veri-row-operator {
   font-size: 0.8rem;
   color: var(--film-dim);
+}
+
+/* Fiş no düzenlemeden AYRI bir aksiyon — "veri girişi operatörü artık
+ * miktarları elle girmiyor, MES'in hesapladığını kontrol ediyor" (bkz.
+ * CLAUDE.md). Satır zaten <button> olduğu için gerçek bir <button>
+ * yuvalanamaz (geçersiz HTML) — role="button" + tabIndex ile erişilebilir
+ * bir eşdeğer. */
+.veri-row-kontrol {
+  flex-shrink: 0;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--steel-600);
+  background: var(--steel-700);
+  color: var(--film-dim);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.veri-row-kontrol:hover,
+.veri-row-kontrol:focus-visible {
+  color: var(--film);
+  border-color: var(--film-dim);
 }
 
 /* ---- Fiş no düzenleme sheet'i: canlı alt fiş önizlemesi ---- */

@@ -3,18 +3,22 @@ import { supabase } from '../lib/supabaseClient'
 
 /*
  * Veri girişi ekranı için: TÜM hatların TÜM vardiyaları (açık + kapanmış),
- * ürünleriyle birlikte. `useOpenShifts.js` ile aynı desen (realtime +
- * yeniden çekme, tüm hatlar), tek fark `ended_at is null` filtresinin
- * OLMAMASI — bu ekranın işi geçmişe dönük fiş no mutabakatı da kapsıyor,
- * kapanmış bir vardiyaya artık erişilemez olmamalı.
+ * ürünleri/olayları/paletleriyle birlikte. `useOpenShifts.js` ile aynı
+ * desen (realtime + yeniden çekme, tüm hatlar), tek fark `ended_at is
+ * null` filtresinin OLMAMASI — bu ekranın işi geçmişe dönük fiş no
+ * mutabakatı da kapsıyor, kapanmış bir vardiyaya artık erişilemez
+ * olmamalı.
  *
- * Palet kayıtları burada çekilmiyor — fiş no bölümü ürün/vardiya
- * seviyesinde çalışıyor, palete ihtiyaç yok (sevkiyat ekranından farkı).
+ * Olaylar + paletler de çekiliyor (`useShift.js`'in tek-vardiyalık
+ * setiyle aynı alanlar) — veri girişi operatörü artık miktar/personel
+ * bilgisini kağıttan elle girmiyor, MES'in zaten hesapladığı özeti
+ * (`timeline.js#runSummaries`) KONTROL ediyor. Bu yüzden sevkiyat
+ * ekranının aksine `stop_reason_segments` hariç her şey burada.
  *
- * Dönen `entries`: [{ shift, runs }], en yeni vardiya önde.
+ * Dönen `entries`: [{ shift, runs, events, pallets }], en yeni vardiya önde.
  */
 
-const TABLES = ['shifts', 'product_runs']
+const TABLES = ['shifts', 'product_runs', 'timeline_events', 'pallet_records']
 
 export function useAllShifts() {
   const [entries, setEntries] = useState([])
@@ -42,24 +46,29 @@ export function useAllShifts() {
 
     const shiftIds = shifts.map((shift) => shift.id)
 
-    const { data: runs, error: runsError } = await supabase
-      .from('product_runs')
-      .select('*')
-      .in('shift_id', shiftIds)
-      .order('sira')
+    const [runsResult, eventsResult, palletsResult] = await Promise.all([
+      supabase.from('product_runs').select('*').in('shift_id', shiftIds).order('sira'),
+      supabase.from('timeline_events').select('*').in('shift_id', shiftIds).order('at'),
+      supabase.from('pallet_records').select('*').in('shift_id', shiftIds).order('completed_at'),
+    ])
 
-    if (runsError) {
-      setError('Ürün verisi okunamadı: ' + runsError.message)
+    const failure = runsResult.error || eventsResult.error || palletsResult.error
+    if (failure) {
+      setError('Vardiya verisi okunamadı: ' + failure.message)
     } else {
       setError(null)
     }
 
-    const runList = runs ?? []
+    const runs = runsResult.data ?? []
+    const events = eventsResult.data ?? []
+    const pallets = palletsResult.data ?? []
 
     setEntries(
       shifts.map((shift) => ({
         shift,
-        runs: runList.filter((run) => run.shift_id === shift.id),
+        runs: runs.filter((run) => run.shift_id === shift.id),
+        events: events.filter((event) => event.shift_id === shift.id),
+        pallets: pallets.filter((pallet) => pallet.shift_id === shift.id),
       })),
     )
     setLoading(false)
