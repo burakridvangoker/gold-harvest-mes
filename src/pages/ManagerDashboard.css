@@ -444,6 +444,38 @@
   transition: width 0.6s ease;
 }
 
+/*
+ * Sevkiyat rozeti — OperatorPanel'in `.operator-sevkiyat-row-badge` ile
+ * AYNI görsel dil (tamam yeşil/kısmi amber/bekliyor nötr), ama bilerek
+ * KENDİ sınıf adıyla (`.plan-row-*`): bu satırın ölçeği (duvar ekranı
+ * vw) operatörün telefon rem ölçeğinden farklı, aynı adı paylaşırlarsa
+ * yanlış ölçek sızabilir — projede yerleşik kural (bkz. CLAUDE.md,
+ * "Palet çıkış saatleri" bölümü).
+ */
+.plan-row-sevkiyat {
+  align-self: flex-start;
+  padding: clamp(0.2rem, 0.4vw, 0.4rem) clamp(0.5rem, 0.9vw, 0.9rem);
+  border-radius: 999px;
+  border: 1px solid var(--steel-600);
+  background: var(--steel-700);
+  font-size: clamp(0.8rem, 0.9vw, 1.2rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--film-dim);
+}
+
+.plan-row-sevkiyat--tamam {
+  background: var(--wash-run);
+  border-color: var(--signal-run);
+  color: var(--signal-run-text);
+}
+
+.plan-row-sevkiyat--kismi {
+  background: var(--wash-idle);
+  border-color: var(--signal-idle);
+  color: var(--signal-idle-text);
+}
+
 /* Mühürlü paket: bitmiş ürün, damgalanmış beyaz kart içinde. */
 .plan-row--frozen {
   padding: clamp(0.55rem, 1vw, 1rem) clamp(0.7rem, 1.2vw, 1.25rem);
@@ -471,6 +503,11 @@
 }
 
 .plan-row-label {
+  color: var(--film-dim);
+}
+
+.plan-row-fisno {
+  font-size: clamp(0.8rem, 0.9vw, 1.2rem);
   color: var(--film-dim);
 }
 
@@ -575,6 +612,13 @@
   background: var(--steel-700);
   border-radius: 999px;
   font-size: clamp(0.8rem, 0.9vw, 1.2rem);
+}
+
+/* Sevkiyatçı bu paleti TIR'a yükledi — ProductDetail'in aynı fikirli
+ * `.history-pallets-loaded` rozetinin ürünler listesindeki karşılığı. */
+.plan-row-pallets-loaded {
+  color: var(--signal-run-text);
+  font-weight: 600;
 }
 
 /*

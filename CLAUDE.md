@@ -726,6 +726,27 @@ uydurma kayıttan iyidir (genel proje ilkesi burada da geçerli).
   Satıra dokununca detay: paletler tek tek, her biri dokununca
   yüklendi/bekliyor arası geçiş yapan bir buton.
 
+**Üçüncü ayna: müdür panosunun "Ürünler" ekranı.** Kullanıcı isteği
+("müdür ekranından da sevkiyat ile operatörden çıkan ürünü görebilen bir
+yer olsun") — operatörün Detay ekranındaki "Sevkiyat durumu" listesi
+(bkz. yukarısı) artık üçüncü bir yerde de var. `ManagerDashboard.jsx`'in
+`productRows` hesabı (zaten her ürünün kendi `runPallets`'ini taşıyor)
+aynı `fisNoForRun` türetmesiyle fiş no'yu, `pallet.loaded_at` sayımıyla
+yüklenen/toplam palet oranını hesaplıyor — ayrı bir sorgu/hook YOK, var
+olan veri üstüne iki türetilmiş alan (`fisNo`, `sevkiyatToplam`,
+`sevkiyatYuklenen`). Her ürün satırında (`plan-row`): ürün adının yanında
+fiş no, palet/koli/paket rakamının altında renkli bir rozet
+(`.plan-row-sevkiyat--tamam` yeşil / `--kismi` amber / rozet-yok gri —
+OperatorPanel'in `.operator-sevkiyat-row-badge` ile AYNI renk mantığı ama
+BİLEREK ayrı sınıf adıyla, bkz. "Palet çıkış saatleri" bölümündeki ölçek
+karışması uyarısı), ve mevcut "Palet çıkış saatleri" çip listesindeki her
+palette (yüklenmişse) yeşil "yüklendi ✓" ibaresi. Palet hiç çıkmamış
+ürün için rozet hiç gösterilmiyor (`sevkiyatToplam > 0` şartı) — operatörün
+`sevkiyatRows`'undaki aynı filtre. Salt-okunur: tıklayınca açılan
+`ProductDetail` sheet'i zaten aynı `loaded_at` bilgisini palet listesinde
+gösteriyordu (`history-pallets-loaded`) — bu değişiklik onu ayrıca
+LİSTEDE, tıklamadan da görünür yapıyor.
+
 ## Müdür panosunda liste kesmeleri kaldırıldı
 
 Eskiden "Son olaylar" `RECENT_EVENTS_LIMIT = 8` ile, "Duruş sebepleri"
