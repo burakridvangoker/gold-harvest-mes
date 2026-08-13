@@ -14,13 +14,18 @@
   /* Lamba bandı üstte, pano altta — kabuk dikey akar. */
   flex-direction: column;
   /*
-   * Duvara asılı sabit ekranda tamamı sığar ama masaüstü/tarayıcı
-   * penceresi kısa olduğunda (ör. ürün satırları çoğaldığında) alttaki
-   * "Duruş sebepleri"/"Son olaylar" görünmez oluyordu — sayfa hiç
-   * kaydırılamıyordu. min-height ile sayfanın kendisi kaydırılabilir;
-   * içerik ekrana sığıyorsa zaten fark etmez.
+   * YAŞANMIŞ HATA (üç ekranlı pager'dan ÖNCEKİ hâl) — burada `min-height`
+   * vardı, sayfa tek uzun scroll'du. Ürün satırları çoğaldıkça (`plan-stack`)
+   * içerik uzayıp gidiyor, "Şimdi" bölgesindeki dev süre sayacı (duvar
+   * ekranı için `clamp(3rem,6vw,9rem)`) normal tarayıcı penceresinde tek
+   * başına ekranı doldurup geri kalan her şeyi aşağı itiyordu — kullanıcı
+   * ekran görüntüsüyle bildirdi. Çözüm OperatorPanel'in AYNI deseni: kabuk
+   * artık gerçekten sabit `height`, HİÇBİR ZAMAN kaymaz; içerik üç ekrana
+   * bölündü (bkz. `.manager-pager*`), taşan tek bölüm olan ürün listesi
+   * artık kabuğu değil sadece KENDİ panelini kaydırıyor.
    */
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   background:
     linear-gradient(var(--status-wash), var(--status-wash)),
     var(--steel-900);
@@ -35,6 +40,13 @@
 
 .manager-shell .andon-rail {
   height: clamp(1.1rem, 2.4vh, 2.1rem);
+}
+
+/* Geçmiş vardiya görünümü — bkz. ManagerDashboard.jsx'teki gerekçe. */
+.manager-shell--gecmis {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
 }
 
 .manager-dashboard {
@@ -115,6 +127,93 @@
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.01em;
+}
+
+/*
+ * Üç ekranlı pager — sekme çubuğu + yatay kaydıran şerit. OperatorPanel.css'in
+ * `.operator-pager*` desenin BİREBİR aynısı, aynı gerekçelerle: `left` yüzdesi
+ * (asla `transform` — `position:fixed` torunları için yeni bir konumlanma
+ * bloğu açar), her panel KENDİ İÇİNDE kayar (`overflow-y:auto`), kabuk
+ * (`.manager-pager`) `overflow:hidden` ile asla kaymaz. `justify-content:
+ * center` KULLANILMAZ (bkz. OperatorPanel.css'teki aynı uyarı) — taşan
+ * içeriğin üstü görünmez biçimde kırpılıp kaydırmayla da erişilemez hale
+ * gelirdi; `flex-start` ile taşma her zaman alttan olur.
+ */
+.manager-pager-nav {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.manager-pager-tab {
+  min-height: 2.75rem;
+  border: 1px solid var(--steel-line);
+  border-radius: 0.6rem;
+  background: var(--steel-800);
+  color: var(--film-dim);
+  font-family: var(--plate);
+  font-size: clamp(0.85rem, 1vw, 1.3rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.manager-pager-tab--active {
+  background: var(--film);
+  border-color: var(--film);
+  color: var(--steel-900);
+}
+
+.manager-pager {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.manager-pager-track {
+  display: flex;
+  position: relative;
+  width: 300%;
+  height: 100%;
+  transition: left 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .manager-pager-track {
+    transition: none;
+  }
+}
+
+.manager-pager-panel {
+  flex: 0 0 calc(100% / 3);
+  width: calc(100% / 3);
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: clamp(0.5rem, 1vh, 1rem) clamp(0.25rem, 0.6vw, 0.75rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 2.2vh, 2.5rem);
+}
+
+/*
+ * Şimdi ekranı — içerik sığdığında dikey ortalanmış görünsün (dev süre
+ * sayacı boşlukta yalnız durmasın), ama `justify-content:center` DEĞİL
+ * (bkz. dosya başındaki uyarı — taşınca üstü görünmez kırpılıyordu).
+ * `margin:auto` aynı görsel sonucu güvenli veriyor: boş alan varsa eşit
+ * paylaştırır, taşarsa 0'a çöker ve `flex-start` gibi davranır — üst
+ * kenar hiçbir zaman erişilemez olmaz.
+ */
+.manager-pager-panel--now .zone--now {
+  margin: auto 0;
 }
 
 /* Bölgeler */

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useShift } from '../hooks/useShift'
 import { useLineCode } from '../hooks/useLineCode'
@@ -35,15 +35,55 @@ const VISIT_HEARTBEAT_MS = 20 * 1000
 const VISIT_SESSION_KEY = 'mes_manager_visit'
 const VISIT_RESUME_WINDOW_MS = 30 * 60 * 1000
 
+/*
+ * Üç ekranlı pager (OperatorPanel.jsx'teki desenin aynısı) — tek uzun
+ * scroll'un yerine geçti. Yaşanmış şikayet: "Şimdi" bölgesindeki süre
+ * sayacı duvar ekranı için dev boyutta (`clamp(3rem,6vw,9rem)`), normal
+ * tarayıcı penceresinde sayfayı yiyip "Vardiya toplamı"/ürün listesini
+ * aşağı itiyordu, kullanıcı ekran görüntüsüyle bildirdi. Çözüm: her biri
+ * kendi başına sığan üç ekran — "Şimdi" artık TEK BAŞINA nefes alacak
+ * yer buluyor (dev sayaç kalabilir, kimseyle yer paylaşmıyor), "Vardiya"
+ * sabit boyutlu özet, "Ürünler" ise zaten değişken uzunluklu tek bölüm
+ * (`plan-stack`) — kabuk hiç kaymadan SADECE bu panel kendi içinde kayar.
+ * Varsayılan aktif ekran "Şimdi" (index 0): müdürün ilk bakışta görmek
+ * isteyeceği "şu an ne oluyor" sorusu, operatördeki "Ana ekran"ın
+ * müdür panosundaki karşılığı.
+ */
+const PANEL_TITLES = ['Şimdi', 'Vardiya', 'Ürünler']
+const SWIPE_THRESHOLD_PX = 45
+
 function ManagerDashboard() {
   const { lineCode, selectLine, clearLine } = useLineCode()
   const { shift, runs, events, pallets, loading, error } = useShift(lineCode)
   const [now, setNow] = useState(() => Date.now())
   const [historyPickerOpen, setHistoryPickerOpen] = useState(false)
   const [historyShiftId, setHistoryShiftId] = useState(null)
+  const [activePanel, setActivePanel] = useState(0)
+  const touchStartXRef = useRef(null)
   /* Ürün satırına dokununca açılan detay — salt-okunur, operatördeki
    * ProductHistory detayının aynısı (ortak `ProductDetail` bileşeni). */
   const [detayRunId, setDetayRunId] = useState(null)
+
+  /* Dokunmatik duvar ekranında sağ/sol parmak kaydırması — üstteki
+   * sekmelerin dokunmatik alternatifi, OperatorPanel'deki aynı desen. */
+  const handleTouchStart = (event) => {
+    touchStartXRef.current = { x: event.touches[0].clientX, y: event.touches[0].clientY }
+  }
+
+  const handleTouchEnd = (event) => {
+    const start = touchStartXRef.current
+    touchStartXRef.current = null
+    if (!start) return
+
+    const dx = event.changedTouches[0].clientX - start.x
+    const dy = event.changedTouches[0].clientY - start.y
+    if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) < Math.abs(dy)) return
+
+    setActivePanel((current) => {
+      if (dx < 0) return Math.min(2, current + 1)
+      return Math.max(0, current - 1)
+    })
+  }
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -183,7 +223,16 @@ function ManagerDashboard() {
 
   if (historyShiftId) {
     return (
-      <div className="manager-shell is-beklemede">
+      /*
+       * `manager-shell--gecmis` — canlı görünümün sabit `height:100dvh;
+       * overflow:hidden` kabuğu (bkz. aşağıdaki üç ekranlı pager) burada
+       * BİLEREK devre dışı: ShiftHistoryDetail kendi kaydırmasını taşımıyor,
+       * sayfanın kendisinin kayabilmesine güveniyor (donmuş özet, ürün
+       * sayısı kadar uzayabilir). Sabit kabuk burada da geçerli olsaydı
+       * içerik kaybolurdu, kaymazdı — CLAUDE.md'nin "içerik kaybolmaktansa
+       * kaysın" ilkesiyle çelişirdi.
+       */
+      <div className="manager-shell manager-shell--gecmis is-beklemede">
         <div className="andon-rail" />
         <div className="manager-dashboard">
           <button type="button" className="manager-line-code" onClick={clearLine}>
@@ -389,210 +438,246 @@ function ManagerDashboard() {
 
         {error && <div className="manager-error">{error}</div>}
 
-        {/* Vardiyanın tamamı, planlanan bitişe (07:00→15:00 gibi) kadar tek
-         * bakışta — henüz gelmemiş kısım taralı, "ŞİMDİ" çizgisi net. */}
-        <ShiftClockBar
-          intervals={intervals}
-          shiftStartMs={shiftStartMs}
-          shiftEndMs={shiftEndMs}
-          runsById={runsById}
-          nowMs={now}
-        />
+        <div className="manager-pager-nav">
+          {PANEL_TITLES.map((title, index) => (
+            <button
+              key={title}
+              type="button"
+              className={`manager-pager-tab${activePanel === index ? ' manager-pager-tab--active' : ''}`}
+              onClick={() => setActivePanel(index)}
+            >
+              {title}
+            </button>
+          ))}
+        </div>
 
-        {/* ŞİMDİ */}
-        <section className="zone zone--now">
-          <h2 className="zone-title plate">Şimdi</h2>
-          <div className="now-state" aria-live="polite">
-            <StatusBadge status={state} size="xl" />
-            <span className="now-elapsed tnum">{formatDuration(son ? son.durationMs : 0)}</span>
-          </div>
-          {activeRun ? (
-            <div className="now-run">
-              <span className="now-run-product">{activeRun.urun_adi}</span>
-              <span className="now-run-meta plate">
-                {activeRun.parti_no ? `${activeRun.parti_no} · ` : ''}
-                {activeRun.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : ''}
-              </span>
-              {/*
-               * Bu ürünün kendi palet/koli/paketi — aşağıdaki "Vardiya"
-               * bölgesindeki toplamla karıştırılmasın diye burada, ürün
-               * adının hemen altında, ayrı ve net (yaşanmış hata: ürün
-               * değişince eski ürünün toplamı yenisinin altında görünüyordu).
-               */}
-              <div className="now-run-figures">
-                <span className="now-run-figure">
-                  <span className="now-run-figure-value tnum">{activeRunPaletAdedi}</span>
-                  <span className="now-run-figure-label plate">palet</span>
-                </span>
-                <span className="now-run-figure">
-                  <span className="now-run-figure-value tnum">{activeRunKoli}</span>
-                  <span className="now-run-figure-label plate">koli</span>
-                </span>
-                <span className="now-run-figure">
-                  <span className="now-run-figure-value tnum">{activeRunPaket ?? '—'}</span>
-                  <span className="now-run-figure-label plate">paket</span>
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="now-run-empty plate">Ürün girilmedi</div>
-          )}
-        </section>
-
-        {/* BUGÜN */}
-        <section className="zone zone--today">
-          <div className="zone-head">
-            {/*
-             * "Vardiya toplamı" — bilerek TÜM ürünlerin toplamı, aktif
-             * ürünün değil (o "Şimdi" bölgesinde, .now-run-figures'ta).
-             * Sadece "Vardiya" başlığı bunu netleştirmiyordu (yaşanmış
-             * karışıklık: tek ürün varken bu toplam o ürünün rakamlarıyla
-             * birebir aynı görünüyor, "toplamı" ibaresi olmadan aktif
-             * ürüne aitmiş gibi okunuyordu).
-             */}
-            <h2 className="zone-title plate">Vardiya toplamı</h2>
-            <div className="oran-group">
-              <RadialGauge
-                value={totals.zamanKullanimi}
-                seviye={acikKalmaDurum}
-                size={104}
-                valueLabel={`%${zamanKullanimi}`}
-                label="açık kalma"
-              />
-              <RadialGauge
-                value={performans ? performans.oran : null}
-                seviye={performansDurum}
-                size={104}
-                valueLabel={performansYuzde != null ? `%${performansYuzde}` : '—'}
-                label="hız verimi"
-              />
-            </div>
-          </div>
-
-          <div
-            className="split-bar"
-            role="img"
-            aria-label={`Açık kalma oranı yüzde ${zamanKullanimi}`}
-          >
-            <div className="split-bar-run" style={{ width: `${totals.zamanKullanimi * 100}%` }} />
-          </div>
-
-          <dl className="today-figures">
-            <div className="figure figure--run">
-              <dt className="figure-label plate">Çalışma</dt>
-              <dd className="figure-value tnum">{formatDuration(totals.uretimMs)}</dd>
-            </div>
-            <div className="figure figure--stop">
-              <dt className="figure-label plate">Duruş</dt>
-              <dd className="figure-value tnum">{formatDuration(totals.durusMs)}</dd>
-            </div>
-            <div className="figure figure--mola">
-              <dt className="figure-label plate">Mola</dt>
-              <dd className="figure-value tnum">{formatDuration(totals.molaMs)}</dd>
-            </div>
-            <div className="figure">
-              <dt className="figure-label plate">Palet</dt>
-              <dd className="figure-value tnum">{formatBreakdown(paletParts, paletler.paletAdedi)}</dd>
-            </div>
-            <div className="figure">
-              <dt className="figure-label plate">Koli</dt>
-              <dd className="figure-value tnum">{formatBreakdown(koliParts, paletler.koliAdedi)}</dd>
-            </div>
-            <div className="figure">
-              <dt className="figure-label plate">Paket</dt>
-              <dd className="figure-value tnum">{formatBreakdown(paketParts, paket)}</dd>
-            </div>
-          </dl>
-
-          {productRows.length > 0 && (
-            <div className="plan-stack">
-              <span className="plan-stack-hint">Ürün detayı için satıra dokun</span>
-              {productRows.map(
-                ({ run, acikKalmaOran, perf, pace, isActive, runPallets, paletAdedi, koli, runPaket }, index) => {
-                const isFirstFrozen = !isActive && (index === 0 || productRows[index - 1].isActive)
-                return (
-                <div
-                  key={run.id}
-                  className={`plan-row${pace ? ` plan-row--${pace.durum}` : ''}${
-                    isActive ? '' : ' plan-row--frozen'
-                  }${isFirstFrozen ? ' plan-row--frozen-first' : ''}`}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`${run.urun_adi} detayı`}
-                  onClick={() => setDetayRunId(run.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      setDetayRunId(run.id)
-                    }
-                  }}
-                >
-                  <div className="plan-row-head">
-                    <span className="plan-row-label plate">{run.urun_adi}</span>
-                    <div className="plan-row-metrics tnum">
-                      <span className="plan-row-metric">
-                        <span className="plan-row-metric-value">
-                          {acikKalmaOran != null ? `%${Math.round(acikKalmaOran * 100)}` : '—'}
-                        </span>
-                        <span className="plan-row-metric-label plate">açık kalma</span>
-                      </span>
-                      <span className="plan-row-metric">
-                        <span className="plan-row-metric-value">
-                          {perf ? `%${Math.round(perf.oran * 100)}` : '—'}
-                        </span>
-                        <span className="plan-row-metric-label plate">hız verimi</span>
-                      </span>
-                    </div>
-                    {pace && (
-                      <>
-                        <span className="plan-row-figure tnum">
-                          {pace.uretilenKoli} / {pace.hedefKoli} koli
-                        </span>
-                        <span className="plan-row-status">
-                          {pace.durum === 'tamam'
-                            ? 'Hedef tamam'
-                            : pace.durum === 'planinda'
-                              ? 'Planında'
-                              : `${formatDelta(pace.farkDk)} ${pace.durum === 'onde' ? 'önde' : 'geride'}`}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  {/*
-                   * Bu ürünün kendi palet/koli/paketi — "Vardiya toplamı"
-                   * bölümündeki rakamın hangi üründen geldiği burada net
-                   * görünsün diye (yaşanmış karışıklık: vardiya toplamı tek
-                   * ürünün üretimiyle birebir aynı görününce o rakamın
-                   * nereden geldiği belirsiz kalıyordu).
-                   */}
-                  <div className="plan-row-counts tnum">
-                    {paletAdedi} palet · {koli} koli · {runPaket ?? '—'} paket
-                  </div>
-                  {pace && (
-                    <div className="plan-row-track">
-                      <div className="plan-row-fill" style={{ width: `${pace.ilerleme * 100}%` }} />
-                    </div>
-                  )}
-                  {runPallets.length > 0 && (
-                    <div className="plan-row-pallets">
-                      <span className="plan-row-pallets-label plate">Palet çıkış saatleri</span>
-                      <ul className="plan-row-pallets-list">
-                        {runPallets.map((pallet) => (
-                          <li key={pallet.id} className="plan-row-pallets-row tnum">
-                            <span>{formatShortTime(new Date(pallet.completed_at))}</span>
-                            <span>{pallet.koli_count} koli</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+        <div className="manager-pager" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+          {/* `left` yüzdesi — OperatorPanel.jsx'teki AYNI gerekçeyle `transform`
+           * DEĞİL: bir öğeyi transform ile kaydırmak, torunlarındaki
+           * `position:fixed` öğeler (ürün detayının `sheet-overlay`'i) için
+           * yeni bir konumlanma referansı açar. Buradaki sheet zaten
+           * pager'ın DIŞINDA render ediliyor (bkz. dosya sonu) ama aynı
+           * kalıba bilerek uyuyoruz — ileride biri o overlay'i pager'ın
+           * içine taşırsa aynı hatayı tekrar yaşamasın. */}
+          <div className="manager-pager-track" style={{ left: `-${activePanel * 100}%` }}>
+            {/* Ekran 1/3 — Şimdi: durum + süre + aktif ürün, tek başına.
+              * Açılışta aktif (index 0) — müdürün ilk sorusu "şu an ne
+              * oluyor", operatördeki "Ana ekran"ın karşılığı. */}
+            <div className="manager-pager-panel manager-pager-panel--now">
+              <section className="zone zone--now">
+                <div className="now-state" aria-live="polite">
+                  <StatusBadge status={state} size="xl" />
+                  <span className="now-elapsed tnum">{formatDuration(son ? son.durationMs : 0)}</span>
                 </div>
-                )
-              })}
+                {activeRun ? (
+                  <div className="now-run">
+                    <span className="now-run-product">{activeRun.urun_adi}</span>
+                    <span className="now-run-meta plate">
+                      {activeRun.parti_no ? `${activeRun.parti_no} · ` : ''}
+                      {activeRun.calisma_hizi_pkt_dk ? `${activeRun.calisma_hizi_pkt_dk} pkt/dk` : ''}
+                    </span>
+                    {/*
+                     * Bu ürünün kendi palet/koli/paketi — "Vardiya" ekranındaki
+                     * toplamla karıştırılmasın diye burada, ürün adının hemen
+                     * altında, ayrı ve net (yaşanmış hata: ürün değişince eski
+                     * ürünün toplamı yenisinin altında görünüyordu).
+                     */}
+                    <div className="now-run-figures">
+                      <span className="now-run-figure">
+                        <span className="now-run-figure-value tnum">{activeRunPaletAdedi}</span>
+                        <span className="now-run-figure-label plate">palet</span>
+                      </span>
+                      <span className="now-run-figure">
+                        <span className="now-run-figure-value tnum">{activeRunKoli}</span>
+                        <span className="now-run-figure-label plate">koli</span>
+                      </span>
+                      <span className="now-run-figure">
+                        <span className="now-run-figure-value tnum">{activeRunPaket ?? '—'}</span>
+                        <span className="now-run-figure-label plate">paket</span>
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="now-run-empty plate">Ürün girilmedi</div>
+                )}
+              </section>
             </div>
-          )}
-        </section>
 
+            {/* Ekran 2/3 — Vardiya: zaman çizelgesi + iki oran + 6 rakam.
+              * Sabit boyutlu bir özet, ürün sayısından etkilenmez. */}
+            <div className="manager-pager-panel">
+              {/* Vardiyanın tamamı, planlanan bitişe (07:00→15:00 gibi) kadar
+               * tek bakışta — henüz gelmemiş kısım taralı, "ŞİMDİ" çizgisi net. */}
+              <ShiftClockBar
+                intervals={intervals}
+                shiftStartMs={shiftStartMs}
+                shiftEndMs={shiftEndMs}
+                runsById={runsById}
+                nowMs={now}
+              />
+
+              <section className="zone zone--today">
+                <div className="zone-head">
+                  {/*
+                   * "Vardiya toplamı" — bilerek TÜM ürünlerin toplamı, aktif
+                   * ürünün değil (o "Şimdi" ekranında, .now-run-figures'ta).
+                   * Sadece "Vardiya" başlığı bunu netleştirmiyordu (yaşanmış
+                   * karışıklık: tek ürün varken bu toplam o ürünün rakamlarıyla
+                   * birebir aynı görünüyor, "toplamı" ibaresi olmadan aktif
+                   * ürüne aitmiş gibi okunuyordu).
+                   */}
+                  <h2 className="zone-title plate">Vardiya toplamı</h2>
+                  <div className="oran-group">
+                    <RadialGauge
+                      value={totals.zamanKullanimi}
+                      seviye={acikKalmaDurum}
+                      size={104}
+                      valueLabel={`%${zamanKullanimi}`}
+                      label="açık kalma"
+                    />
+                    <RadialGauge
+                      value={performans ? performans.oran : null}
+                      seviye={performansDurum}
+                      size={104}
+                      valueLabel={performansYuzde != null ? `%${performansYuzde}` : '—'}
+                      label="hız verimi"
+                    />
+                  </div>
+                </div>
+
+                <div
+                  className="split-bar"
+                  role="img"
+                  aria-label={`Açık kalma oranı yüzde ${zamanKullanimi}`}
+                >
+                  <div className="split-bar-run" style={{ width: `${totals.zamanKullanimi * 100}%` }} />
+                </div>
+
+                <dl className="today-figures">
+                  <div className="figure figure--run">
+                    <dt className="figure-label plate">Çalışma</dt>
+                    <dd className="figure-value tnum">{formatDuration(totals.uretimMs)}</dd>
+                  </div>
+                  <div className="figure figure--stop">
+                    <dt className="figure-label plate">Duruş</dt>
+                    <dd className="figure-value tnum">{formatDuration(totals.durusMs)}</dd>
+                  </div>
+                  <div className="figure figure--mola">
+                    <dt className="figure-label plate">Mola</dt>
+                    <dd className="figure-value tnum">{formatDuration(totals.molaMs)}</dd>
+                  </div>
+                  <div className="figure">
+                    <dt className="figure-label plate">Palet</dt>
+                    <dd className="figure-value tnum">{formatBreakdown(paletParts, paletler.paletAdedi)}</dd>
+                  </div>
+                  <div className="figure">
+                    <dt className="figure-label plate">Koli</dt>
+                    <dd className="figure-value tnum">{formatBreakdown(koliParts, paletler.koliAdedi)}</dd>
+                  </div>
+                  <div className="figure">
+                    <dt className="figure-label plate">Paket</dt>
+                    <dd className="figure-value tnum">{formatBreakdown(paketParts, paket)}</dd>
+                  </div>
+                </dl>
+              </section>
+            </div>
+
+            {/* Ekran 3/3 — Ürünler: ürün bazlı liste. Sayfadaki TEK gerçekten
+              * değişken-uzunluklu bölüm burasıydı (ürün sayısı arttıkça
+              * uzuyordu) — artık kabuğu değil, sadece kendi panelini kaydırır. */}
+            <div className="manager-pager-panel">
+              {productRows.length > 0 ? (
+                <div className="plan-stack">
+                  <span className="plan-stack-hint">Ürün detayı için satıra dokun</span>
+                  {productRows.map(
+                    ({ run, acikKalmaOran, perf, pace, isActive, runPallets, paletAdedi, koli, runPaket }, index) => {
+                    const isFirstFrozen = !isActive && (index === 0 || productRows[index - 1].isActive)
+                    return (
+                    <div
+                      key={run.id}
+                      className={`plan-row${pace ? ` plan-row--${pace.durum}` : ''}${
+                        isActive ? '' : ' plan-row--frozen'
+                      }${isFirstFrozen ? ' plan-row--frozen-first' : ''}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${run.urun_adi} detayı`}
+                      onClick={() => setDetayRunId(run.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          setDetayRunId(run.id)
+                        }
+                      }}
+                    >
+                      <div className="plan-row-head">
+                        <span className="plan-row-label plate">{run.urun_adi}</span>
+                        <div className="plan-row-metrics tnum">
+                          <span className="plan-row-metric">
+                            <span className="plan-row-metric-value">
+                              {acikKalmaOran != null ? `%${Math.round(acikKalmaOran * 100)}` : '—'}
+                            </span>
+                            <span className="plan-row-metric-label plate">açık kalma</span>
+                          </span>
+                          <span className="plan-row-metric">
+                            <span className="plan-row-metric-value">
+                              {perf ? `%${Math.round(perf.oran * 100)}` : '—'}
+                            </span>
+                            <span className="plan-row-metric-label plate">hız verimi</span>
+                          </span>
+                        </div>
+                        {pace && (
+                          <>
+                            <span className="plan-row-figure tnum">
+                              {pace.uretilenKoli} / {pace.hedefKoli} koli
+                            </span>
+                            <span className="plan-row-status">
+                              {pace.durum === 'tamam'
+                                ? 'Hedef tamam'
+                                : pace.durum === 'planinda'
+                                  ? 'Planında'
+                                  : `${formatDelta(pace.farkDk)} ${pace.durum === 'onde' ? 'önde' : 'geride'}`}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {/*
+                       * Bu ürünün kendi palet/koli/paketi — "Vardiya toplamı"
+                       * ekranındaki rakamın hangi üründen geldiği burada net
+                       * görünsün diye (yaşanmış karışıklık: vardiya toplamı tek
+                       * ürünün üretimiyle birebir aynı görününce o rakamın
+                       * nereden geldiği belirsiz kalıyordu).
+                       */}
+                      <div className="plan-row-counts tnum">
+                        {paletAdedi} palet · {koli} koli · {runPaket ?? '—'} paket
+                      </div>
+                      {pace && (
+                        <div className="plan-row-track">
+                          <div className="plan-row-fill" style={{ width: `${pace.ilerleme * 100}%` }} />
+                        </div>
+                      )}
+                      {runPallets.length > 0 && (
+                        <div className="plan-row-pallets">
+                          <span className="plan-row-pallets-label plate">Palet çıkış saatleri</span>
+                          <ul className="plan-row-pallets-list">
+                            {runPallets.map((pallet) => (
+                              <li key={pallet.id} className="plan-row-pallets-row tnum">
+                                <span>{formatShortTime(new Date(pallet.completed_at))}</span>
+                                <span>{pallet.koli_count} koli</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="zone-empty plate">Henüz ürün girilmedi</p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/*
