@@ -741,6 +741,66 @@ tamamen kaldırıldı (bkz. "Vardiya bölümleri" notu) — bu limit tartışmas
 artık sadece `ShiftHistoryDetail`'in (geçmiş vardiya özeti) `downtimeByNote`
 kullanımı için geçerli, canlı panoda o fonksiyon hiç çağrılmıyor.
 
+## Müdür panosu: üç ekranlı pager (SÜPERSEDE eder — artık tek scroll değil)
+
+Yukarıdaki "sayfa artık kaydırılabilir" kararı (bir önceki bölüm) CANLI
+`ManagerDashboard` için artık geçerli değil — kullanıcı gerçek tarayıcı
+penceresinde (duvar ekranı değil, normal masaüstü) ekran görüntüsüyle
+bildirdi: "Şimdi" bölgesindeki duvar-ölçekli dev süre sayacı
+(`.now-elapsed`, `clamp(3rem,6vw,9rem)`) tek başına sayfayı dolduruyor,
+altındaki "Vardiya toplamı" ve ürün listesini aşağı itiyordu — kullanıcı
+"aşağı kaydırma olmasın" dedi. OperatorPanel'in üç ekranlı pager deseni
+(bkz. "Andon tasarım sistemi" bölümündeki "Üçüncü tasarım") buraya da
+taşındı, aynı gerekçe ve aynı CSS kalıplarıyla:
+
+- **Şimdi** (`PANEL_TITLES[0]`, açılışta aktif) — durum rozeti + süre
+  sayacı + aktif ürün adı/meta + o ürünün palet/koli/paket'i. Artık
+  KİMSEYLE yer paylaşmıyor; dev sayaç bilerek aynı boyutta kaldı (duvar
+  ekranında hâlâ uzaktan okunmalı), sadece tek başına bir ekranı kaplıyor.
+- **Vardiya** — `ShiftClockBar` + iki oran (`RadialGauge`) + `split-bar`
+  + altı rakam (Çalışma/Duruş/Mola/Palet/Koli/Paket). Sabit boyutlu,
+  ürün sayısından etkilenmez.
+- **Ürünler** — `plan-stack` (ürün bazlı satırlar, her biri dokununca
+  `ProductDetail` açar). Sayfadaki TEK gerçekten değişken-uzunluklu
+  bölüm buradaydı (ürün sayısı arttıkça uzuyordu) — artık kabuğu değil
+  SADECE kendi panelini kaydırıyor.
+
+Header (hat kodu, tarih/vardiya/operatör, "Geçmiş vardiyalar", canlı saat)
+her üç ekranda da sabit — OperatorPanel'deki pager'ın dışında kalan
+header'la aynı fikir. Sekmelere dokunarak ya da (duvar ekranı dokunmatikse)
+sağ/sol parmak kaydırmasıyla geçilir (`handleTouchStart`/`handleTouchEnd`,
+aynı `SWIPE_THRESHOLD_PX` deseni).
+
+**CSS kalıpları OperatorPanel.css'ten BİREBİR taşındı, aynı gerekçelerle**
+(`.manager-pager-nav`/`-tab`/`-tab--active`/`.manager-pager`/`-track`/
+`-panel`): `left` yüzdesi (asla `transform` — bkz. "Yaşanmış hata" notu,
+`position:fixed` torunları için yeni bir konumlanma bloğu açardı), her
+panel kendi `overflow-y:auto`'suyla kayar, kabuk (`.manager-shell`)
+`height:100dvh; overflow:hidden` ile HİÇBİR ZAMAN kaymaz. "Şimdi" ekranında
+içerik sığdığında dikey ortalanmış görünsün diye `.zone--now`'a
+`margin:auto 0` verildi — `justify-content:center` KULLANILMADI (aynı
+proje-geneli kural: taşan içeriğin üstü görünmez kırpılırdı).
+
+**`ProductDetail` sheet'i pager'ın dışında kaldı, bilerek dokunulmadı** —
+zaten `.manager-dashboard`'ın değil `.manager-shell`'in doğrudan çocuğu
+olarak render ediliyordu (JSX'te pager kapanış `</div>`'inden SONRA), yani
+`transform` sorunu baştan beri onu etkilemiyordu; yine de `left` deseni
+tutarlılık için tercih edildi — ileride biri sheet'i pager'ın içine
+taşırsa aynı hata (bkz. OperatorPanel'in "Yaşanmış hata" notu) tekrar
+yaşanmasın diye.
+
+**`manager-shell--gecmis` — "Geçmiş vardiyalar" (`ShiftHistoryDetail`,
+`historyShiftId` dolu) BİLEREK sabit kabuğun DIŞINDA.** `ShiftHistoryDetail`
+kendi kaydırmasını taşımıyor, sayfanın kendisinin kayabilmesine güveniyor
+(donmuş özet, ürün sayısı kadar uzayabilir — bkz. "Geçmiş vardiyalar"
+bölümü). Canlı görünümün `height:100dvh;overflow:hidden` kabuğu burada da
+geçerli olsaydı içerik CLAUDE.md'nin en temel ilkesini ("içerik
+kaybolmaktansa kaysın") ihlal ederdi — kaymazdı, kaybolurdu. Bu yüzden
+`historyShiftId` dalı `manager-shell--gecmis` ek sınıfıyla açılıyor,
+CSS'te `height:auto;min-height:100dvh;overflow:visible`'a geri dönüyor —
+loading/"Açık vardiya yok" dalları (`is-beklemede`, içerik zaten kısa)
+etkilenmiyor.
+
 ## Ürün geçmişi ve ürün değiştirme
 
 Aynı vardiyada birden çok ürün üretilebilir.
