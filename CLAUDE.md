@@ -747,6 +747,68 @@ palette (yüklenmişse) yeşil "yüklendi ✓" ibaresi. Palet hiç çıkmamış
 gösteriyordu (`history-pallets-loaded`) — bu değişiklik onu ayrıca
 LİSTEDE, tıklamadan da görünür yapıyor.
 
+## Veri girişi ekranı: yeni bir rol, kademeli inşa
+
+`/veri-girisi` (`src/pages/VeriGirisiPanel.jsx`) — operatör/müdür/sevkiyat
+üçlüsünden AYRI, dördüncü bir yüzey. Kullanıcının tarif ettiği rol
+sahadaki operatör değil: "**veri girişi operatörü**" — sistemi baştan
+sona kullanan, uygulayan, kontrol eden, gerektiğinde değişiklik
+yapabilen kişi (bkz. büyük ERP yol haritası taslağındaki Faz 0 notları —
+bugün bu kişi elle kağıttan Logo'ya aktarım yapıyor). Bu ekran o kişi
+için MES tarafındaki merkezi kontrol panosu olacak; **bilerek küçük
+başladı** — kullanıcının kendi ifadesiyle "veri girişinde çok fazla
+bölüm var yavaş yavaş eklicez", ilk bölüm fiş no mantığı.
+
+**Kapsam: TÜM hatların TÜM vardiyaları, açık + kapanmış.** Sevkiyat
+ekranından farkı burada — sevkiyat sadece o an açık vardiyaları
+gösteriyor (sahadaki iş anlık), veri girişinin işi ise geçmişe dönük
+mutabakat da içeriyor (Logo'daki bir fiş no günler sonra da
+düzeltilebilir/girilebilir). `useAllShifts.js` bu yüzden
+`useOpenShifts.js`'in `ended_at is null` filtresi OLMADAN aynı deseni
+kullanır (tüm hatlar, realtime + yeniden çekme, `shifts` + `product_runs`
+— palet çekilmiyor, bu ekranın işi palet değil fiş).
+
+**Liste büyüyeceği için (geçmiş dahil) arama + filtre var — sevkiyatta
+yok, ihtiyaç da yoktu (kısa, hep açık vardiyalar).** Üstte serbest metin
+arama (hat/operatör/fiş no, Türkçe'ye duyarlı `toLocaleLowerCase('tr')`,
+`OperatorNameField`'daki desenin aynısı) ve bir "Fiş no eksik" çipi —
+mutabakat işinin gerçek görevi zaten "hangi vardiyada fiş no unutulmuş"
+sorusuna cevap, çip bunu tek dokunuşla filtreler.
+
+**Fiş no artık İKİ yerden girilebilir — operatörün ana ekranındaki
+alanla ÇAKIŞMAZ, ikisi de aynı `shifts.fis_no` kolonuna yazar.**
+OperatorPanel'deki fiş no alanı (bkz. "Sevkiyat" bölümü) kalktı/değişmedi
+— kağıt sahadaysa operatör kendi girebilir. Veri girişi ekranı bunu
+MERKEZİ olarak da düzenleme imkanı ekliyor (aynı satır, aynı sütun,
+ikinci bir yazma yolu) — iki taraf birbirini ELEMEZ, kim önce girerse
+o kalır, sonra değiştirilebilir. Yeni bir "kilitli alan" kavramı
+BİLEREK eklenmedi; CLAUDE.md'nin "eksik alan sonradan doldurulur"
+ilkesiyle tutarlı.
+
+**Her satırda alt fiş dökümü de görünür (salt-okunur), tek satırda
+sadece ana fiş no değil.** Bir vardiyada birden çok ürün varsa
+(`fisNoForRun`'ın türettiği `.1`/`.2` deseni, bkz. "Sevkiyat" bölümü)
+veri girişi operatörünün Logo'ya HER ürün için hangi alt fiş no'yu
+gireceğini görmesi gerekiyor — satırın altında küçük bir "ürün adı ·
+fiş no" listesi bunu karşılıyor. Fiş no düzenleme sheet'i AÇIKKEN bu
+liste CANLI önizlemeye döner (`RunEndSheet`'in ambalaj fire önizlemesiyle
+aynı desen — girerken hesapla, kayıttan sonra değil): operatör yazdıkça
+`fisNoForRun(editValue, ...)` yeniden hesaplanıp altta gösterilir, "600123
+yazınca ikinci ürün 600123.1 mi olacak" sorusunun cevabı kaydetmeden
+önce görünür.
+
+**Sheet operatörün fiş no sheet'inin KOPYASI, ortak bileşene
+çıkarılmadı — bilinçli.** İkisi görsel olarak aynı ama OperatorPanel'in
+sheet'i tek bir aktif vardiyaya bağlı (`shift` zaten prop/hook'tan gelen
+tek nesne), buradaki ise listedeki HANGİ satıra dokunulduğuna göre
+değişen bir `edit` state'i taşıyor — ortak bir bileşen bu farkı taşımak
+için gereksiz bir prop yüzeyi açardı, iki 40 satırlık JSX bloğu
+birbirinden bağımsız kalması daha basit.
+
+`sunum/uretim/main.jsx`'in `?ekran=` anahtarına `veri-girisi` de eklendi
+(sevkiyat eklenirken açılan yolun aynısı) — bu ekranın da mock
+backend'le görsel doğrulaması/demo videosu mümkün olsun diye.
+
 ## Müdür panosunda liste kesmeleri kaldırıldı
 
 Eskiden "Son olaylar" `RECENT_EVENTS_LIMIT = 8` ile, "Duruş sebepleri"
