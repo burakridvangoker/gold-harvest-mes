@@ -9,16 +9,17 @@ import { supabase } from '../lib/supabaseClient'
  * mutabakatı da kapsıyor, kapanmış bir vardiyaya artık erişilemez
  * olmamalı.
  *
- * Olaylar + paletler de çekiliyor (`useShift.js`'in tek-vardiyalık
- * setiyle aynı alanlar) — veri girişi operatörü artık miktar/personel
- * bilgisini kağıttan elle girmiyor, MES'in zaten hesapladığı özeti
- * (`timeline.js#runSummaries`) KONTROL ediyor. Bu yüzden sevkiyat
- * ekranının aksine `stop_reason_segments` hariç her şey burada.
+ * Olaylar + paletler + duruş sebebi segmentleri de çekiliyor (`useShift.js`'in
+ * tek-vardiyalık setiyle aynı alanlar) — veri girişi operatörü artık
+ * miktar/personel/iş analizi bilgisini kağıttan elle girmiyor, MES'in
+ * zaten hesapladığı özeti (`timeline.js#runSummaries`/`downtimeByNote`)
+ * KONTROL ediyor.
  *
- * Dönen `entries`: [{ shift, runs, events, pallets }], en yeni vardiya önde.
+ * Dönen `entries`: [{ shift, runs, events, pallets, segments }], en yeni
+ * vardiya önde.
  */
 
-const TABLES = ['shifts', 'product_runs', 'timeline_events', 'pallet_records']
+const TABLES = ['shifts', 'product_runs', 'timeline_events', 'pallet_records', 'stop_reason_segments']
 
 export function useAllShifts() {
   const [entries, setEntries] = useState([])
@@ -46,13 +47,14 @@ export function useAllShifts() {
 
     const shiftIds = shifts.map((shift) => shift.id)
 
-    const [runsResult, eventsResult, palletsResult] = await Promise.all([
+    const [runsResult, eventsResult, palletsResult, segmentsResult] = await Promise.all([
       supabase.from('product_runs').select('*').in('shift_id', shiftIds).order('sira'),
       supabase.from('timeline_events').select('*').in('shift_id', shiftIds).order('at'),
       supabase.from('pallet_records').select('*').in('shift_id', shiftIds).order('completed_at'),
+      supabase.from('stop_reason_segments').select('*').in('shift_id', shiftIds).order('start_at'),
     ])
 
-    const failure = runsResult.error || eventsResult.error || palletsResult.error
+    const failure = runsResult.error || eventsResult.error || palletsResult.error || segmentsResult.error
     if (failure) {
       setError('Vardiya verisi okunamadı: ' + failure.message)
     } else {
@@ -62,6 +64,7 @@ export function useAllShifts() {
     const runs = runsResult.data ?? []
     const events = eventsResult.data ?? []
     const pallets = palletsResult.data ?? []
+    const segments = segmentsResult.data ?? []
 
     setEntries(
       shifts.map((shift) => ({
@@ -69,6 +72,7 @@ export function useAllShifts() {
         runs: runs.filter((run) => run.shift_id === shift.id),
         events: events.filter((event) => event.shift_id === shift.id),
         pallets: pallets.filter((pallet) => pallet.shift_id === shift.id),
+        segments: segments.filter((segment) => segment.shift_id === shift.id),
       })),
     )
     setLoading(false)

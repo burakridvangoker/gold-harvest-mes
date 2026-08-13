@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAllShifts } from '../hooks/useAllShifts'
-import { fisNoForRun, runSummaries } from '../lib/timeline'
+import { buildIntervals, downtimeByNote, fisNoForRun, groupSegmentsByEvent, runSummaries } from '../lib/timeline'
 import { formatDateLabel } from '../lib/time'
+import { formatDuration } from '../lib/duration'
 import ProductDetail from '../components/ProductDetail'
 import '../components/Sheet.css'
 import './VeriGirisiPanel.css'
@@ -37,6 +38,15 @@ import './VeriGirisiPanel.css'
  * arkasındaki üretim verisini salt-okunur doğrulamak. Ortak `ProductDetail`
  * (operatör/müdürle AYNI bileşen, aynı rakamlar) — müdür panosundaki
  * gibi salt-okunur, hiçbir yazma prop'u geçirilmiyor.
+ *
+ * "İş analizi" (duruş sebepleri) `ProductDetail`'in DIŞINDA, veri girişi
+ * ekranına ÖZEL bir bölüm — ortak bileşene eklenmedi çünkü "Duruş
+ * sebepleri" CANLI ManagerDashboard'dan bilinçli olarak kaldırılmıştı
+ * (bkz. CLAUDE.md "Vardiya bölümleri"); ProductDetail'e eklemek onu
+ * sessizce geri getirirdi. Bu run'ı aktif ürün olarak taşıyan `durus`
+ * aralıkları `downtimeByNote` ile notlarına göre toplanır — segmentli
+ * duruşlarda (`stop_reason_segments`) sebep bazlı, değilse olay notuna
+ * göre; `ShiftHistoryDetail`'in aynı deseni.
  */
 function VeriGirisiPanel() {
   const { entries, loading, error } = useAllShifts()
@@ -49,9 +59,9 @@ function VeriGirisiPanel() {
   const rows = useMemo(() => {
     const list = []
 
-    for (const { shift, runs, events, pallets } of entries) {
+    for (const { shift, runs, events, pallets, segments } of entries) {
       if (runs.length === 0) {
-        list.push({ key: shift.id, shift, runs, events, pallets, run: null, fisNo: shift.fis_no ?? null })
+        list.push({ key: shift.id, shift, runs, events, pallets, segments, run: null, fisNo: shift.fis_no ?? null })
         continue
       }
 
@@ -62,6 +72,7 @@ function VeriGirisiPanel() {
           runs,
           events,
           pallets,
+          segments,
           run,
           fisNo: fisNoForRun(shift.fis_no, runs, run),
         })
@@ -119,6 +130,16 @@ function VeriGirisiPanel() {
     return runSummaries(detayRow.runs, detayRow.events, detayRow.pallets, nowMs, { frozen }).find(
       (ozet) => ozet.run.id === detayRow.run.id,
     )
+  }, [detayRow])
+
+  const detayIsAnalizi = useMemo(() => {
+    if (!detayRow || !detayRow.run) return []
+    const frozen = Boolean(detayRow.shift.ended_at)
+    const nowMs = frozen ? new Date(detayRow.shift.ended_at).getTime() : Date.now()
+    const runIntervals = buildIntervals(detayRow.events, nowMs).filter(
+      (interval) => interval.productRunId === detayRow.run.id,
+    )
+    return downtimeByNote(runIntervals, { segmentsByEventId: groupSegmentsByEvent(detayRow.segments ?? []) })
   }, [detayRow])
 
   return (
@@ -281,6 +302,22 @@ function VeriGirisiPanel() {
             </p>
 
             <ProductDetail ozet={detayOzet} />
+
+            {detayIsAnalizi.length > 0 ? (
+              <div className="veri-analiz">
+                <span className="veri-analiz-label plate">İş analizi — duruş sebepleri</span>
+                <ul className="veri-analiz-list">
+                  {detayIsAnalizi.map((item) => (
+                    <li key={item.note ?? '__yok__'} className="veri-analiz-row">
+                      <span className="veri-analiz-not">{item.note || 'Not girilmedi'}</span>
+                      <span className="veri-analiz-deger tnum">
+                        {formatDuration(item.ms)} · {item.adet}×
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
 
             <div className="sheet-actions">
               <button type="button" className="sheet-button sheet-button--primary" onClick={() => setDetayKey(null)}>

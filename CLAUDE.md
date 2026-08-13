@@ -841,6 +841,25 @@ Kapanmış bir vardiyanın ürünü `frozen: true` ile hesaplanır (`nowMs =
 shift.ended_at`, `ShiftHistoryDetail`'deki donmuş özet prensibinin
 aynısı) — kapanmış bir işin "süregelen" gibi görünmesi yanlış olurdu.
 
+**"İş analizi" (duruş sebepleri) — Kontrol sheet'inin devamı, ama
+`ProductDetail`'in İÇİNDE değil.** Kullanıcı isteği "iş analizlerini de
+ekleyelim" — eski süreçte veri girişi operatörünün elle girdiği
+üçüncü şey (miktar/personel'den sonra) neyin ne kadar süre makineyi
+durdurduğuydu. Bu BİLEREK ortak `ProductDetail` bileşenine değil,
+`VeriGirisiPanel.jsx`'in kendi JSX'ine eklendi: "Duruş sebepleri" CANLI
+`ManagerDashboard`'dan bilinçli olarak kaldırılmıştı (bkz. "Vardiya
+bölümleri" notu, "adam gibi çeki düzen" geri bildirimi) — `ProductDetail`
+paylaşılan bir bileşen olduğu için oraya eklemek bu kararı sessizce geri
+getirir, ManagerDashboard'un ürün detayında da aniden yeniden çıkardı.
+Hesap: `buildIntervals(events, nowMs)` ile o run'ın süresince aktif olan
+`durus` aralıkları (`interval.productRunId === run.id` filtresi) alınıp
+`downtimeByNote` ile notlarına göre toplanıyor — segment varsa
+(`stop_reason_segments`) sebep bazlı, yoksa olay notuna göre, tıpkı
+`ShiftHistoryDetail`'in aynı deseni. `useAllShifts.js` bu yüzden
+`stop_reason_segments`'ı da çekiyor artık (dördüncü tablo, `useShift.js`
+ile aynı tam set — sadece `manager_dashboard_visits` gibi bu ekranla
+alakasız tablolar hariç).
+
 ## Müdür panosunda liste kesmeleri kaldırıldı
 
 Eskiden "Son olaylar" `RECENT_EVENTS_LIMIT = 8` ile, "Duruş sebepleri"
