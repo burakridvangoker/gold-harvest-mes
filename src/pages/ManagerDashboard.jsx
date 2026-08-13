@@ -9,6 +9,7 @@ import {
   aktifUrun,
   buildIntervals,
   currentState,
+  fisNoForRun,
   hizVerimi,
   koliToPaket,
   paceStatus,
@@ -371,7 +372,30 @@ function ManagerDashboard() {
         .filter((pallet) => pallet.product_run_id === run.id)
         .reverse()
 
-      return { run, isActive, acikKalmaOran, perf, pace, runPallets, paletAdedi, koli, runPaket }
+      /*
+       * Sevkiyatçı bu ürünün kaç paletini TIR'a yükledi — /sevkiyat ve
+       * operatörün Detay ekranındaki "Sevkiyat durumu" ile aynı hesap
+       * (`pallet.loaded_at`), burada Ürünler listesinde de görünsün diye.
+       * Fiş no aynı türetme (`fisNoForRun`) ile, ayrı bir sorgu yok.
+       */
+      const fisNo = fisNoForRun(shift.fis_no, runs, run)
+      const sevkiyatToplam = runPallets.length
+      const sevkiyatYuklenen = runPallets.filter((pallet) => pallet.loaded_at).length
+
+      return {
+        run,
+        isActive,
+        acikKalmaOran,
+        perf,
+        pace,
+        runPallets,
+        paletAdedi,
+        koli,
+        runPaket,
+        fisNo,
+        sevkiyatToplam,
+        sevkiyatYuklenen,
+      }
     })
     .filter(Boolean)
 
@@ -593,8 +617,27 @@ function ManagerDashboard() {
                 <div className="plan-stack">
                   <span className="plan-stack-hint">Ürün detayı için satıra dokun</span>
                   {productRows.map(
-                    ({ run, acikKalmaOran, perf, pace, isActive, runPallets, paletAdedi, koli, runPaket }, index) => {
+                    (
+                      {
+                        run,
+                        acikKalmaOran,
+                        perf,
+                        pace,
+                        isActive,
+                        runPallets,
+                        paletAdedi,
+                        koli,
+                        runPaket,
+                        fisNo,
+                        sevkiyatToplam,
+                        sevkiyatYuklenen,
+                      },
+                      index,
+                    ) => {
                     const isFirstFrozen = !isActive && (index === 0 || productRows[index - 1].isActive)
+                    const sevkiyatTamamMi = sevkiyatToplam > 0 && sevkiyatYuklenen === sevkiyatToplam
+                    const sevkiyatKismiMi = sevkiyatYuklenen > 0 && !sevkiyatTamamMi
+                    const sevkiyatDurum = sevkiyatTamamMi ? 'tamam' : sevkiyatKismiMi ? 'kismi' : 'bekliyor'
                     return (
                     <div
                       key={run.id}
@@ -614,6 +657,7 @@ function ManagerDashboard() {
                     >
                       <div className="plan-row-head">
                         <span className="plan-row-label plate">{run.urun_adi}</span>
+                        {fisNo ? <span className="plan-row-fisno tnum">Fiş {fisNo}</span> : null}
                         <div className="plan-row-metrics tnum">
                           <span className="plan-row-metric">
                             <span className="plan-row-metric-value">
@@ -658,6 +702,19 @@ function ManagerDashboard() {
                           <div className="plan-row-fill" style={{ width: `${pace.ilerleme * 100}%` }} />
                         </div>
                       )}
+                      {/*
+                       * Sevkiyatçı bu ürünün kaç paletini TIR'a yükledi —
+                       * operatörün Detay ekranındaki "Sevkiyat durumu" ile
+                       * aynı fikir, müdür panosunda da görünsün diye
+                       * ("müdür ekranından da sevkiyat ile operatörden çıkan
+                       * ürünü görebilen bir yer olsun" — kullanıcı isteği).
+                       * Hiç palet çıkmamış ürün için hiç gösterilmiyor.
+                       */}
+                      {sevkiyatToplam > 0 && (
+                        <span className={`plan-row-sevkiyat plan-row-sevkiyat--${sevkiyatDurum}`}>
+                          Sevkiyat: {sevkiyatYuklenen}/{sevkiyatToplam} palet
+                        </span>
+                      )}
                       {runPallets.length > 0 && (
                         <div className="plan-row-pallets">
                           <span className="plan-row-pallets-label plate">Palet çıkış saatleri</span>
@@ -666,6 +723,9 @@ function ManagerDashboard() {
                               <li key={pallet.id} className="plan-row-pallets-row tnum">
                                 <span>{formatShortTime(new Date(pallet.completed_at))}</span>
                                 <span>{pallet.koli_count} koli</span>
+                                {pallet.loaded_at ? (
+                                  <span className="plan-row-pallets-loaded">yüklendi ✓</span>
+                                ) : null}
                               </li>
                             ))}
                           </ul>
